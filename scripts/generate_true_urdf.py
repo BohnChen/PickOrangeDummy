@@ -29,16 +29,20 @@ REST = (0.0, -73.0, 180.0, 0.0, 0.0, 0.0)
 limits_deg = [(-170, 170), (-73, 90), (35, 180), (-180, 180), (-120, 120), (-720, 720)]
 reduction = [30, 30, 30, 24, 30, 50]
 # 关节轴: J1=Z, J2=Y, J3=Y, J4=X(腕滚), J5=Y, J6=X(末端旋转轴)
+# 关节轴 (定案, KDL 自洽验证): J1=Z, J2/J3/J5=-Y(俯仰), J4/J6=+X(腕滚/末端轴)
 axes = [(0, 0, 1), (0, -1, 0), (0, -1, 0), (1, 0, 0), (0, -1, 0), (1, 0, 0)]
-# 各关节 origin (父 frame, m): [x向前, y侧向, z向上]
+# 各关节 origin (父 frame, m)
+# 腕部结构照搬固件(公共腕点): 腕心=肘+R03·(-D_ELBOW,0,L_FA) → J4 origin 在 link3 系 (-0.052,0,0.115)
+# J5/J6 与腕心重合; tool0 = 腕点 + 0.072 沿 J6 轴(+X)
 origins = [
     (0.0, 0.0, 0.0),                                  # J1 @桌面
     (D_BASE / 1000, 0.0, L_BASE / 1000),              # J2
-    (L_ARM / 1000, D_ELBOW / 1000, 0.0),              # J3 (沿J2轴偏 D_ELBOW)
-    (L_FA / 1000, 0.0, 0.0),                          # J4
-    (L_EW / 1000, 0.0, 0.0),                          # J5
-    (L_WRIST / 1000, 0.0, 0.0),                       # J6
+    (L_ARM / 1000, 0.0, 0.050),                       # J3 (面内偏 D_ELBOW 见下)
+    (-D_ELBOW / 1000, 0.0, L_FA / 1000),              # J4 (腕心, link3 系, 固件 v3 结构)
+    (0.0, 0.0, 0.0),                                  # J5 @腕心
+    (0.0, 0.0, 0.0),                                  # J6 @腕心 (末端驱动轴)
 ]
+TOOL0 = (L_WRIST / 1000, 0.0, 0.0)
 
 def fmt(x):
     return f"{x:.6f}"
@@ -74,7 +78,7 @@ def main():
     out.append('<joint name="tool0_joint" type="fixed">')
     out.append(f'  <parent link="{prev}"/>')
     out.append('  <child link="tool0"/>')
-    out.append('  <origin xyz="0 0 0" rpy="0 0 0"/>')
+    out.append('  <origin xyz="%s %s %s" rpy="0 0 0"/>' % (fmt(TOOL0[0]), fmt(TOOL0[1]), fmt(TOOL0[2])))
     out.append('</joint>')
     out.append('</robot>')
     open(OUT, 'w').write('\n'.join(out) + '\n')

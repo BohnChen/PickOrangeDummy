@@ -24,7 +24,7 @@
 <joint name="Joint3" type="revolute">
   <parent link="link_2"/>
   <child link="link_3"/>
-  <origin xyz="0.146000 0.052000 0.000000" rpy="0 0 0"/>
+  <origin xyz="0.146000 0.000000 0.050000" rpy="0 0 0"/>
   <axis xyz="0.000000 -1.000000 0.000000"/>
   <limit lower="0.610865" upper="3.141593" effort="150" velocity="3.15"/>
 </joint>
@@ -32,7 +32,7 @@
 <joint name="Joint4" type="revolute">
   <parent link="link_3"/>
   <child link="link_4"/>
-  <origin xyz="0.115000 0.000000 0.000000" rpy="0 0 0"/>
+  <origin xyz="-0.052000 0.000000 0.115000" rpy="0 0 0"/>
   <axis xyz="1.000000 0.000000 0.000000"/>
   <limit lower="-3.141593" upper="3.141593" effort="150" velocity="3.15"/>
 </joint>
@@ -40,7 +40,7 @@
 <joint name="Joint5" type="revolute">
   <parent link="link_4"/>
   <child link="link_5"/>
-  <origin xyz="0.092000 0.000000 0.000000" rpy="0 0 0"/>
+  <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
   <axis xyz="0.000000 -1.000000 0.000000"/>
   <limit lower="-2.094395" upper="2.094395" effort="150" velocity="3.15"/>
 </joint>
@@ -48,7 +48,7 @@
 <joint name="Joint6" type="revolute">
   <parent link="link_5"/>
   <child link="link_6"/>
-  <origin xyz="0.072000 0.000000 0.000000" rpy="0 0 0"/>
+  <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
   <axis xyz="1.000000 0.000000 0.000000"/>
   <limit lower="-12.566371" upper="12.566371" effort="150" velocity="3.15"/>
 </joint>
@@ -56,6 +56,6 @@
 <joint name="tool0_joint" type="fixed">
   <parent link="link_6"/>
   <child link="tool0"/>
-  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <origin xyz="0.072000 0.000000 0.000000" rpy="0 0 0"/>
 </joint>
 </robot>
