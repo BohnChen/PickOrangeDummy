@@ -103,7 +103,7 @@ def main(path):
         cs = groups[key]
         print(f"\n  r≈{key:.0f}mm ({len(cs)} 个):")
         uniq = set()
-        for c in cs[:12]:
+        for c in cs:
             if c['origin'] and c['axis']:
                 o = tuple(round(v, 3) for v in c['origin'])
                 d = tuple(round(v, 3) for v in c['axis'])
@@ -114,5 +114,40 @@ def main(path):
         if not any(c['origin'] for c in cs):
             print("    (无原点信息)")
 
+
 if __name__ == '__main__':
-    main(sys.argv[1])
+    if len(sys.argv) > 2 and sys.argv[2] == '--json':
+        import json
+        ents = load(sys.argv[1])
+        axis2 = {}
+        for eid, (kind, body) in ents.items():
+            if kind == 'AXIS2_PLACEMENT_3D':
+                axis2[eid] = [int(a[1:]) for a in re.findall(r'#\d+', body)]
+        out = []
+        for eid, (kind, body) in ents.items():
+            if kind != 'CYLINDRICAL_SURFACE':
+                continue
+            args = [int(a[1:]) for a in re.findall(r'#\d+', body)]
+            rm = re.search(r',\s*([\d.eE+-]+)\s*\)', body)
+            if not args or len(args) < 1 or not rm:
+                continue
+            radius = float(rm.group(1))
+            ap = args[-1]
+            dat = axis2.get(ap)
+            if not dat or len(dat) < 2:
+                continue
+            oid, aid = dat[0], dat[1]
+            dep = ents.get(oid, (None, ''))[1]
+            m = re.findall(r'\(\s*([\d.eE+-]+)\s*,\s*([\d.eE+-]+)\s*,\s*([\d.eE+-]+)\s*\)', dep)
+            if not m:
+                continue
+            orig = [float(x) for x in m[0]]
+            dd = ents.get(aid, (None, ''))[1]
+            m2 = re.findall(r'\(\s*([\d.eE+-]+)\s*,\s*([\d.eE+-]+)\s*,\s*([\d.eE+-]+)\s*\)', dd)
+            if not m2:
+                continue
+            out.append({'r': radius, 'p': orig, 'dir': [float(x) for x in m2[0]]})
+        print(json.dumps(out))
+    else:
+        main(sys.argv[1])
+

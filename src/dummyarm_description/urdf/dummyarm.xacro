@@ -3,8 +3,15 @@
 <!-- 说明: L_BASE=92.5(基座55+J1件37.5); D_BASE=35; L_ARM=146; D_ELBOW=52(图50 二选一); L_FA=115; J4/J5/J6 段为近似+待调; 固件DH与其差异属预期 -->
 <robot name="dummyarm" xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:include filename="$(find dummyarm_description)/urdf/materials.xacro" />
-<link name="base_link"/>
-<link name="link_1"/>
+<link name="base_link"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="package://dummyarm_description/meshes/arm_base.stl" scale="0.001 0.001 0.001"/></geometry><material name="silver"/></visual></link>
+<link name="link_1">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J1.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J1.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
 <joint name="Joint1" type="revolute">
   <parent link="base_link"/>
   <child link="link_1"/>
@@ -12,7 +19,14 @@
   <axis xyz="0.000000 0.000000 1.000000"/>
   <limit lower="-2.967060" upper="2.967060" effort="150" velocity="3.15"/>
 </joint>
-<link name="link_2"/>
+<link name="link_2">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J23.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J23.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
 <joint name="Joint2" type="revolute">
   <parent link="link_1"/>
   <child link="link_2"/>
@@ -20,7 +34,14 @@
   <axis xyz="0.000000 -1.000000 0.000000"/>
   <limit lower="-1.274090" upper="1.570796" effort="150" velocity="3.15"/>
 </joint>
-<link name="link_3"/>
+<link name="link_3">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J4.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J4.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
 <joint name="Joint3" type="revolute">
   <parent link="link_2"/>
   <child link="link_3"/>
@@ -28,7 +49,14 @@
   <axis xyz="0.000000 -1.000000 0.000000"/>
   <limit lower="0.610865" upper="3.141593" effort="150" velocity="3.15"/>
 </joint>
-<link name="link_4"/>
+<link name="link_4">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5A.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J5A.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
 <joint name="Joint4" type="revolute">
   <parent link="link_3"/>
   <child link="link_4"/>
@@ -36,7 +64,14 @@
   <axis xyz="1.000000 0.000000 0.000000"/>
   <limit lower="-3.141593" upper="3.141593" effort="150" velocity="3.15"/>
 </joint>
-<link name="link_5"/>
+<link name="link_5">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5B.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J5B.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
 <joint name="Joint5" type="revolute">
   <parent link="link_4"/>
   <child link="link_5"/>
@@ -44,7 +79,14 @@
   <axis xyz="0.000000 -1.000000 0.000000"/>
   <limit lower="-2.094395" upper="2.094395" effort="150" velocity="3.15"/>
 </joint>
-<link name="link_6"/>
+<link name="link_6">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J6.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J6.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
 <joint name="Joint6" type="revolute">
   <parent link="link_5"/>
   <child link="link_6"/>

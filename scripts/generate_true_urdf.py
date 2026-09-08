@@ -55,12 +55,20 @@ def main():
                'L_FA=115; J4/J5/J6 段为近似+待调; 固件DH与其差异属预期 -->')
     out.append('<robot name="dummyarm" xmlns:xacro="http://www.ros.org/wiki/xacro">')
     out.append('<xacro:include filename="$(find dummyarm_description)/urdf/materials.xacro" />')
-    out.append('<link name="base_link"/>')
+    out.append('<link name="base_link"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="package://dummyarm_description/meshes/arm_base.stl" scale="0.001 0.001 0.001"/></geometry><material name="silver"/></visual></link>')
 
     prev = 'base_link'
     for i in range(6):
         ln = f'link_{i+1}'
-        out.append(f'<link name="{ln}"/>')
+        stl = {1:'arm_J1.stl',2:'arm_J23.stl',3:'arm_J4.stl',4:'arm_J5A.stl',5:'arm_J5B.stl',6:'arm_J6.stl'}[i+1]
+        out.append(f'<link name="{ln}">')
+        out.append('  <visual>')
+        out.append('    <origin xyz="0 0 0" rpy="0 0 0"/>')
+        out.append('    <geometry><mesh filename="package://dummyarm_description/meshes/%s" scale="0.001 0.001 0.001"/></geometry>' % stl)
+        out.append('    <material name="silver"/>')
+        out.append('  </visual>')
+        out.append(f'  <collision><geometry><mesh filename="package://dummyarm_description/meshes/%s" scale="0.001 0.001 0.001"/></geometry></collision>' % stl)
+        out.append('</link>')
         lo, hi = limits_deg[i]
         x, y, z = origins[i]
         ax = ' '.join(fmt(a) for a in axes[i])
