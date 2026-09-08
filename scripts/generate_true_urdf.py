@@ -48,6 +48,81 @@ def fmt(x):
     return f"{x:.6f}"
 
 def main():
+    import struct, os
+    # ---- 每件: 视觉姿态(首版启发式: PCA主轴对齐链段方向 + 段中点, 基座贴地) ----
+    MESHDIR = os.path.expanduser("~/PickOrangeDummy/src/dummyarm_description/meshes")
+    def stl_bbox(name):
+        vs = []
+        with open(os.path.join(MESHDIR, name), 'rb') as f:
+            data = f.read()
+        off = 84
+        while off + 50 <= len(data):
+            d = struct.unpack_from('<12fH', data, off)
+            vs += [d[3:6], d[6:9], d[9:12]]
+            off += 50
+        import numpy as np
+        V = np.array(vs)
+        return V.min(0), V.max(0)
+    def pca_axes(name):
+        import numpy as np
+        lo, hi = stl_bbox(name)
+        dims = hi - lo
+        order = np.argsort(dims)[::-1]     # 长→短
+        return lo, hi, dims, order
+    import math as _m
+    def rot_rpy_from_axes(axes_w, axes_part):
+        # axes_w: 世界目标(列), axes_part: 部件主方向(列); 求R使 R·e_i → axes_w[i] (标签按排序对齐)
+        import numpy as np
+        M = np.column_stack(axes_w); P = np.column_stack(axes_part)
+        R = M @ P.T
+        def rpy_of(R):
+            r = _m.atan2(R[2, 1], R[2, 2]); p = _m.atan2(-R[2, 0], _m.sqrt(R[0, 0] ** 2 + R[1, 0] ** 2)); y = _m.atan2(R[1, 0], R[0, 0])
+            return r, p, y
+        return rpy_of(R)
+    # 段: (中点, 方向) 世界(零位) — 来自链
+    import numpy as _np
+    J2 = _np.array([0.035, 0, 0.0925]); J3 = _np.array([0.181, 0, 0.1425])
+    J4 = _np.array([0.129, 0, 0.2575]); Wrist = _np.array([0.129, 0, 0.2575])
+    Tool = _np.array([0.201, 0, 0.2575])
+    segs = {
+        1: (( _np.array([0,0,0]) + J2)/2,  (J2-_np.array([0,0,0]))/0.1),
+        2: ((J2 + J3)/2,                  (J3-J2)),
+        3: ((J3 + J4)/2,                  (J4-J3)),
+        4: (J4,                           (_np.array([1,0,0]))),
+        5: (Wrist,                        (_np.array([1,0,0]))),
+        6: ((Wrist + Tool)/2,             (Tool-Wrist)),
+    }
+    VIS_POSE = {}
+    for k in (1,2,3,4,5,6):
+        name = {1:'arm_J1.stl',2:'arm_J23.stl',3:'arm_J4.stl',4:'arm_J5A.stl',5:'arm_J5B.stl',6:'arm_J6.stl'}[k]
+        lo, hi, dims, order = pca_axes(name)
+        import numpy as np
+        # 部件三主轴单位向量(e_i = 单位基沿 order)
+        axes_part = [np.eye(3)[:, i] for i in order]  # 近似: 部件几何沿标准轴排序(对规则零件成立)
+        axes_w = []
+        d_w = segs[k][1]; d_w = d_w / np.linalg.norm(d_w)
+        axes_w.append(d_w)
+        # 第二轴: 取世界垂直(近Z)方向
+        up = np.array([0,0,1.0]); up2 = up - np.dot(up, d_w) * d_w
+        if np.linalg.norm(up2) < 1e-6: up2 = np.array([0,1,0.0])
+        up2 = up2 / np.linalg.norm(up2)
+        axes_w.append(up2)
+        axes_w.append(np.cross(d_w, up2))
+        r, p, y = rot_rpy_from_axes(axes_w, axes_part)
+        # 原点: 部件包围盒中心 → 段中点(通过R作用)
+        import math as _m2
+        R = _np.array([[_m2.cos(p)*_m2.cos(y), _m2.sin(p)*_m2.sin(r)*_m2.cos(y)-_m2.sin(r)*_m2.sin(y)],
+                       ])  # 不用了: 用rpy矩阵数值
+        def Rmat(rp):
+            r3 = rp
+            ca = _m.cos(r); sa = _m.sin(r); cb = _m.cos(p); sb = _m.sin(p); cg = _m.cos(y); sg = _m.sin(y)
+            Ry = _np.array([[cb,0,sb],[0,1,0],[-sb,0,cb]]); Rz = _np.array([[cg,-sg,0],[sg,cg,0],[0,0,1]]); Rx = _np.array([[1,0,0],[0,ca,-sa],[0,sa,ca]])
+            return _np.dot(Rz, _np.dot(Ry, Rx))
+        R3 = Rmat((r, p, y))
+        center = (lo + hi) / 2.0 / 1000.0     # mm→m
+        target = segs[k][0]
+        t = target - R3 @ center
+        VIS_POSE[k] = (t[0], t[1], t[2], _m.degrees(r), _m.degrees(p), _m.degrees(y))
     out = []
     out.append('<?xml version="1.0" ?>')
     out.append('<!-- dummyarm 运动学链(图纸真值版, 2026-09-08 %s) -->' % os.path.basename(__file__))
@@ -61,9 +136,10 @@ def main():
     for i in range(6):
         ln = f'link_{i+1}'
         stl = {1:'arm_J1.stl',2:'arm_J23.stl',3:'arm_J4.stl',4:'arm_J5A.stl',5:'arm_J5B.stl',6:'arm_J6.stl'}[i+1]
+        ox, oy, oz, rx, py, yw = VIS_POSE[i+1]
         out.append(f'<link name="{ln}">')
         out.append('  <visual>')
-        out.append('    <origin xyz="0 0 0" rpy="0 0 0"/>')
+        out.append('    <origin xyz="%s %s %s" rpy="%s %s %s"/>' % (fmt(ox), fmt(oy), fmt(oz), rx, py, yw))
         out.append('    <geometry><mesh filename="package://dummyarm_description/meshes/%s" scale="0.001 0.001 0.001"/></geometry>' % stl)
         out.append('    <material name="silver"/>')
         out.append('  </visual>')
