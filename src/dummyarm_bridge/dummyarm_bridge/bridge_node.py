@@ -26,6 +26,18 @@ except ImportError:
 JOINT_NAMES = [f'Joint{i}' for i in range(1, 7)]
 DEG2RAD = 3.141592653589793 / 180.0
 
+# FW→模型 角度映射 (Kabsch 配准, 2026-09-08; 残差 0.04mm):
+#   q_model[i] = SIGNS[i] * (q_fw[i] + TH_HOME[i])
+# 依据: 固件 DH 表 θ-home [0,-90,90,0,0,0]; 轴归一化符号 +,-,-,+,+,+
+# 系统关系(诊断用): p_fw ≈ p_model + (60.85, 0, 171.14)mm
+SIGNS = [1, -1, -1, 1, 1, 1]
+TH_HOME = [0.0, -90.0, 90.0, 0.0, 0.0, 0.0]
+
+
+def fw_to_model(angles_deg):
+    """输入固件关节角(度, GETJPOS), 输出 URDF 模型关节角(度)。"""
+    return [SIGNS[i] * (angles_deg[i] + TH_HOME[i]) for i in range(6)]
+
 
 class DummyArmSystem(Node):
     def __init__(self):
@@ -60,7 +72,8 @@ class DummyArmSystem(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = 'world'
         msg.name = JOINT_NAMES
-        msg.position = [j * DEG2RAD for j in joints]
+        model_deg = fw_to_model(joints)
+        msg.position = [j * DEG2RAD for j in model_deg]
         self._pub.publish(msg)
 
     # ---------- 管理服务 ----------
