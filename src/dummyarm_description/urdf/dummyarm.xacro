@@ -100,4 +100,6 @@
   <child link="tool0"/>
   <origin xyz="0.072000 0.000000 0.000000" rpy="0 0 0"/>
 </joint>
+  <xacro:include filename="$(find dummyarm_description)/urdf/dummyarm.ros2_control.xacro" />
+  <xacro:dummyarm_ros2_control name="dummyarm" initial_positions_file="$(find dummyarm_description)/config/initial_positions.yaml"/>
 </robot>

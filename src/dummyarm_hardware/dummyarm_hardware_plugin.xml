@@ -1,0 +1,7 @@
+<library path="dummyarm_hardware">
+  <class name="dummyarm_hardware/DummyArmHardware"
+         type="dummyarm_hardware::DummyArmHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>Dummy REF 机械臂串口 SystemInterface (ASCII 协议)</description>
+  </class>
+</library>

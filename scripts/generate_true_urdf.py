@@ -141,6 +141,9 @@ def main():
     out.append('  <child link="tool0"/>')
     out.append('  <origin xyz="%s %s %s" rpy="0 0 0"/>' % (fmt(TOOL0[0]), fmt(TOOL0[1]), fmt(TOOL0[2])))
     out.append('</joint>')
+    out.append('  <xacro:include filename="$(find dummyarm_description)/urdf/dummyarm.ros2_control.xacro" />')
+    out.append('  <xacro:dummyarm_ros2_control name="dummyarm" '
+               'initial_positions_file="$(find dummyarm_description)/config/initial_positions.yaml"/>')
     out.append('</robot>')
     open(OUT, 'w').write('\n'.join(out) + '\n')
     print(f'已写入 {OUT}')
