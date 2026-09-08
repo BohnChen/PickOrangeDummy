@@ -122,7 +122,7 @@ def main():
         center = (lo + hi) / 2.0 / 1000.0     # mm→m
         target = segs[k][0]
         t = target - R3 @ center
-        VIS_POSE[k] = (t[0], t[1], t[2], _m.degrees(r), _m.degrees(p), _m.degrees(y))
+        VIS_POSE[k] = (t[0], t[1], t[2], r, p, y)   # 弧度!
     out = []
     out.append('<?xml version="1.0" ?>')
     out.append('<!-- dummyarm 运动学链(图纸真值版, 2026-09-08 %s) -->' % os.path.basename(__file__))
