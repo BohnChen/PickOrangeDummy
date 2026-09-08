@@ -92,37 +92,14 @@ def main():
         5: (Wrist,                        (_np.array([1,0,0]))),
         6: ((Wrist + Tool)/2,             (Tool-Wrist)),
     }
-    VIS_POSE = {}
-    for k in (1,2,3,4,5,6):
-        name = {1:'arm_J1.stl',2:'arm_J23.stl',3:'arm_J4.stl',4:'arm_J5A.stl',5:'arm_J5B.stl',6:'arm_J6.stl'}[k]
-        lo, hi, dims, order = pca_axes(name)
-        import numpy as np
-        # 部件三主轴单位向量(e_i = 单位基沿 order)
-        axes_part = [np.eye(3)[:, i] for i in order]  # 近似: 部件几何沿标准轴排序(对规则零件成立)
-        axes_w = []
-        d_w = segs[k][1]; d_w = d_w / np.linalg.norm(d_w)
-        axes_w.append(d_w)
-        # 第二轴: 取世界垂直(近Z)方向
-        up = np.array([0,0,1.0]); up2 = up - np.dot(up, d_w) * d_w
-        if np.linalg.norm(up2) < 1e-6: up2 = np.array([0,1,0.0])
-        up2 = up2 / np.linalg.norm(up2)
-        axes_w.append(up2)
-        axes_w.append(np.cross(d_w, up2))
-        r, p, y = rot_rpy_from_axes(axes_w, axes_part)
-        # 原点: 部件包围盒中心 → 段中点(通过R作用)
-        import math as _m2
-        R = _np.array([[_m2.cos(p)*_m2.cos(y), _m2.sin(p)*_m2.sin(r)*_m2.cos(y)-_m2.sin(r)*_m2.sin(y)],
-                       ])  # 不用了: 用rpy矩阵数值
-        def Rmat(rp):
-            r3 = rp
-            ca = _m.cos(r); sa = _m.sin(r); cb = _m.cos(p); sb = _m.sin(p); cg = _m.cos(y); sg = _m.sin(y)
-            Ry = _np.array([[cb,0,sb],[0,1,0],[-sb,0,cb]]); Rz = _np.array([[cg,-sg,0],[sg,cg,0],[0,0,1]]); Rx = _np.array([[1,0,0],[0,ca,-sa],[0,sa,ca]])
-            return _np.dot(Rz, _np.dot(Ry, Rx))
-        R3 = Rmat((r, p, y))
-        center = (lo + hi) / 2.0 / 1000.0     # mm→m
-        target = segs[k][0]
-        t = target - R3 @ center
-        VIS_POSE[k] = (t[0], t[1], t[2], r, p, y)   # 弧度!
+    VIS_POSE = {
+      1: (0.04525, -0.035, 0.0925, 3.1416, -0.0, -1.5708),
+      2: (0.0, -0.007, 0.0, 3.1416, -0.0, 1.5708),
+      3: (-0.017, -0.15625, 0.115, 0.0, -0.0, 0.0),
+      4: (0.0069, -0.151321, 0.10253, -0.7854, -0.0, 0.0),
+      5: (0.0196, -0.198, -0.1316, 0.0, -0.0, 0.0),
+      6: (-0.0355, -0.198, 0.107, 3.1416, -0.0, 3.1416),
+    }
     out = []
     out.append('<?xml version="1.0" ?>')
     out.append('<!-- dummyarm 运动学链(图纸真值版, 2026-09-08 %s) -->' % os.path.basename(__file__))

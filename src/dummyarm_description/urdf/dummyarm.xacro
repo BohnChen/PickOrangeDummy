@@ -6,7 +6,7 @@
 <link name="base_link"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="package://dummyarm_description/meshes/arm_base.stl" scale="0.001 0.001 0.001"/></geometry><material name="silver"/></visual></link>
 <link name="link_1">
   <visual>
-    <origin xyz="0.012317 -0.011000 0.074940" rpy="0.0 -0.3617292415199325 3.141592653589793"/>
+    <origin xyz="0.045250 -0.035000 0.092500" rpy="3.1416 -0.0 -1.5708"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J1.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -21,7 +21,7 @@
 </joint>
 <link name="link_2">
   <visual>
-    <origin xyz="0.039101 -0.015000 0.093370" rpy="0.32994709214655477 -0.0 -1.5707963267948966"/>
+    <origin xyz="0.000000 -0.007000 0.000000" rpy="3.1416 -0.0 1.5708"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J23.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -36,7 +36,7 @@
 </joint>
 <link name="link_3">
   <visual>
-    <origin xyz="0.243357 -0.000000 0.047071" rpy="1.5707963267948966 -0.4246602825497734 0.0"/>
+    <origin xyz="-0.017000 -0.156250 0.115000" rpy="0.0 -0.0 0.0"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J4.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -51,7 +51,7 @@
 </joint>
 <link name="link_4">
   <visual>
-    <origin xyz="0.151750 -0.198000 0.272950" rpy="0.0 -1.5707963267948966 0.0"/>
+    <origin xyz="0.006900 -0.151321 0.102530" rpy="-0.7854 -0.0 0.0"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5A.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -66,7 +66,7 @@
 </joint>
 <link name="link_5">
   <visual>
-    <origin xyz="0.209000 -0.008500 0.059500" rpy="1.5707963267948966 -0.0 -1.5707963267948966"/>
+    <origin xyz="0.019600 -0.198000 -0.131600" rpy="0.0 -0.0 0.0"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5B.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -81,7 +81,7 @@
 </joint>
 <link name="link_6">
   <visual>
-    <origin xyz="0.294500 -0.198000 0.283750" rpy="0.0 -1.5707963267948966 0.0"/>
+    <origin xyz="-0.035500 -0.198000 0.107000" rpy="3.1416 -0.0 3.1416"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J6.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
