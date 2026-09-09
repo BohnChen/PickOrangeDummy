@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="base_link_macro">
+
+  <xacro:macro name="base_link" params="prefix">
+
+    <!-- Links -->
+    <link name="${prefix}base_link">
+      <inertial>
+        <origin xyz="-0.014954 0.035153 -0.085283" rpy="0 0 0"/>
+        <mass value="3.811599"/>
+        <inertia ixx="6.970906e-03" ixy="-9.546838e-06" ixz="5.266589e-06"
+                 iyy="6.524135e-03" iyz="9.167431e-05" izz="6.883515e-03"/>
+      </inertial>
+      <visual>
+        <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000"/>
+        <geometry>
+          <mesh filename="package://Dummy_ForURDF_description/meshes/base_link/base_link.dae" scale="1 1 1"/>
+        </geometry>
+        <material name="material"/>
+      </visual>
+      <collision>
+        <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000"/>
+        <geometry>
+          <mesh filename="package://Dummy_ForURDF_description/meshes/base_link/base_link_collision.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>
+
+</robot>

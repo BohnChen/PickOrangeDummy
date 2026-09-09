@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="J4_macro">
+
+  <xacro:macro name="J4" params="prefix">
+
+    <!-- Links -->
+    <link name="${prefix}J4_2">
+      <inertial>
+        <origin xyz="-0.141319 0.014305 -0.527583" rpy="0 0 0"/>
+        <mass value="1.021442"/>
+        <inertia ixx="6.577699e-04" ixy="-9.884284e-05" ixz="2.386312e-05"
+                 iyy="5.867915e-04" iyz="1.414195e-04" izz="8.276767e-04"/>
+      </inertial>
+      <visual>
+        <origin xyz="-0.106252 -0.174470 -0.546500" rpy="-0.261799 1.570796 0.000000"/>
+        <geometry>
+          <mesh filename="package://Dummy_ForURDF_description/meshes/J4/J4_2.dae" scale="1 1 1"/>
+        </geometry>
+        <material name="material"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.106252 -0.174470 -0.546500" rpy="-0.261799 1.570796 0.000000"/>
+        <geometry>
+          <mesh filename="package://Dummy_ForURDF_description/meshes/J4/J4_2_collision.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>
+
+</robot>

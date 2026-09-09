@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="Dummy_ForURDF">
+
+  <!-- Materials (shared across all assemblies) -->
+  <material name="material">
+    <color rgba="0.910 0.678 0.137 1.0"/>
+  </material>
+
+  <!-- Assembly includes -->
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/J1.urdf.xacro"/>
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/J2J3.urdf.xacro"/>
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/J4.urdf.xacro"/>
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/35_20Motor_Assembly.urdf.xacro"/>
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/35_20Motor_Assembly_1.urdf.xacro"/>
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/base_link.urdf.xacro"/>
+  <xacro:include filename="$(find Dummy_ForURDF_description)/urdf/assemblies/Dummy_ForURDF.urdf.xacro"/>
+
+  <!-- Instantiate assemblies -->
+  <xacro:J1 prefix=""/>
+  <xacro:J2J3 prefix=""/>
+  <xacro:J4 prefix=""/>
+  <xacro:assembly_35_20Motor_Assembly prefix=""/>
+  <xacro:assembly_35_20Motor_Assembly_1 prefix=""/>
+  <xacro:base_link prefix=""/>
+  <xacro:Dummy_ForURDF prefix=""/>
+
+  <!-- Mount joints (cross-assembly connections) -->
+  <!-- These define how assemblies connect to each other. -->
+  <!-- When swapping a dummy assembly with a real part, -->
+  <!-- update the include + macro call above, and adjust -->
+  <!-- parent/child link names in the mount joint below. -->
+
+  <joint name="_1" type="revolute">
+    <parent link="base_link"/>
+    <child link="J1_2"/>
+    <origin xyz="-0.565000 -0.070500 0.035000" rpy="0.000000 0.000000 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="0.000000" upper="5.934119" effort="100.0" velocity="1.00"/>
+  </joint>
+
+  <joint name="_2" type="revolute">
+    <parent link="J1_2"/>
+    <child link="J2J3_2"/>
+    <origin xyz="-0.014000 0.042030 0.071252" rpy="-1.570796 0.000000 1.570796"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="4.625123" upper="6.283185" effort="100.0" velocity="1.00"/>
+  </joint>
+
+  <joint name="_3" type="revolute">
+    <parent link="J2J3_2"/>
+    <child link="J4_2"/>
+    <origin xyz="0.313535 0.035019 -1.097000" rpy="-3.141593 0.000000 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-2.530727" upper="0.000000" effort="100.0" velocity="1.00"/>
+  </joint>
+
+  <joint name="_4" type="revolute">
+    <parent link="J4_2"/>
+    <child link="35_20Motor_Assembly_2"/>
+    <origin xyz="-0.255471 0.573910 -0.377137" rpy="0.261799 -1.570796 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-3.141593" upper="3.141593" effort="100.0" velocity="1.00"/>
+  </joint>
+
+  <joint name="_5" type="revolute">
+    <parent link="35_20Motor_Assembly_2"/>
+    <child link="35_20Motor_Assembly_1_2"/>
+    <origin xyz="-0.142941 0.018600 0.344777" rpy="-1.570796 1.308997 -1.570796"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-1.658063" upper="1.658063" effort="100.0" velocity="1.00"/>
+  </joint>
+
+  <joint name="_6" type="continuous">
+    <parent link="35_20Motor_Assembly_1_2"/>
+    <child link="3"/>
+    <origin xyz="-0.037344 -0.028020 -0.060370" rpy="0.261799 -1.570796 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit effort="100.0" velocity="1.00"/>
+  </joint>
+
+  <!-- ROS 2 control: generated generic system -->
+  <ros2_control name="Dummy_ForURDF_system" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+      <param name="cmd_topic">sim/Dummy_ForURDF_system/cmd</param>
+      <param name="state_topic">sim/Dummy_ForURDF_system/state</param>
+    </hardware>
+
+    <joint name="_1">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="_2">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="_3">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="_4">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="_5">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="_6">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </ros2_control>
+
+</robot>

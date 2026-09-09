@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="J2J3_macro">
+
+  <xacro:macro name="J2J3" params="prefix">
+
+    <!-- Links -->
+    <link name="${prefix}J2J3_2">
+      <inertial>
+        <origin xyz="0.098760 0.087323 -0.564762" rpy="0 0 0"/>
+        <mass value="2.612363"/>
+        <inertia ixx="1.921450e-03" ixy="1.724029e-03" ixz="-1.027785e-03"
+                 iyy="7.819008e-03" iyz="2.785856e-04" izz="7.714397e-03"/>
+      </inertial>
+      <visual>
+        <origin xyz="0.028470 0.106252 -0.580500" rpy="1.832596 1.570796 0.000000"/>
+        <geometry>
+          <mesh filename="package://Dummy_ForURDF_description/meshes/J2J3/J2J3_2.dae" scale="1 1 1"/>
+        </geometry>
+        <material name="material"/>
+      </visual>
+      <collision>
+        <origin xyz="0.028470 0.106252 -0.580500" rpy="1.832596 1.570796 0.000000"/>
+        <geometry>
+          <mesh filename="package://Dummy_ForURDF_description/meshes/J2J3/J2J3_2_collision.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>
+
+</robot>

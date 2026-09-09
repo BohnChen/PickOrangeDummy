@@ -1,0 +1,21 @@
+# Joint configuration for joint_state_publisher_gui
+
+joint_state_publisher:
+  ros__parameters:
+    # Joint names and default positions
+    zeros:
+      _1: 0.0
+      _2: 0.0
+      _3: 0.0
+      _4: 0.0
+      _5: 0.0
+      _6: 0.0
+
+    # Joints to publish
+    source_list:
+      - _1
+      - _2
+      - _3
+      - _4
+      - _5
+      - _6
