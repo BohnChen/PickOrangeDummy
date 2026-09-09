@@ -6,6 +6,8 @@
 import json, math, sys
 
 def main():
+    from OCP.OCP.collections import Sequence_TDF_Label
+    from OCP.XCAFDoc import XCAFDoc_ShapeTool as XST
     from OCP.STEPCAFControl import STEPCAFControl_Reader
     from OCP.Interface import Interface_Static
     from OCP.XCAFDoc import XCAFDoc_DocumentTool
@@ -22,15 +24,15 @@ def main():
     path = '/home/arduino/Dummy.step'
     doc = TDocStd_Document(TCollection_ExtendedString('dummy'))
     # 强制映射装配(XCAF)
-    Interface_Static.SetCVal_s('read.step.product.mode', '0')
     rdr = STEPCAFControl_Reader()
     if not rdr.ReadFile(path):
         print('读取失败'); sys.exit(1)
     if not rdr.Transfer(doc):
         print('Transfer 失败'); sys.exit(1)
 
-    shapeTool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    lblRoot = shapeTool.Root().Label()  # 或 doc Main? 用 shapeTool.Root()
+    main = doc.Main()
+    shapeTool = XCAFDoc_DocumentTool.ShapeTool_s(main)
+    XCAFDoc_ShapeTool = XST
     def name_of(label):
         if label.HasAttribute():
             h = TDataStd_Name()
@@ -44,11 +46,15 @@ def main():
         return m
 
     out = []
+    def subseq(label):
+        seq = Sequence_TDF_Label()
+        XCAFDoc_ShapeTool.GetSubShapes_s(label, seq)
+        return [seq.Value(i+1) for i in range(seq.Length())]
     def walk(label, parent_loc=TopLoc_Location()):
-        shp = shapeTool.GetShape(label)
+        shp = XCAFDoc_ShapeTool.GetShape_s(label)
         loc = parent_loc * shp.Location()
-        if shapeTool.IsAssembly(label):
-            for sub in shapeTool.GetSubShapes(label):
+        if XCAFDoc_ShapeTool.IsAssembly_s(label):
+            for sub in subseq(label):
                 walk(sub, loc)
         else:
             # 叶: solid
@@ -65,7 +71,10 @@ def main():
             out.append({'name': nm, 'xyz_min': [x1,y1,z1], 'xyz_max': [x2,y2,z2],
                         'M': mat4(loc)})
 
-    walk(lblRoot)
+    fs = Sequence_TDF_Label()
+    shapeTool.GetFreeShapes(fs)
+    for i in range(fs.Length()):
+        walk(fs.Value(i+1), TopLoc_Location())
     print('实例数:', len(out))
     for o in out:
         s=o['name']
