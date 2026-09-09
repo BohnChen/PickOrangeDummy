@@ -1,204 +1,105 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
+<!-- dummyarm 运动学链(图纸真值版, 2026-09-08 generate_true_urdf.py) -->
+<!-- 说明: L_BASE=92.5(基座55+J1件37.5); D_BASE=35; L_ARM=146; D_ELBOW=52(图50 二选一); L_FA=115; J4/J5/J6 段为近似+待调; 固件DH与其差异属预期 -->
 <robot name="dummyarm" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <!-- 由 fusion2urdf 导出 Dummy_ForURDF_description 转换并入 (2026-09-09) -->
-  <!-- 限位=真值表: J1±170 J2-73..90 J3 35..180 J4±180 J5±95(105碰) J6±720 -->
-  <xacro:include filename="$(find dummyarm_description)/urdf/materials.xacro" />
-<link name="base_link">
-      <inertial>
-        <origin xyz="-0.014954 0.035153 -0.085283" rpy="0 0 0" />
-        <mass value="3.811599" />
-        <inertia ixx="6.970906e-03" ixy="-9.546838e-06" ixz="5.266589e-06" iyy="6.524135e-03" iyz="9.167431e-05" izz="6.883515e-03" />
-      </inertial>
-      <visual>
-        <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/base_link_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/base_link_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
+<xacro:include filename="$(find dummyarm_description)/urdf/materials.xacro" />
+<link name="base_link"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="package://dummyarm_description/meshes/arm_base.stl" scale="0.001 0.001 0.001"/></geometry><material name="silver"/></visual></link>
 <link name="link_1">
-      <inertial>
-        <origin xyz="0.540156 0.095614 -0.055517" rpy="0 0 0" />
-        <mass value="0.428700" />
-        <inertia ixx="2.491450e-04" ixy="-8.081314e-05" ixz="4.733898e-05" iyy="2.024938e-04" iyz="7.400180e-05" izz="3.002973e-04" />
-      </inertial>
-      <visual>
-        <origin xyz="0.565000 0.070500 -0.035000" rpy="1.570796 0.000000 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_1_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="0.565000 0.070500 -0.035000" rpy="1.570796 0.000000 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_1_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
+  <visual>
+    <origin xyz="0.045250 -0.035000 0.092500" rpy="3.1416 -0.0 -1.5708"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J1.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J1.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
+<joint name="Joint1" type="revolute">
+  <parent link="base_link"/>
+  <child link="link_1"/>
+  <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+  <axis xyz="0.000000 0.000000 1.000000"/>
+  <limit lower="-2.967060" upper="2.967060" effort="150" velocity="3.15"/>
+</joint>
 <link name="link_2">
-      <inertial>
-        <origin xyz="0.098760 0.087323 -0.564762" rpy="0 0 0" />
-        <mass value="2.612363" />
-        <inertia ixx="1.921450e-03" ixy="1.724029e-03" ixz="-1.027785e-03" iyy="7.819008e-03" iyz="2.785856e-04" izz="7.714397e-03" />
-      </inertial>
-      <visual>
-        <origin xyz="0.028470 0.106252 -0.580500" rpy="1.832596 1.570796 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_2_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="0.028470 0.106252 -0.580500" rpy="1.832596 1.570796 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_2_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
+  <visual>
+    <origin xyz="0.000000 -0.007000 0.000000" rpy="3.1416 -0.0 1.5708"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J23.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J23.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
+<joint name="Joint2" type="revolute">
+  <parent link="link_1"/>
+  <child link="link_2"/>
+  <origin xyz="0.035000 0.000000 0.092500" rpy="0 0 0"/>
+  <axis xyz="0.000000 -1.000000 0.000000"/>
+  <limit lower="-1.274090" upper="1.570796" effort="150" velocity="3.15"/>
+</joint>
 <link name="link_3">
-      <inertial>
-        <origin xyz="-0.141319 0.014305 -0.527583" rpy="0 0 0" />
-        <mass value="1.021442" />
-        <inertia ixx="6.577699e-04" ixy="-9.884284e-05" ixz="2.386312e-05" iyy="5.867915e-04" iyz="1.414195e-04" izz="8.276767e-04" />
-      </inertial>
-      <visual>
-        <origin xyz="-0.106252 -0.174470 -0.546500" rpy="-0.261799 1.570796 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_3_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="-0.106252 -0.174470 -0.546500" rpy="-0.261799 1.570796 0.000000" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_3_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
+  <visual>
+    <origin xyz="-0.017000 -0.156250 0.115000" rpy="0.0 -0.0 0.0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J4.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J4.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
+<joint name="Joint3" type="revolute">
+  <parent link="link_2"/>
+  <child link="link_3"/>
+  <origin xyz="0.146000 0.000000 0.050000" rpy="0 0 0"/>
+  <axis xyz="0.000000 -1.000000 0.000000"/>
+  <limit lower="0.610865" upper="3.141593" effort="150" velocity="3.15"/>
+</joint>
 <link name="link_4">
-      <inertial>
-        <origin xyz="-0.149389 -0.563478 0.126968" rpy="0 0 0" />
-        <mass value="0.967210" />
-        <inertia ixx="1.249993e-03" ixy="2.737523e-07" ixz="-3.156633e-05" iyy="1.305649e-03" iyz="2.856591e-07" izz="2.598669e-04" />
-      </inertial>
-      <visual>
-        <origin xyz="-0.194263 -0.563500 0.113561" rpy="-1.570796 0.000000 -1.570796" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_4_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="-0.194263 -0.563500 0.113561" rpy="-1.570796 0.000000 -1.570796" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_4_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
+  <visual>
+    <origin xyz="0.006900 -0.151321 0.102530" rpy="-0.7854 -0.0 0.0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5A.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J5A.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
+<joint name="Joint4" type="revolute">
+  <parent link="link_3"/>
+  <child link="link_4"/>
+  <origin xyz="-0.052000 0.000000 0.115000" rpy="0 0 0"/>
+  <axis xyz="1.000000 0.000000 0.000000"/>
+  <limit lower="-3.141593" upper="3.141593" effort="150" velocity="3.15"/>
+</joint>
 <link name="link_5">
-      <inertial>
-        <origin xyz="0.284077 -0.526466 -0.018959" rpy="0 0 0" />
-        <mass value="0.409979" />
-        <inertia ixx="1.275702e-04" ixy="-2.599625e-05" ixz="4.819400e-05" iyy="2.176230e-04" iyz="1.267650e-05" izz="1.914378e-04" />
-      </inertial>
-      <visual>
-        <origin xyz="0.312177 -0.518987 -0.012621" rpy="1.570796 0.000000 -1.308997" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_5_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="0.312177 -0.518987 -0.012621" rpy="1.570796 0.000000 -1.308997" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/link_5_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
-<link name="tool0">
-      <inertial>
-        <origin xyz="0.047749 -0.564700 -0.154191" rpy="0 0 0" />
-        <mass value="0.073848" />
-        <inertia ixx="9.037478e-06" ixy="7.455686e-09" ixz="0.000000e+00" iyy="2.847963e-05" iyz="0.000000e+00" izz="3.702439e-05" />
-      </inertial>
-      <visual>
-        <origin xyz="0.047749 -0.564700 -0.151040" rpy="0.000000 0.000000 -1.570796" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/tool0_visual.dae" scale="1 1 1" />
-        </geometry>
-        <material name="material" />
-      </visual>
-      <collision>
-        <origin xyz="0.047749 -0.564700 -0.151040" rpy="0.000000 0.000000 -1.570796" />
-        <geometry>
-          <mesh filename="package://dummyarm_description/meshes/export/tool0_collision.stl" scale="0.01 0.01 0.01" />
-        </geometry>
-      </collision>
-    </link>
-
-  
-  <joint name="Joint1" type="revolute">
-    <parent link="base_link"/>
-    <child link="link_1"/>
-    <origin xyz="-0.565000 -0.070500 0.035000" rpy="0.000000 0.000000 0.000000"/>
-    <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="-2.967059728" upper="2.967059728" effort="100" velocity="1.0"/>
-  </joint>
-  <joint name="Joint2" type="revolute">
-    <parent link="link_1"/>
-    <child link="link_2"/>
-    <origin xyz="-0.014000 0.042030 0.071252" rpy="-1.570796 0.000000 1.570796"/>
-    <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="-1.274090354" upper="1.570796327" effort="100" velocity="1.0"/>
-  </joint>
-  <joint name="Joint3" type="revolute">
-    <parent link="link_2"/>
-    <child link="link_3"/>
-    <origin xyz="0.313535 0.035019 -1.097000" rpy="-3.141593 0.000000 0.000000"/>
-    <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="0.610865238" upper="3.141592654" effort="100" velocity="1.0"/>
-  </joint>
-  <joint name="Joint4" type="revolute">
-    <parent link="link_3"/>
-    <child link="link_4"/>
-    <origin xyz="-0.255471 0.573910 -0.377137" rpy="0.261799 -1.570796 0.000000"/>
-    <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="-3.141592654" upper="3.141592654" effort="100" velocity="1.0"/>
-  </joint>
-  <joint name="Joint5" type="revolute">
-    <parent link="link_4"/>
-    <child link="link_5"/>
-    <origin xyz="-0.142941 0.018600 0.344777" rpy="-1.570796 1.308997 -1.570796"/>
-    <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="-1.658062789" upper="1.658062789" effort="100" velocity="1.0"/>
-  </joint>
-  <joint name="Joint6" type="revolute">
-    <parent link="link_5"/>
-    <child link="tool0"/>
-    <origin xyz="-0.037344 -0.028020 -0.060370" rpy="0.261799 -1.570796 0.000000"/>
-    <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="-12.566370614" upper="12.566370614" effort="100" velocity="1.0"/>
-  </joint>
+  <visual>
+    <origin xyz="0.019600 -0.198000 -0.131600" rpy="0.0 -0.0 0.0"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5B.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J5B.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
+<joint name="Joint5" type="revolute">
+  <parent link="link_4"/>
+  <child link="link_5"/>
+  <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+  <axis xyz="0.000000 -1.000000 0.000000"/>
+  <limit lower="-1.658063" upper="1.658063" effort="150" velocity="3.15"/>
+</joint>
+<link name="link_6">
+  <visual>
+    <origin xyz="-0.035500 -0.198000 0.107000" rpy="3.1416 -0.0 3.1416"/>
+    <geometry><mesh filename="package://dummyarm_description/meshes/arm_J6.stl" scale="0.001 0.001 0.001"/></geometry>
+    <material name="silver"/>
+  </visual>
+  <collision><geometry><mesh filename="package://dummyarm_description/meshes/arm_J6.stl" scale="0.001 0.001 0.001"/></geometry></collision>
+</link>
+<joint name="Joint6" type="revolute">
+  <parent link="link_5"/>
+  <child link="link_6"/>
+  <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+  <axis xyz="1.000000 0.000000 0.000000"/>
+  <limit lower="-12.566371" upper="12.566371" effort="150" velocity="3.15"/>
+</joint>
+<link name="tool0"/>
+<joint name="tool0_joint" type="fixed">
+  <parent link="link_6"/>
+  <child link="tool0"/>
+  <origin xyz="0.072000 0.000000 0.000000" rpy="0 0 0"/>
+</joint>
   <xacro:include filename="$(find dummyarm_description)/urdf/dummyarm.ros2_control.xacro" />
   <xacro:dummyarm_ros2_control name="dummyarm" initial_positions_file="$(find dummyarm_description)/config/initial_positions.yaml"/>
 </robot>
