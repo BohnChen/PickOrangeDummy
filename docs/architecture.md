@@ -133,4 +133,4 @@ world ── base_link ── Joint1_link ── … ── Joint6_link ── t
 | D3 | 管理服务用 `std_srvs/Trigger`（start/disable/estop/home/reset） | §5 |
 | D4 | 自定义接口延迟到任务层需要时再引入 | 蓝图约束 |
 | D5 | URDF 几何：固件 DH + 图纸 DH 交叉验证 | §10-4 |
-| D6 | workspace 根：`~/PickOrangeDummy`，git 管理 | |
+| D6 | workspace 根：`~/01_MyProject/PickOrangeDummy`（2026-09-10 移入），git 管理 | |

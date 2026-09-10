@@ -9,7 +9,9 @@
   网格(全局装配坐标 STL)锚定: 参考姿态=真机 REST, 视觉原点 O = -R_k(REST)^-1 · P_k(REST)
   使 REST 下网格叠加回装配像(RViz 中拼装完整)。精确位姿待 Fusion URDF 导出后精修。
 """
-import math
+import math, os
+
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PARAM = dict(L_BASE=0.109, D_BASE=0.035, L_ARM=0.146, D_ELBOW=0.052,
              L_FOREARM=0.115, L_WRIST=0.072)
@@ -132,7 +134,7 @@ def main():
     out.append('  <origin xyz="0 0 0" rpy="0 0 0"/>')
     out.append('</joint>')
     out.append('</robot>')
-    open('/home/arduino/PickOrangeDummy/src/dummyarm_description/urdf/dummyarm.xacro', 'w').write('\n'.join(out) + '\n')
+    open(os.path.join(REPO, 'src/dummyarm_description/urdf/dummyarm.xacro'), 'w').write('\n'.join(out) + '\n')
     print('已生成 dummyarm.xacro')
     # 打印 REST 锚点核对
     for k in range(1, 7):

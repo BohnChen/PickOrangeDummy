@@ -7,8 +7,9 @@
 import json, math, struct, os
 import numpy as np
 
-MESHDIR = '/home/arduino/PickOrangeDummy/src/dummyarm_description/meshes'
-TOOL = '/home/arduino/PickOrangeDummy/scripts/extract_step_joints.py'
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MESHDIR = os.path.join(REPO, 'src/dummyarm_description/meshes')
+TOOL = os.path.join(REPO, 'scripts/extract_step_joints.py')
 STEP_DIR = ('/home/arduino/Dummy_work/ren20250527/1.Dummy V2任同学整理/4.Model/'
             'Dummy V2 版本 视频款/CNC加工STEP文件')
 import subprocess

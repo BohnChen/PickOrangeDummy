@@ -81,7 +81,7 @@ $L_{1}$ **J1** -> $L_{2}$ **J2J3** (revolute)
 - **origin xyz**: (-0.015, -0.035, 0.039) m
 - **origin rpy**: (1.570796, 0, 1.570796) rad
 - **axis**: (0, 0, 1)
-- **limits**: [4.625123, 6.283185] rad ([265deg, 360deg])
+- **limits**: [0, 2.844887] rad ([0deg, 163deg])
 
 ### Local Transform
 

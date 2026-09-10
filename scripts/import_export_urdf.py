@@ -17,7 +17,8 @@ import math, os, shutil
 import xml.etree.ElementTree as ET
 
 EXPT = os.path.expanduser('~/dummyurdf/Dummy_Description')
-OUTD = os.path.expanduser('~/PickOrangeDummy/src/dummyarm_description')
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTD = os.path.join(REPO, 'src/dummyarm_description')
 MESH_DST = os.path.join(OUTD, 'meshes', 'export')
 os.makedirs(MESH_DST, exist_ok=True)
 

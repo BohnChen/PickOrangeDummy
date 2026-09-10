@@ -15,7 +15,8 @@
 import math
 import os
 
-OUT = os.path.expanduser("~/PickOrangeDummy/src/dummyarm_description/urdf/dummyarm.xacro")
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(REPO, "src/dummyarm_description/urdf/dummyarm.xacro")
 
 # ---- 真值参数 (mm) ----
 L_BASE = 92.5       # 桌面→J2 轴心 (55 基座 + 37.5 J1 主孔中心)   [待实测确认]
@@ -53,7 +54,7 @@ def fmt(x):
 def main():
     import struct, os
     # ---- 每件: 视觉姿态(首版启发式: PCA主轴对齐链段方向 + 段中点, 基座贴地) ----
-    MESHDIR = os.path.expanduser("~/PickOrangeDummy/src/dummyarm_description/meshes")
+    MESHDIR = os.path.join(REPO, "src/dummyarm_description/meshes")
     def stl_bbox(name):
         vs = []
         with open(os.path.join(MESHDIR, name), 'rb') as f:

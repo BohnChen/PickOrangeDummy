@@ -25,10 +25,9 @@ def generate_launch_description():
     ns = LaunchConfiguration('namespace')
     prefix = LaunchConfiguration('prefix')
 
-    robot_description = ParameterValue(
-        Command(['xacro ', xacro_file, ' prefix:=', prefix]),
-        value_type=str,
-    )
+    robot_description = ParameterValue(Command([
+        'xacro ', xacro_file, ' prefix:=', prefix,
+    ]), value_type=str)
 
     return LaunchDescription([
         DeclareLaunchArgument(

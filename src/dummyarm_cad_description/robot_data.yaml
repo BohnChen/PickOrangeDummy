@@ -81,7 +81,8 @@ links:
     color_rgba: [0.910, 0.678, 0.137, 1.0]
     body_count: 1
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: box
     bake_offset_m: [0.015000, -0.035000, 0.039000]
     mesh_origin_rpy_rad: [1.570796, 0.000000, 0.000000]
     frame_rule: auto
@@ -106,7 +107,8 @@ links:
     color_rgba: [0.910, 0.678, 0.137, 1.0]
     body_count: 1
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: box
     bake_offset_m: [0.000000, 0.000000, 0.032000]
     mesh_origin_rpy_rad: [-1.308997, -1.570796, 0.000000]
     frame_rule: auto
@@ -131,7 +133,8 @@ links:
     color_rgba: [0.910, 0.678, 0.137, 1.0]
     body_count: 1
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: box
     bake_offset_m: [0.037788, -0.141025, -0.032000]
     mesh_origin_rpy_rad: [-0.261799, 1.570796, 0.000000]
     frame_rule: auto
@@ -156,7 +159,8 @@ links:
     color_rgba: [0.961, 0.961, 0.965, 1.0]
     body_count: 3
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: box
     bake_offset_m: [-0.039900, 0.000000, 0.049500]
     mesh_origin_rpy_rad: [-1.570796, 0.000000, -1.570796]
     frame_rule: auto
@@ -181,7 +185,8 @@ links:
     color_rgba: [0.961, 0.961, 0.965, 1.0]
     body_count: 3
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: box
     bake_offset_m: [-0.008693, 0.002329, -0.017100]
     mesh_origin_rpy_rad: [-1.570796, 0.000000, 1.308997]
     frame_rule: auto
@@ -206,7 +211,8 @@ links:
     color_rgba: [0.965, 0.965, 0.953, 1.0]
     body_count: 1
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: sphere
     bake_offset_m: [0.000000, 0.000000, 0.000000]
     mesh_origin_rpy_rad: [1.570796, 0.000000, 0.000000]
     frame_rule: auto
@@ -231,7 +237,8 @@ links:
     color_rgba: [0.627, 0.627, 0.627, 1.0]
     body_count: 1
     is_empty: false
-    collision_source: cached_existing
+    collision_source: primitive
+    collision_shape: box
     bake_offset_m: [0.000000, 0.000000, 0.006000]
     mesh_origin_rpy_rad: [0.000000, 0.000000, 1.570796]
     frame_rule: auto
@@ -265,8 +272,8 @@ joints:
     is_mount: true
     passive: false
     limits:
-      lower: 4.625123
-      upper: 6.283185
+      lower: 0.000000
+      upper: 2.844887
       effort: 100.0
       velocity: 1.00
   _3:

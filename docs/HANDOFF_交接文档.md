@@ -9,19 +9,22 @@
 ## 0. 一句话状态
 
 机械臂**运动学/控制链已全部打通并实测**（ros2_control + 桥接 + 映射）；
-**视觉 CAD 装配已修复**（导出器 double-lift 补丁 + 离线 reframe + CAD↔模型映射；
-2026-09-10 另按 DH 修正真值链几何 J3/J4，J3 零位约定随之平移 90°，TH[2]: 90→0）。
-剩余：CAD 包并入 `dummyarm_description`（改名 Joint1..6/link_1..6/tool0 + 换 ros2_control）。
+**视觉 CAD 装配已完成**：补丁版导出器直接产出可用包，项目内 `dummyarm_cad_description`
+（2026-09-10 直接采用 Fusion 导出：坐标/限位/滑块+RViz 全验证；关节值=CAD 约定、设计姿态=0）。
+2026-09-10 另按 DH 修正真值链几何 J3/J4，J3 零位约定随之平移 90°，TH[2]: 90→0。
+Fusion→URDF 导出全流程（含三个坑与设计规则）见 **`docs/fusion_export_workflow.md`**。
+剩余：CAD 包并入 `dummyarm_description`（可选，改名 Joint1..6/link_1..6/tool0 + 换 ros2_control）；
+真机只读核对新映射（TH[2]: 90→0）。
 
 ## 1. 环境与工具（都在这台 VENTUNO Q 上）
 
-- Ubuntu 24.04 / ROS2 Jazzy；源码工作区：`~/PickOrangeDummy`（git, GitHub 远端 `BohnChen/PickOrangeDummy`，已推）
-- 5 个包：`dummyarm_description` `dummyarm_hardware`(C++ SystemInterface) `dummyarm_bridge`(管理服务) `dummyarm_bringup` + 外部 `Dummy_ForURDF_description`(Fusion 导出副本, install 后仅供预览)
-- 构建：`~/PickOrangeDummy/scripts/build.sh`（记得它补 lib symlink）
+- Ubuntu 24.04 / ROS2 Jazzy；源码工作区：`~/01_MyProject/PickOrangeDummy`（2026-09-10 从 `~/PickOrangeDummy` 移入；git, GitHub 远端 `BohnChen/PickOrangeDummy`，已推）
+- 5 个包：`dummyarm_description`（真值链）`dummyarm_cad_description`（Fusion CAD 视觉包）`dummyarm_hardware`(C++ SystemInterface) `dummyarm_bridge`(管理服务) `dummyarm_bringup`
+- 构建：`scripts/build.sh`（记得它补 lib symlink；仓库根 = 本目录）
 - 真机串口：`/dev/ttyACM1`（Type-C 控制面 = REF 板 USB-CDC；另一面是 ESP32）
 - OCC venv：`~/occvenv/bin/python`（已装 cadquery-ocp=OCP）；pip 源已切清华镜像
 - 独立库：`~/dummyarm_tools/dummyarm_link`（ASCII 协议 Python 库+`dummyarm` CLI，J5 限位已改 ±95）
-- 关键文档：`~/PickOrangeDummy/docs/`：`architecture.md`（v1.0 批准）`safety_and_incidents.md`（事故史+硬约束）`M0_spec.md`（规格冻结）
+- 关键文档：`docs/`：`architecture.md`（v1.0 批准）`safety_and_incidents.md`（事故史+硬约束）`M0_spec.md`（规格冻结）`fusion_export_workflow.md`（Fusion 导出流程）
 
 ## 2. 机械臂事实（实测/图纸真值，勿再推翻）
 
@@ -56,7 +59,7 @@
 
 ```bash
 # RViz 纯模型（滑块演示, 不连臂）
-source /opt/ros/jazzy/setup.bash && source ~/PickOrangeDummy/install/setup.bash
+source /opt/ros/jazzy/setup.bash && source install/setup.bash   # 在仓库根执行
 ros2 launch dummyarm_description display.launch.py
 # 真机只读控制链 (不使能)
 ros2 launch dummyarm_bringup control.launch.py          # spawn_trajectory:=true 才加载轨迹控制器
@@ -92,10 +95,12 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 
 ## 5. 下一步建议（新会话按序）
 
-1. 【等素材】Fusion v2 URDF（用户导好放家目录/`~/dummyurdf/`）→ 跑 import/评审（脚本 `scripts/import_export_urdf.py` 思路：命名统一 Joint1..6/link_1..6/tool0、限位按 M0 表覆盖、J6 revolute±720、ros2_control 换 dummyarm_hardware）
-2. 若 v2 仍坏 → 与用户约 Fusion 规则重导 或 STEP 专项(B)
-3. 视觉 OK 后：真机同步验收 `control.launch.py`(include_bridge:=false 单开) + 低速单轴动作（需用户在场；大动作先报风险）
-4. 收尾文档/演示视频/公开仓库（面试用）
+1. **真机只读核对新映射**：`ros2 run dummyarm_bridge dummyarm_system` + `ros2 topic echo /joint_states --once`
+   → 期望 REST = `(0, 2.844887, -3.141593, 0,0,0)`（模型 −180°，不是旧的 −270°）。全程失能、无运动。
+2. 【可选】CAD 包并入 `dummyarm_description`：命名统一 Joint1..6/link_1..6/tool0、
+   限位按 M0 表、J6 revolute±720、ros2_control 换 dummyarm_hardware（思路见 `scripts/import_export_urdf.py`）
+3. 真机同步验收 `control.launch.py`(include_bridge:=false 单开) + 低速单轴动作（需用户在场；大动作先报风险）
+4. 末端执行器（套果-旋切）+ 视觉；收尾文档/演示视频/公开仓库（面试用）
 
 ## 6. 已知坑速查（不要再踩）
 

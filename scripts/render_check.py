@@ -6,7 +6,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-MESHDIR = '/home/arduino/PickOrangeDummy/src/dummyarm_description/meshes'
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MESHDIR = os.path.join(REPO, 'src/dummyarm_description/meshes')
 VIS = json.load(open('/tmp/vis_precise.json'))
 
 def load_stl(name, step=7):

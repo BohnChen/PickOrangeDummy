@@ -1,10 +1,11 @@
 # Dummy_URDF — Robot Description
 
-> **DummyArm 项目内用法**（2026-09-10 并入）：
-> - `ros2 launch dummyarm_cad_description display_jsp.launch.py` — 滑块版（初始=REST），看模型/演示用
+> **DummyArm 项目内用法**（2026-09-10 更新：直接采用 Fusion 导出，补丁版导出器）：
+> - `ros2 launch dummyarm_cad_description display_jsp.launch.py` — 滑块版（初始=设计姿态/REST），看模型/演示用
 > - `ros2 launch dummyarm_cad_description display.launch.py` — 导出器原版（mock ros2_control + 3 控制器），可用 `/position_controller/commands` 驱动
-> - 本包 = Fusion v2 导出 + 导出器 double-lift 补丁 + CAD↔模型映射（限位=模型约定 J2 [0,163°]、J3 [-180°,-35°]）
-> - 关节名保持 CAD 的 `_1.._6`（真值链 `dummyarm_description` 用 `Joint1..6`）
+> - 关节值 = **直接导出的 CAD 约定**（设计姿态/REST = 0）；限位按"相对 REST"（J1 ±170° / J2 [0,163°] / J3 [-145,0°] / J4 ±180° / J5 ±95° / J6 continuous）
+> - 关节名保持 CAD 的 `_1.._6`（真值链 `dummyarm_description` 用 `Joint1..6` + 模型约定）
+> - 导出/修复流程与坑见 `docs/fusion_export_workflow.md`
 
 ![Dummy_URDF](images/robot.png)
 
@@ -49,20 +50,20 @@ base_link [BAKE]
 
 | Link | Mass (kg) | Material | Collision | Bodies |
 |------|-----------|----------|-----------|--------|
-| `J1` | 0.4287 | material | cached_existing | 1 |
-| `J2J3` | 2.6121 | material | cached_existing | 1 |
-| `J4` | 1.0217 | material | cached_existing | 1 |
-| `J5` | 0.9671 | material | cached_existing | 3 |
-| `J6` | 0.4100 | material | cached_existing | 3 |
-| `base_link` | 3.8115 | material | cached_existing | 1 |
-| `tool0` | 0.0738 | material | cached_existing | 1 |
+| `J1` | 0.4287 | material | box | 1 |
+| `J2J3` | 2.6121 | material | box | 1 |
+| `J4` | 1.0217 | material | box | 1 |
+| `J5` | 0.9671 | material | box | 3 |
+| `J6` | 0.4100 | material | box | 3 |
+| `base_link` | 3.8115 | material | sphere | 1 |
+| `tool0` | 0.0738 | material | box | 1 |
 
 ## Joint Properties
 
 | Joint | Type | Parent → Child | Axis | Limits |
 |-------|------|---------------|------|--------|
 | `_1` | revolute | `base_link` → `J1` | (0,0,1) | [-170.0°, 170.0°] |
-| `_2` | revolute | `J1` → `J2J3` | (0,0,1) | [265.0°, 360.0°] |
+| `_2` | revolute | `J1` → `J2J3` | (0,0,1) | [0.0°, 163.0°] |
 | `_3` | revolute | `J2J3` → `J4` | (0,0,1) | [-145.0°, 0.0°] |
 | `_4` | revolute | `J4` → `J5` | (0,0,1) | [-180.0°, 180.0°] |
 | `_5` | revolute | `J5` → `J6` | (0,0,1) | [-95.0°, 95.0°] |
@@ -198,6 +199,7 @@ ros2 param get /robot_state_publisher robot_description
 | `meshes/` | Visual (OBJ) and collision (STL) meshes |
 | `launch/display.launch.py` | Launch robot_state_publisher, RViz, and generated controllers |
 | `config/joint_state.yaml` | Joint state publisher config |
+| `config/ros2_controllers.yaml` | Generated ros2_control controller manager config |
 | `robot_data.yaml` | Supplementary data (beyond URDF) |
 | `docs/transforms.md` | Transformation matrices (KaTeX) |
 

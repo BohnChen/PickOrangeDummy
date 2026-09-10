@@ -1,0 +1,28 @@
+diff --git a/core/robot_model.py b/core/robot_model.py
+index ae6c1f8..ba8f239 100644
+--- a/core/robot_model.py
++++ b/core/robot_model.py
+@@ -2546,6 +2546,23 @@ def _compute_joint_global_origin(
+     if fj.origin_is_world or str(fj.origin_source).endswith("_world"):
+         return fj.origin_global_m
+ 
++    # 0b) Root-owned joints: Fusion reports geometryOrOrigin* in the root
++    # frame, which IS the world frame. Lifting through the child/parent
++    # occurrence would double-apply its pose (observed on Dummy_URDF v3:
++    # 0.5-1.1 m joint origins and metre-scale mesh bake offsets). One/Two
++    # agreement is the discriminator: occurrence-local values would differ
++    # between the two sides.
++    if (
++        edge.defining_component == snapshot.design_name_clean
++        and fj.geometry_or_origin_one_cm is not None
++        and fj.geometry_or_origin_two_cm is not None
++        and max(
++            abs(a - b)
++            for a, b in zip(fj.geometry_or_origin_one_cm, fj.geometry_or_origin_two_cm)
++        ) < 1e-6
++    ):
++        return fj.origin_global_m
++
+     # 1) Child-side joint geometry in the child occurrence's local frame.
+     world = _lift_point_by_occurrence(
+         fj.geometry_or_origin_one_cm, edge.child_path, snapshot

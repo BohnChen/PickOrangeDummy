@@ -1,206 +1,212 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0"?>
 <robot name="Dummy_URDF">
 
-  
+  <!-- Materials -->
   <material name="material">
-    <color rgba="0.910 0.678 0.137 1.0" />
+    <color rgba="0.910 0.678 0.137 1.0"/>
   </material>
 
   <link name="base_link">
     <inertial>
-      <origin xyz="-0.014953 0.035152 -0.085142" rpy="0 0 0" />
-      <mass value="3.811528" />
-      <inertia ixx="7.001890e-03" ixy="-9.554389e-06" ixz="5.286073e-06" iyy="6.555310e-03" iyz="9.169302e-05" izz="6.883350e-03" />
+      <origin xyz="-0.014953 0.035152 -0.085142" rpy="0 0 0"/>
+      <mass value="3.811528"/>
+      <inertia ixx="7.001890e-03" ixy="-9.554389e-06" ixz="5.286073e-06"
+               iyy="6.555310e-03" iyz="9.169302e-05" izz="6.883350e-03"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000" />
+      <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/base_link/base_link.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/base_link/base_link.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000" />
+      <origin xyz="0.000000 0.000000 0.000000" rpy="1.570796 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/base_link/base_link_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/base_link/base_link_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <link name="J1">
     <inertial>
-      <origin xyz="-0.009844 -0.009886 0.018483" rpy="0 0 0" />
-      <mass value="0.428721" />
-      <inertia ixx="2.491551e-04" ixy="-8.081023e-05" ixz="4.734222e-05" iyy="2.025076e-04" iyz="7.400640e-05" izz="3.003057e-04" />
+      <origin xyz="-0.009844 -0.009886 0.018483" rpy="0 0 0"/>
+      <mass value="0.428721"/>
+      <inertia ixx="2.491551e-04" ixy="-8.081023e-05" ixz="4.734222e-05"
+               iyy="2.025076e-04" iyz="7.400640e-05" izz="3.003057e-04"/>
     </inertial>
     <visual>
-      <origin xyz="0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 0.000000" />
+      <origin xyz="0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/J1/J1.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/J1/J1.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 0.000000" />
+      <origin xyz="0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/J1/J1_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/J1/J1_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <link name="J2J3">
     <inertial>
-      <origin xyz="0.070290 0.018926 0.016262" rpy="0 0 0" />
-      <mass value="2.612107" />
-      <inertia ixx="1.921296e-03" ixy="-1.724054e-03" ixz="1.027770e-03" iyy="7.818967e-03" iyz="2.785837e-04" izz="7.714248e-03" />
+      <origin xyz="0.070290 0.018926 0.016262" rpy="0 0 0"/>
+      <mass value="2.612107"/>
+      <inertia ixx="1.921296e-03" ixy="-1.724054e-03" ixz="1.027770e-03"
+               iyy="7.818967e-03" iyz="2.785837e-04" izz="7.714248e-03"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.032000" rpy="-1.308997 -1.570796 0.000000" />
+      <origin xyz="0.000000 0.000000 0.032000" rpy="-1.308997 -1.570796 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/J2J3/J2J3.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/J2J3/J2J3.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="0.000000 0.000000 0.032000" rpy="-1.308997 -1.570796 0.000000" />
+      <origin xyz="0.000000 0.000000 0.032000" rpy="-1.308997 -1.570796 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/J2J3/J2J3_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/J2J3/J2J3_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <link name="J4">
     <inertial>
-      <origin xyz="0.002717 0.047747 -0.013078" rpy="0 0 0" />
-      <mass value="1.021673" />
-      <inertia ixx="6.578363e-04" ixy="-9.889956e-05" ixz="2.393921e-05" iyy="5.869259e-04" iyz="1.414971e-04" izz="8.277172e-04" />
+      <origin xyz="0.002717 0.047747 -0.013078" rpy="0 0 0"/>
+      <mass value="1.021673"/>
+      <inertia ixx="6.578363e-04" ixy="-9.889956e-05" ixz="2.393921e-05"
+               iyy="5.869259e-04" iyz="1.414971e-04" izz="8.277172e-04"/>
     </inertial>
     <visual>
-      <origin xyz="0.037788 -0.141025 -0.032000" rpy="-0.261799 1.570796 0.000000" />
+      <origin xyz="0.037788 -0.141025 -0.032000" rpy="-0.261799 1.570796 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/J4/J4.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/J4/J4.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="0.037788 -0.141025 -0.032000" rpy="-0.261799 1.570796 0.000000" />
+      <origin xyz="0.037788 -0.141025 -0.032000" rpy="-0.261799 1.570796 0.000000"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/J4/J4_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/J4/J4_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <link name="J5">
     <inertial>
-      <origin xyz="0.004973 0.000021 0.062911" rpy="0 0 0" />
-      <mass value="0.967114" />
-      <inertia ixx="1.249715e-03" ixy="2.711989e-07" ixz="-3.152151e-05" iyy="1.305340e-03" iyz="7.690131e-07" izz="2.598691e-04" />
+      <origin xyz="0.004973 0.000021 0.062911" rpy="0 0 0"/>
+      <mass value="0.967114"/>
+      <inertia ixx="1.249715e-03" ixy="2.711989e-07" ixz="-3.152151e-05"
+               iyy="1.305340e-03" iyz="7.690131e-07" izz="2.598691e-04"/>
     </inertial>
     <visual>
-      <origin xyz="-0.039900 0.000000 0.049500" rpy="-1.570796 0.000000 -1.570796" />
+      <origin xyz="-0.039900 0.000000 0.049500" rpy="-1.570796 0.000000 -1.570796"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly/J5.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly/J5.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="-0.039900 0.000000 0.049500" rpy="-1.570796 0.000000 -1.570796" />
+      <origin xyz="-0.039900 0.000000 0.049500" rpy="-1.570796 0.000000 -1.570796"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly/J5_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly/J5_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <link name="J6">
     <inertial>
-      <origin xyz="-0.036793 0.009809 -0.010763" rpy="0 0 0" />
-      <mass value="0.409975" />
-      <inertia ixx="1.275675e-04" ixy="2.599620e-05" ixz="-4.819149e-05" iyy="2.176185e-04" iyz="1.267589e-05" izz="1.914349e-04" />
+      <origin xyz="-0.036793 0.009809 -0.010763" rpy="0 0 0"/>
+      <mass value="0.409975"/>
+      <inertia ixx="1.275675e-04" ixy="2.599620e-05" ixz="-4.819149e-05"
+               iyy="2.176185e-04" iyz="1.267589e-05" izz="1.914349e-04"/>
     </inertial>
     <visual>
-      <origin xyz="-0.008693 0.002329 -0.017100" rpy="-1.570796 0.000000 1.308997" />
+      <origin xyz="-0.008693 0.002329 -0.017100" rpy="-1.570796 0.000000 1.308997"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly_1/J6.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly_1/J6.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="-0.008693 0.002329 -0.017100" rpy="-1.570796 0.000000 1.308997" />
+      <origin xyz="-0.008693 0.002329 -0.017100" rpy="-1.570796 0.000000 1.308997"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly_1/J6_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly_1/J6_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <link name="tool0">
     <inertial>
-      <origin xyz="0.000000 0.000000 0.002849" rpy="0 0 0" />
-      <mass value="0.073848" />
-      <inertia ixx="9.037478e-06" ixy="7.455686e-09" ixz="0.000000e+00" iyy="2.847963e-05" iyz="0.000000e+00" izz="3.702439e-05" />
+      <origin xyz="0.000000 0.000000 0.002849" rpy="0 0 0"/>
+      <mass value="0.073848"/>
+      <inertia ixx="9.037478e-06" ixy="7.455686e-09" ixz="0.000000e+00"
+               iyy="2.847963e-05" iyz="0.000000e+00" izz="3.702439e-05"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.006000" rpy="0.000000 0.000000 1.570796" />
+      <origin xyz="0.000000 0.000000 0.006000" rpy="0.000000 0.000000 1.570796"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/tool0/tool0.dae" scale="1 1 1" />
+        <mesh filename="package://dummyarm_cad_description/meshes/tool0/tool0.dae" scale="1 1 1"/>
       </geometry>
-      <material name="material" />
+      <material name="material"/>
     </visual>
     <collision>
-      <origin xyz="0.000000 0.000000 0.006000" rpy="0.000000 0.000000 1.570796" />
+      <origin xyz="0.000000 0.000000 0.006000" rpy="0.000000 0.000000 1.570796"/>
       <geometry>
-        <mesh filename="package://dummyarm_cad_description/meshes/tool0/tool0_collision.stl" scale="0.01 0.01 0.01" />
+        <mesh filename="package://dummyarm_cad_description/meshes/tool0/tool0_collision.stl" scale="0.01 0.01 0.01"/>
       </geometry>
     </collision>
   </link>
 
   <joint name="_1" type="revolute">
-    <parent link="base_link" />
-    <child link="J1" />
-    <origin xyz="-0.015000 0.035000 -0.037500" rpy="0.000000 0.000000 0.000000" />
-    <axis xyz="0.000000 0.000000 1.000000" />
-    <limit lower="-2.967060000" upper="2.967060000" effort="100.0" velocity="1.00" />
+    <parent link="base_link"/>
+    <child link="J1"/>
+    <origin xyz="-0.015000 0.035000 -0.037500" rpy="0.000000 0.000000 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-2.967060" upper="2.967060" effort="100.0" velocity="1.00"/>
   </joint>
 
   <joint name="_2" type="revolute">
-    <parent link="J1" />
-    <child link="J2J3" />
-    <origin xyz="-0.015000000 -0.035000000 0.039000000" rpy="-1.570795988 -0.262640848 -1.570796741" />
-    <axis xyz="-0.000000000 -0.000000000 -1.000000000" />
-    <limit lower="0.000000000" upper="2.844888000" effort="100.0" velocity="1.00" />
+    <parent link="J1"/>
+    <child link="J2J3"/>
+    <origin xyz="-0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 1.570796"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="0.000000" upper="2.844887" effort="100.0" velocity="1.00"/>
   </joint>
 
   <joint name="_3" type="revolute">
-    <parent link="J2J3" />
-    <child link="J4" />
-    <origin xyz="0.141025000 0.037788000 0.033800000" rpy="0.000000000 -0.000000000 -3.140759373" />
-    <axis xyz="-0.000000000 -0.000000000 -1.000000000" />
-    <limit lower="-3.141593000" upper="-0.610865000" effort="100.0" velocity="1.00" />
+    <parent link="J2J3"/>
+    <child link="J4"/>
+    <origin xyz="0.141025 0.037788 0.033800" rpy="0.000000 0.000000 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-2.530727" upper="0.000000" effort="100.0" velocity="1.00"/>
   </joint>
 
   <joint name="_4" type="revolute">
-    <parent link="J4" />
-    <child link="J5" />
-    <origin xyz="-0.027465 0.046475 -0.017000" rpy="0.261799 -1.570796 0.000000" />
-    <axis xyz="0.000000 0.000000 1.000000" />
-    <limit lower="-3.141593000" upper="3.141593000" effort="100.0" velocity="1.00" />
+    <parent link="J4"/>
+    <child link="J5"/>
+    <origin xyz="-0.027465 0.046475 -0.017000" rpy="0.261799 -1.570796 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-3.141593" upper="3.141593" effort="100.0" velocity="1.00"/>
   </joint>
 
   <joint name="_5" type="revolute">
-    <parent link="J5" />
-    <child link="J6" />
-    <origin xyz="-0.018100 0.000000 0.104500" rpy="1.570796 1.308997 -1.570796" />
-    <axis xyz="0.000000 0.000000 1.000000" />
-    <limit lower="-1.658063000" upper="1.658063000" effort="100.0" velocity="1.00" />
+    <parent link="J5"/>
+    <child link="J6"/>
+    <origin xyz="-0.018100 0.000000 0.104500" rpy="1.570796 1.308997 -1.570796"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit lower="-1.658063" upper="1.658063" effort="100.0" velocity="1.00"/>
   </joint>
 
-  <joint name="_6" type="revolute">
-    <parent link="J6" />
-    <child link="tool0" />
-    <origin xyz="-0.060370 0.016176 -0.017100" rpy="-2.879793 1.570796 0.000000" />
-    <axis xyz="0.000000 0.000000 1.000000" />
-    <limit effort="100.0" velocity="1.00" lower="-12.566371000" upper="12.566371000" />
+  <joint name="_6" type="continuous">
+    <parent link="J6"/>
+    <child link="tool0"/>
+    <origin xyz="-0.060370 0.016176 -0.017100" rpy="-2.879793 1.570796 0.000000"/>
+    <axis xyz="0.000000 0.000000 1.000000"/>
+    <limit effort="100.0" velocity="1.00"/>
   </joint>
-
 
   <!-- ROS 2 control: generated generic system -->
   <ros2_control name="Dummy_URDF_system" type="system">
@@ -223,7 +229,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
-        <param name="initial_value">2.844887</param>
+        <param name="initial_value">0.0</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -232,7 +238,7 @@
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
-        <param name="initial_value">-3.141593</param>
+        <param name="initial_value">0.0</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>

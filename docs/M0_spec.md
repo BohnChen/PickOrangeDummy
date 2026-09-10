@@ -59,9 +59,10 @@
 
 ## 7. 待办（不阻塞）
 
-- 视觉装配：Fusion CAD 导出已修复（导出器 double-lift 补丁 + 离线 reframe，轴距残差 <1.6mm）；
-  CAD↔模型映射已解出并应用：`q_model = [+1,-1,-1,+1,+1,+1]·q_cad + (0,164.95°,-179.95°,0,0,0)`；
-  限位已按模型约定（J2 [0,163°]、J3 [-180°,-35°]，RViz 验证通过）；
+- 视觉装配：**已完成**（2026-09-10）。补丁版导出器直接产出可用包 → 项目内 `dummyarm_cad_description`
+  （直接采用 Fusion 导出：坐标/限位/滑块+RViz 全验证；关节值=CAD 约定、设计姿态=0）。
+  导出/修复流程与坑见 `docs/fusion_export_workflow.md`。
+  CAD↔模型映射（并入时用，已验证）：`q_model = [+1,-1,-1,+1,+1,+1]·q_cad + (0,164.95°,-179.95°,0,0,0)`。
   剩余：并入 `dummyarm_description`（改名 Joint1..6/link_1..6/tool0 + 换 ros2_control）
 - J1/J2 上极限、J6 多圈的实际物理核定（低速扫角专项）
 - tool0/tcp 定义待末端执行器 CAD

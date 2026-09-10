@@ -2,7 +2,8 @@
 
 用法:
     ros2 launch dummyarm_cad_description display_jsp.launch.py
-说明: 初始姿态 = 物理 REST (0,163°,-180°,0,0,0) 的模型值。
+说明: 关节值 = 直接导出的 CAD 约定（设计姿态/REST = 0）；
+      限位已按"相对 REST"设置（J1 ±170° / J2 [0,163°] / J3 [-145,0°] / J4 ±180° / J5 ±95° / J6 continuous）。
 """
 import os
 
@@ -34,7 +35,7 @@ def generate_launch_description():
             package='joint_state_publisher_gui',
             executable='joint_state_publisher_gui',
             condition=IfCondition(LaunchConfiguration('gui')),
-            parameters=[{'zeros._1': 0.0, 'zeros._2': 2.844887, 'zeros._3': -3.141593,
+            parameters=[{'zeros._1': 0.0, 'zeros._2': 0.0, 'zeros._3': 0.0,
                          'zeros._4': 0.0, 'zeros._5': 0.0, 'zeros._6': 0.0}],
         ),
         Node(
