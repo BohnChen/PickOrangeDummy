@@ -1,7 +1,7 @@
 initial_positions:
   Joint1: 0.0
-  Joint2: 2.845    # REST→模型角 163° (rad)
-  Joint3: -4.712   # -270° (rad)
+  Joint2: 2.844887 # REST: 物理 -73° -> 模型 163° (rad)
+  Joint3: -3.141593 # REST: 物理 180° -> 模型 -180° (rad)
   Joint4: 0.0
   Joint5: 0.0
   Joint6: 0.0

@@ -5,7 +5,8 @@
   joints: _1.._6 → Joint1..Joint6; _6 continuous→revolute
   links : base_link→base_link; J1_2→link_1; J2J3_2→link_2; J4_2→link_3;
           35_20Motor_Assembly_2→link_4; 35_20Motor_Assembly_1_2→link_5; '3'→tool0(末端)
-  限位 : 真值表覆盖 (J1±170 J2-73..90 J3 35..180 J4±180 J5±95! J6±720)
+  限位 : 模型约定覆盖 (J1±170 J2 0..163 J3 -180..-35 J4±180 J5±95! J6±720;
+         物理值 J2-73..90/J3 35..180 经 TH=[0,-90,0,0,0,0] 映射)
   网格 : 拷贝导出 meshes → dummyarm_description/meshes/export/<link>_visual.dae(+collision stl)
          路径改为 package://dummyarm_description/meshes/export/...
   保留 : 各 link inertial/visual origin/rpy (CAD 真装配)
@@ -51,10 +52,10 @@ def get_link(asm_file, linkname):
             return l
     return None
 
-limits = {   # (lower, upper) rad, 按真值表
+limits = {   # (lower, upper) rad, 模型约定 (TH=[0,-90,0,0,0,0], 2026-09-10)
   'Joint1': (-2.967059728, 2.967059728),
-  'Joint2': (-1.274090354, 1.570796327),   # -73°..90°
-  'Joint3': (0.610865238, 3.141592654),    # 35°..180°
+  'Joint2': (0.0, 2.844887),               # 物理 -73°..90° -> 模型 0°..163°
+  'Joint3': (-3.141592654, -0.610865238),  # 物理 35°..180° -> 模型 -180°..-35°
   'Joint4': (-3.141592654, 3.141592654),
   'Joint5': (-1.658062789, 1.658062789),   # ±95° (105°碰结构!)
   'Joint6': (-12.566370614, 12.566370614), # ±720°
@@ -67,7 +68,7 @@ out = []
 out.append('<?xml version="1.0"?>')
 out.append('<robot name="dummyarm" xmlns:xacro="http://www.ros.org/wiki/xacro">')
 out.append('  <!-- 由 fusion2urdf 导出 Dummy_ForURDF_description 转换并入 (2026-09-09) -->')
-out.append('  <!-- 限位=真值表: J1±170 J2-73..90 J3 35..180 J4±180 J5±95(105碰) J6±720 -->')
+out.append('  <!-- 限位=模型约定: J1±170 J2 0..163 J3 -180..-35 J4±180 J5±95(105碰) J6±720 -->')
 out.append('  <xacro:include filename="$(find dummyarm_description)/urdf/materials.xacro" />')
 
 # 主文件 mount joints

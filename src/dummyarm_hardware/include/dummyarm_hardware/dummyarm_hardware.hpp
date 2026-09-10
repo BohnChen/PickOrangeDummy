@@ -13,10 +13,11 @@
 namespace dummyarm_hardware
 {
 
-// FW→模型 角度映射 (与 bridge 一致, Kabsch 配准):
+// FW→模型 角度映射 (与 bridge 一致):
 //   q_model = SIGNS[i]·(q_fw + TH_HOME[i])   [度]
+// 2026-09-10: 真值链几何按 DH 修正后 J3 零位平移 90°, TH_HOME[2]: 90 -> 0
 static const double SIGNS[6] = {1, -1, -1, 1, 1, 1};
-static const double TH_HOME[6] = {0, -90, 90, 0, 0, 0};
+static const double TH_HOME[6] = {0, -90, 0, 0, 0, 0};
 
 inline double map_fw_to_model(double q_fw_deg, size_t i)
 {

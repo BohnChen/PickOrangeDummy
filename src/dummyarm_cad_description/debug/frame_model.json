@@ -1,0 +1,1761 @@
+{
+  "cache_version": 1,
+  "config": {
+    "collision_auto_method": "primitive",
+    "collision_format": "stl",
+    "export_collision_mesh": true,
+    "export_visual_mesh": true,
+    "frame_convention": "ros",
+    "frame_overrides_filename": "frame_overrides.csv",
+    "include_debug": true,
+    "include_docs": true,
+    "include_launch": true,
+    "include_readme": true,
+    "include_robot_data_yaml": true,
+    "include_ros2_control": false,
+    "include_rviz": true,
+    "include_screenshot": true,
+    "mesh_refinement": "medium",
+    "output_dir": "/tmp/opencode/fix",
+    "override_explicit_collision": false,
+    "package_name": "dummyarm_cad_description",
+    "robot_prefix": "",
+    "ros2_control_command_interfaces": [
+      "position",
+      "velocity"
+    ],
+    "ros2_control_hardware_plugin": "mock_components/GenericSystem",
+    "ros2_control_update_rate": 100,
+    "use_xacro": false,
+    "verbosity": "verbose",
+    "visual_format": "dae",
+    "zip_name": "",
+    "zip_output": false
+  },
+  "model": {
+    "assemblies": {
+      "": {
+        "children_assemblies": [],
+        "depth": 1,
+        "global_offset": [
+          -0.5818000000001241,
+          -0.025166173620409963,
+          0.3082414278230263
+        ],
+        "global_rotation": [
+          -1.0,
+          4.882026998723209e-16,
+          4.74393902495643e-17,
+          8.053322437196647e-17,
+          0.25881904510252035,
+          -0.9659258262890685,
+          -4.838458139553636e-16,
+          -0.9659258262890685,
+          -0.25881904510252035
+        ],
+        "joints": [],
+        "links": [],
+        "name": "",
+        "parent_assembly": "base_link"
+      },
+      "35Motor_Driver": {
+        "children_assemblies": [],
+        "depth": 2,
+        "global_offset": [
+          -0.5632000000001245,
+          0.19614731395939675,
+          0.2163918757542784
+        ],
+        "global_rotation": [
+          -1.0,
+          3.3123697059070633e-16,
+          1.194647584300445e-16,
+          -2.9663659068026567e-17,
+          0.2588190451025202,
+          -0.9659258262890684,
+          -3.5087009921558295e-16,
+          -0.9659258262890684,
+          -0.2588190451025202
+        ],
+        "joints": [],
+        "links": [],
+        "name": "35Motor_Driver",
+        "parent_assembly": "35_28Motor_Assembly"
+      },
+      "35Motor_Driver_1": {
+        "children_assemblies": [],
+        "depth": 2,
+        "global_offset": [
+          -0.5966000000001239,
+          0.06574732741045672,
+          0.18145130466546106
+        ],
+        "global_rotation": [
+          8.719404951851749e-16,
+          -5.3307982988636194e-17,
+          1.0,
+          0.2588190451025212,
+          0.9659258262890683,
+          -1.7418324883394442e-16,
+          -0.9659258262890683,
+          0.2588190451025212,
+          8.560269645400994e-16
+        ],
+        "joints": [],
+        "links": [],
+        "name": "35Motor_Driver_1",
+        "parent_assembly": "35_20Motor_Assembly"
+      },
+      "35Motor_Driver_2": {
+        "children_assemblies": [],
+        "depth": 2,
+        "global_offset": [
+          -0.5642000000001238,
+          -0.0023504433429214445,
+          0.16320456198573347
+        ],
+        "global_rotation": [
+          1.0986719210715826e-14,
+          1.0,
+          -1.2882303775285584e-16,
+          0.25881904510252085,
+          -2.968005674113486e-15,
+          -0.9659258262890684,
+          -0.9659258262890684,
+          1.0579013976198265e-14,
+          -0.25881904510252085
+        ],
+        "joints": [],
+        "links": [],
+        "name": "35Motor_Driver_2",
+        "parent_assembly": "35_20Motor_Assembly_1"
+      },
+      "35_20Motor_Assembly": {
+        "children_assemblies": [
+          "35Motor_Driver_1"
+        ],
+        "depth": 1,
+        "global_offset": [
+          -0.5951000000001241,
+          0.06574732741045684,
+          0.181451304665461
+        ],
+        "global_rotation": [
+          8.719404951851749e-16,
+          -5.3307982988636096e-17,
+          1.0,
+          0.25881904510252113,
+          0.9659258262890683,
+          -1.7418324883394447e-16,
+          -0.9659258262890683,
+          0.25881904510252113,
+          8.560269645400994e-16
+        ],
+        "joints": [],
+        "links": [
+          "J5"
+        ],
+        "name": "35_20Motor_Assembly",
+        "parent_assembly": "J5"
+      },
+      "35_20Motor_Assembly_1": {
+        "children_assemblies": [
+          "35Motor_Driver_2"
+        ],
+        "depth": 1,
+        "global_offset": [
+          -0.5642000000001238,
+          -0.0037993320823551356,
+          0.1628163334180797
+        ],
+        "global_rotation": [
+          1.0986719210715826e-14,
+          1.0,
+          -1.2882303775285606e-16,
+          0.2588190451025208,
+          -2.9680056741134855e-15,
+          -0.9659258262890684,
+          -0.9659258262890684,
+          1.0579013976198265e-14,
+          -0.2588190451025208
+        ],
+        "joints": [],
+        "links": [
+          "J6"
+        ],
+        "name": "35_20Motor_Assembly_1",
+        "parent_assembly": "J6"
+      },
+      "35_28Motor_Assembly": {
+        "children_assemblies": [
+          "35Motor_Driver"
+        ],
+        "depth": 1,
+        "global_offset": [
+          -0.5632000000001245,
+          0.19614731395939675,
+          0.2163918757542784
+        ],
+        "global_rotation": [
+          -1.0,
+          3.3123697059070633e-16,
+          1.194647584300445e-16,
+          -2.9663659068026567e-17,
+          0.2588190451025202,
+          -0.9659258262890684,
+          -3.5087009921558295e-16,
+          -0.9659258262890684,
+          -0.2588190451025202
+        ],
+        "joints": [],
+        "links": [],
+        "name": "35_28Motor_Assembly",
+        "parent_assembly": "J4"
+      },
+      "42_34Motor_Assembly": {
+        "children_assemblies": [],
+        "depth": 1,
+        "global_offset": [
+          -0.553000000000087,
+          0.09755850845519577,
+          0.13614072355535448
+        ],
+        "global_rotation": [
+          -6.936605405613165e-15,
+          -1.0,
+          -4.569221962617857e-16,
+          -0.9659258262890683,
+          6.581986141535493e-15,
+          0.25881904510252096,
+          -0.25881904510252096,
+          2.236678537307765e-15,
+          -0.9659258262890683
+        ],
+        "joints": [],
+        "links": [],
+        "name": "42_34Motor_Assembly",
+        "parent_assembly": "J2J3"
+      },
+      "42_34Motor_Assembly_1": {
+        "children_assemblies": [],
+        "depth": 1,
+        "global_offset": [
+          -0.5650000000000002,
+          0.0349999999999999,
+          0.008000000000087245
+        ],
+        "global_rotation": [
+          -3.5655571073803805e-16,
+          -1.728647576646789e-16,
+          -1.0,
+          -1.0,
+          -1.3855274618710797e-16,
+          3.5655571073803805e-16,
+          -1.3855274618710797e-16,
+          1.0,
+          -1.728647576646788e-16
+        ],
+        "joints": [],
+        "links": [],
+        "name": "42_34Motor_Assembly_1",
+        "parent_assembly": "base_link"
+      },
+      "42_40Motor_Assembly": {
+        "children_assemblies": [],
+        "depth": 1,
+        "global_offset": [
+          -0.5790000000000872,
+          0.04346666218300792,
+          0.12164685702961334
+        ],
+        "global_rotation": [
+          -5.395907604530402e-18,
+          1.0,
+          -3.0184057334247775e-16,
+          0.9659258262890682,
+          8.333413547718202e-17,
+          0.25881904510252135,
+          0.25881904510252135,
+          -2.901590415597322e-16,
+          -0.9659258262890682
+        ],
+        "joints": [],
+        "links": [],
+        "name": "42_40Motor_Assembly",
+        "parent_assembly": "J2J3"
+      },
+      "J1": {
+        "children_assemblies": [],
+        "depth": 0,
+        "global_offset": [
+          -0.05,
+          -1.9470536294363702e-16,
+          0.11
+        ],
+        "global_rotation": [
+          1.0,
+          1.39310806709303e-32,
+          -1.23588640194663e-46,
+          -1.2030198630942281e-46,
+          -2.35922392732846e-16,
+          -1.0,
+          -1.39310806709303e-32,
+          1.0,
+          -2.35922392732846e-16
+        ],
+        "joints": [],
+        "links": [
+          "J1"
+        ],
+        "name": "J1",
+        "parent_assembly": null
+      },
+      "J2J3": {
+        "children_assemblies": [
+          "42_34Motor_Assembly",
+          "42_40Motor_Assembly"
+        ],
+        "depth": 0,
+        "global_offset": [
+          -0.5480000000000873,
+          -1.7763568394002506e-16,
+          0.10999999999999996
+        ],
+        "global_rotation": [
+          1.0,
+          -4.635727207310509e-17,
+          -3.008587736038772e-16,
+          -3.309029416315097e-17,
+          0.9659258262890683,
+          -0.25881904510252096,
+          3.0260540438116035e-16,
+          0.25881904510252096,
+          0.9659258262890683
+        ],
+        "joints": [],
+        "links": [
+          "J2J3"
+        ],
+        "name": "J2J3",
+        "parent_assembly": null
+      },
+      "J4": {
+        "children_assemblies": [
+          "35_28Motor_Assembly"
+        ],
+        "depth": 0,
+        "global_offset": [
+          -0.5482000000001246,
+          0.17881275122317214,
+          0.0067624099467639455
+        ],
+        "global_rotation": [
+          1.0,
+          -5.462529394499793e-16,
+          -1.1971872834885216e-16,
+          -2.5702007577553016e-16,
+          -0.25881904510252085,
+          -0.9659258262890682,
+          4.966543349489152e-16,
+          0.9659258262890682,
+          -0.25881904510252085
+        ],
+        "joints": [],
+        "links": [
+          "J4"
+        ],
+        "name": "J4",
+        "parent_assembly": null
+      },
+      "J5": {
+        "children_assemblies": [
+          "",
+          "35_20Motor_Assembly"
+        ],
+        "depth": 0,
+        "global_offset": [
+          -0.5482000000001243,
+          0.17494904791810004,
+          0.005727133766376653
+        ],
+        "global_rotation": [
+          1.0,
+          -3.785915227402639e-16,
+          -4.287760198613475e-17,
+          -1.394032795272954e-16,
+          -0.25881904510252074,
+          -0.9659258262890684,
+          3.5459378942658846e-16,
+          0.9659258262890684,
+          -0.25881904510252074
+        ],
+        "joints": [],
+        "links": [],
+        "name": "J5",
+        "parent_assembly": null
+      },
+      "J6": {
+        "children_assemblies": [
+          "35_20Motor_Assembly_1"
+        ],
+        "depth": 0,
+        "global_offset": [
+          -0.549200000000124,
+          0.16722164130778847,
+          0.0036565814055567
+        ],
+        "global_rotation": [
+          1.0,
+          -5.122751941864262e-16,
+          -1.2882303775285609e-16,
+          -2.570200757755338e-16,
+          -0.25881904510252074,
+          -0.9659258262890684,
+          4.61477984613515e-16,
+          0.9659258262890684,
+          -0.25881904510252074
+        ],
+        "joints": [],
+        "links": [],
+        "name": "J6",
+        "parent_assembly": null
+      },
+      "base_link": {
+        "children_assemblies": [
+          "",
+          "42_34Motor_Assembly_1"
+        ],
+        "depth": 0,
+        "global_offset": [
+          -0.5500000000000004,
+          -1.4210854715202004e-16,
+          0.10850000000008723
+        ],
+        "global_rotation": [
+          1.0,
+          1.1879591728798175e-32,
+          0.0,
+          0.0,
+          -4.16108502343397e-16,
+          -1.0,
+          -4.0678661118124966e-32,
+          1.0,
+          -4.1610850234339695e-16
+        ],
+        "joints": [],
+        "links": [
+          "base_link"
+        ],
+        "name": "base_link",
+        "parent_assembly": null
+      },
+      "tool0": {
+        "children_assemblies": [],
+        "depth": 0,
+        "global_offset": [
+          -0.5642000000001242,
+          -0.0535445121362422,
+          0.1494871525953
+        ],
+        "global_rotation": [
+          -4.510428542290569e-16,
+          -1.0,
+          -1.1102230246251565e-16,
+          -0.25881904510252074,
+          2.498001805406602e-16,
+          -0.9659258262890686,
+          0.9659258262890682,
+          -4.0245584642661925e-16,
+          -0.2588190451025208
+        ],
+        "joints": [],
+        "links": [
+          "tool0"
+        ],
+        "name": "tool0",
+        "parent_assembly": null
+      }
+    },
+    "closing_joints": {},
+    "errors": [],
+    "joints": {
+      "_1": {
+        "axis": [
+          -1.7286475766467905e-16,
+          1.0,
+          -9.860761315262648e-32
+        ],
+        "child_link": "J1",
+        "closing_source": "",
+        "fusion_source": "regular",
+        "is_closing": false,
+        "is_mount": true,
+        "is_passive": false,
+        "joint_type": "revolute",
+        "limits": {
+          "effort": 100.0,
+          "lower": -2.9670597283903604,
+          "upper": 2.9670597283903604,
+          "velocity": 1.0
+        },
+        "name": "_1",
+        "origin_global": [
+          -0.565,
+          0.034999999999999844,
+          0.07099999999999995
+        ],
+        "origin_method": "joint_minus_parent",
+        "origin_rpy": [
+          -1.8018610961055094e-16,
+          -1.2609882742342866e-46,
+          -2.0514889421321287e-33
+        ],
+        "origin_xyz": [
+          -0.01499999999999957,
+          -0.0375000000000873,
+          -0.03499999999999997
+        ],
+        "parent_link": "base_link"
+      },
+      "_2": {
+        "axis": [
+          1.0,
+          1.7286475766467776e-16,
+          -1.8063637339262422e-16
+        ],
+        "child_link": "J2J3",
+        "closing_source": "",
+        "fusion_source": "regular",
+        "is_closing": false,
+        "is_mount": true,
+        "is_passive": false,
+        "joint_type": "revolute",
+        "limits": {
+          "effort": 100.0,
+          "lower": 4.625122517784973,
+          "upper": 6.283185307179586,
+          "velocity": 1.0
+        },
+        "name": "_2",
+        "origin_global": [
+          -0.58,
+          -1.756060574731322e-16,
+          0.10999999999999992
+        ],
+        "origin_method": "joint_minus_parent",
+        "origin_rpy": [
+          -1.3089969389957472,
+          -3.3090294163150894e-17,
+          3.0260540438116035e-16
+        ],
+        "origin_xyz": [
+          -0.015000000000000013,
+          0.03899999999999997,
+          0.03500000000000002
+        ],
+        "parent_link": "J1"
+      },
+      "_3": {
+        "axis": [
+          -1.0,
+          -2.1057468728121902e-16,
+          -3.99010001138567e-17
+        ],
+        "child_link": "J4",
+        "closing_source": "",
+        "fusion_source": "regular",
+        "is_closing": false,
+        "is_mount": true,
+        "is_passive": false,
+        "joint_type": "revolute",
+        "limits": {
+          "effort": 100.0,
+          "lower": -2.530727415391778,
+          "upper": 0.0,
+          "velocity": 1.0
+        },
+        "name": "_3",
+        "origin_global": [
+          -0.5462000000001244,
+          0.14102517063820416,
+          0.14778758058496802
+        ],
+        "origin_method": "joint_minus_parent",
+        "origin_rpy": [
+          1.5707963267948966,
+          -3.1220968368272294e-17,
+          -3.141592653589793
+        ],
+        "origin_xyz": [
+          0.0337999999998756,
+          0.14600000000000038,
+          -6.245004513516506e-17
+        ],
+        "parent_link": "J2J3"
+      },
+      "_4": {
+        "axis": [
+          -4.440892098500626e-16,
+          -1.0,
+          4.360672291361923e-17
+        ],
+        "child_link": "J5",
+        "closing_source": "",
+        "fusion_source": "regular",
+        "is_closing": false,
+        "is_mount": true,
+        "is_passive": false,
+        "joint_type": "revolute",
+        "limits": {
+          "effort": 100.0,
+          "lower": -3.141592653589793,
+          "upper": 3.141592653589793,
+          "velocity": 1.0
+        },
+        "name": "_4",
+        "origin_global": [
+          -0.5632000000001243,
+          0.11356065581176572,
+          0.19426284739803582
+        ],
+        "origin_method": "joint_minus_parent",
+        "origin_rpy": [
+          1.5707963267948966,
+          -1.1102230246251565e-16,
+          -1.5707963267948972
+        ],
+        "origin_xyz": [
+          0.01699999999999989,
+          0.05200000000000028,
+          -0.014499999999912815
+        ],
+        "parent_link": "J4"
+      },
+      "_5": {
+        "axis": [
+          -1.0338875662489499e-14,
+          -1.0,
+          8.029972556898937e-17
+        ],
+        "child_link": "J6",
+        "closing_source": "",
+        "fusion_source": "regular",
+        "is_closing": false,
+        "is_mount": true,
+        "is_passive": false,
+        "joint_type": "revolute",
+        "limits": {
+          "effort": 100.0,
+          "lower": -1.6580627893946132,
+          "upper": 1.6580627893946132,
+          "velocity": 1.0
+        },
+        "name": "_5",
+        "origin_global": [
+          -0.5813000000001242,
+          0.012621406964559068,
+          0.16721625718482258
+        ],
+        "origin_method": "joint_minus_parent",
+        "origin_rpy": [
+          1.5707963267948968,
+          -1.0114778715530652e-14,
+          -3.330669073875468e-16
+        ],
+        "origin_xyz": [
+          1.734723475976807e-17,
+          -0.10449999999999904,
+          -0.018099999999999908
+        ],
+        "parent_link": "J5"
+      },
+      "_6": {
+        "axis": [
+          0.0,
+          -8.30217017497526e-18,
+          1.0
+        ],
+        "child_link": "tool0",
+        "closing_source": "",
+        "fusion_source": "regular",
+        "is_closing": false,
+        "is_mount": true,
+        "is_passive": false,
+        "joint_type": "continuous",
+        "limits": null,
+        "name": "_6",
+        "origin_global": [
+          -0.5642000000001242,
+          -0.04774895717850779,
+          0.15104006686591512
+        ],
+        "origin_method": "joint_minus_parent",
+        "origin_rpy": [
+          -8.302170174975457e-18,
+          5.551115123125783e-17,
+          3.141592653589783
+        ],
+        "origin_xyz": [
+          7.979727989493313e-17,
+          0.017100000000000014,
+          0.06250000000000007
+        ],
+        "parent_link": "J6"
+      }
+    },
+    "links": {
+      "J1": {
+        "area_m2": 0.020377989026006408,
+        "assembly": "J1",
+        "bbox_max": [
+          0.01749999999999996,
+          0.017500000000000005,
+          0.0175
+        ],
+        "bbox_min": [
+          -0.04749999999999999,
+          -0.042499999999999954,
+          -0.0675
+        ],
+        "bbox_size": [
+          0.06499999999999995,
+          0.059999999999999956,
+          0.085
+        ],
+        "body_count": 1,
+        "clean_name": "Dummy_0001",
+        "collision": {
+          "mesh_path": "meshes/J1/J1_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.01749999999999996,
+          0.017500000000000005,
+          0.0175
+        ],
+        "collision_bbox_min": [
+          -0.04749999999999999,
+          -0.042499999999999954,
+          -0.0675
+        ],
+        "collision_bbox_size": [
+          0.06499999999999995,
+          0.059999999999999956,
+          0.085
+        ],
+        "collision_body_count": 13,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 5.461410917351169e-05,
+        "color_rgb": [
+          0.9098039215686274,
+          0.6784313725490196,
+          0.13725490196078433
+        ],
+        "com_link_local": [
+          -0.024843747459888824,
+          -0.020516973827865426,
+          -0.02511356019485595
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.55,
+          -1.702804564018836e-16,
+          0.10999999999999995
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 0.00024915510232261656,
+          "ixy": 4.734221736970939e-05,
+          "ixz": 8.081023144217976e-05,
+          "iyy": 0.00030030571455778914,
+          "iyz": -7.400640109210084e-05,
+          "izz": 0.00020250757787724304
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 0.42872075701206636,
+        "material_name": "material",
+        "merged_member_paths": [
+          "J1:1+Dummy-0001:1",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:1",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:2",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:3",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:4",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:5",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:6",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:7",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:8",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:9",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:10",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:11",
+          "J1:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 14:12"
+        ],
+        "mesh_bake_offset": [
+          0.014999999999999902,
+          0.039,
+          0.03500000000000001
+        ],
+        "mesh_collision": "meshes/J1/J1_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/J1/J1.dae",
+        "needs_mesh_bake": true,
+        "occurrence_path": "J1:1+Dummy-0001:1",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "J1",
+        "source_world_rotation": [
+          1.0,
+          1.3931080670930303e-32,
+          -1.2358864019466297e-46,
+          -1.203019863094228e-46,
+          -2.35922392732846e-16,
+          -1.0,
+          -1.3931080670930303e-32,
+          1.0,
+          -2.35922392732846e-16
+        ],
+        "urdf_name": "J1",
+        "volume_m3": 5.461410917351169e-05,
+        "wants_accurate_collision": false
+      },
+      "J2J3": {
+        "area_m2": 0.212816684446589,
+        "assembly": "J2J3",
+        "bbox_max": [
+          0.02300000000000003,
+          0.17550000000000004,
+          0.02650000000000001
+        ],
+        "bbox_min": [
+          -0.052999999999999936,
+          -0.029500000000000012,
+          -0.026099999999989108
+        ],
+        "bbox_size": [
+          0.07599999999999997,
+          0.20500000000000007,
+          0.052599999999989114
+        ],
+        "body_count": 1,
+        "clean_name": "Dummy_0009",
+        "collision": {
+          "mesh_path": "meshes/J2J3/J2J3_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.02300000000000003,
+          0.17550000000000004,
+          0.02650000000000001
+        ],
+        "collision_bbox_min": [
+          -0.052999999999999936,
+          -0.029500000000000012,
+          -0.026099999999989108
+        ],
+        "collision_bbox_size": [
+          0.07599999999999997,
+          0.20500000000000007,
+          0.052599999999989114
+        ],
+        "collision_body_count": 111,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 0.00033275252910542935,
+        "color_rgb": [
+          0.9098039215686274,
+          0.6784313725490196,
+          0.13725490196078433
+        ],
+        "com_link_local": [
+          -0.015737909242861708,
+          0.072793696953999,
+          8.895005807306564e-05
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.5480000000000873,
+          -1.7763568394002506e-16,
+          0.10999999999999996
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 0.007714248152341222,
+          "ixy": 0.0010648520392159172,
+          "ixz": 3.0847948663930033e-06,
+          "iyy": 0.0014543381318753807,
+          "iyz": -1.8656800352104943e-05,
+          "izz": 0.008285925111115458
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 2.6121073534776196,
+        "material_name": "material",
+        "merged_member_paths": [
+          "J2J3:1+42-34Motor Assembly:1+42-34\u6b65\u8fdb\u7535\u673a:1",
+          "J2J3:1+42-34Motor Assembly:1+Dummy-0018:1",
+          "J2J3:1+42-34Motor Assembly:1+Dummy-0019:1",
+          "J2J3:1+42-40Motor Assembly:1+42-40\u6b65\u8fdb\u7535\u673a:1",
+          "J2J3:1+42-40Motor Assembly:1+Dummy-0018:2",
+          "J2J3:1+42-40Motor Assembly:1+Dummy-0019:2",
+          "J2J3:1+NSK \u8f74\u627f 695ZZ:1",
+          "J2J3:1+Dummy-0009:1",
+          "J2J3:1+D\u5b57\u8f74 5-30:1",
+          "J2J3:1+TB \u540c\u6b65\u8f6e GPA20GT2060-B-H5:1",
+          "J2J3:1+\u666e\u8d62 \u51cf\u901f\u673a minif-11-50:1",
+          "J2J3:1+TB \u540c\u6b65\u8f6e GPA20GT2060-A-H5:1",
+          "J2J3:1+TB \u540c\u6b65\u5e26 GBN1302GT-60:1",
+          "J2J3:1+Dummy-0012\uff08\u5916\u58f3\uff09:1",
+          "J2J3:1+Dummy-0013:1",
+          "J2J3:1+Dummy-0036:1",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:1",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:1",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:1",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:1",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-45:1",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:1",
+          "J2J3:1+NSK \u8f74\u627f 695ZZ:2",
+          "J2J3:1+D\u5b57\u8f74 5-30:2",
+          "J2J3:1+TB \u540c\u6b65\u8f6e GPA20GT2060-B-H5:2",
+          "J2J3:1+\u666e\u8d62 \u51cf\u901f\u673a minif-11-50:2",
+          "J2J3:1+TB \u540c\u6b65\u8f6e GPA20GT2060-A-H5:2",
+          "J2J3:1+TB \u540c\u6b65\u5e26 GBN1302GT-60:2",
+          "J2J3:1+Dummy-0012\uff08\u5916\u58f3\uff09:2",
+          "J2J3:1+Dummy-0013:2",
+          "J2J3:1+Dummy-0036:2",
+          "J2J3:1+Dummy-0036:3",
+          "J2J3:1+Dummy-0036:4",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:2",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:3",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:4",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:2",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:3",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:4",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:2",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:3",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:4",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:5",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:6",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:7",
+          "J2J3:1+\u5e73\u57ab\u7247 M3:8",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:2",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:3",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:4",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:5",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:6",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:7",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 10:8",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-45:2",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-45:3",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-45:4",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:2",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:3",
+          "J2J3:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:4"
+        ],
+        "mesh_bake_offset": [
+          0.031999999999912654,
+          7.331606037234867e-18,
+          3.1112566194760837e-17
+        ],
+        "mesh_collision": "meshes/J2J3/J2J3_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/J2J3/J2J3.dae",
+        "needs_mesh_bake": true,
+        "occurrence_path": "J2J3:1+Dummy-0009:1",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "J2J3",
+        "source_world_rotation": [
+          1.0,
+          -4.635727207310509e-17,
+          -3.008587736038772e-16,
+          -3.309029416315097e-17,
+          0.9659258262890683,
+          -0.25881904510252096,
+          3.0260540438116035e-16,
+          0.25881904510252096,
+          0.9659258262890683
+        ],
+        "urdf_name": "J2J3",
+        "volume_m3": 0.00033275252910542935,
+        "wants_accurate_collision": false
+      },
+      "J4": {
+        "area_m2": 0.0777070560211769,
+        "assembly": "J4",
+        "bbox_max": [
+          0.010000000000000293,
+          0.223,
+          0.06329999999999981
+        ],
+        "bbox_min": [
+          -0.04499999999999999,
+          0.12849999999999998,
+          -0.0175
+        ],
+        "bbox_size": [
+          0.055000000000000285,
+          0.09450000000000003,
+          0.08079999999999982
+        ],
+        "body_count": 1,
+        "clean_name": "Dummy_0008",
+        "collision": {
+          "mesh_path": "meshes/J4/J4_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.010000000000000293,
+          0.223,
+          0.06329999999999981
+        ],
+        "collision_bbox_min": [
+          -0.04499999999999999,
+          0.12849999999999998,
+          -0.0175
+        ],
+        "collision_bbox_size": [
+          0.055000000000000285,
+          0.09450000000000003,
+          0.08079999999999982
+        ],
+        "collision_body_count": 37,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 0.00013014941386457152,
+        "color_rgb": [
+          0.9098039215686274,
+          0.6784313725490196,
+          0.13725490196078433
+        ],
+        "com_link_local": [
+          -0.018922462867279933,
+          0.1914165685076953,
+          0.014982445604662099
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.5782000000001244,
+          0.17881275122317222,
+          0.006762409946764057
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 0.0008277171987685466,
+          "ixy": -0.00013047977815292745,
+          "ixz": -5.974564994053319e-05,
+          "iyy": 0.0006411257473123716,
+          "iyz": -0.00010337714576341894,
+          "izz": 0.0006036364318239636
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 1.0216728988368864,
+        "material_name": "material",
+        "merged_member_paths": [
+          "J4:1+35-28Motor Assembly:1+35Motor Driver:1+Dummy-0020:1",
+          "J4:1+35-28Motor Assembly:1+35Motor Driver:1+Dummy-0021:1",
+          "J4:1+35-28Motor Assembly:1+35-28\u6b65\u8fdb\u7535\u673a:1",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:1",
+          "J4:1+Dummy-0022:1",
+          "J4:1+Dummy-0008:1",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-35:1",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:2",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:3",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:4",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:5",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:6",
+          "J4:1+\u666e\u8d62 \u51cf\u901f\u673a minif-11-50:4",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:7",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:8",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:9",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:10",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:7",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:8",
+          "J4:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-35:2"
+        ],
+        "mesh_bake_offset": [
+          0.03200000000000007,
+          -0.146,
+          -6.938893903907228e-18
+        ],
+        "mesh_collision": "meshes/J4/J4_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/J4/J4.dae",
+        "needs_mesh_bake": true,
+        "occurrence_path": "J4:1+Dummy-0008:1",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "J4",
+        "source_world_rotation": [
+          -1.0,
+          -2.696378052356052e-16,
+          -8.925068584277094e-17,
+          -1.64221431949258e-17,
+          -0.258819045102521,
+          0.9659258262890682,
+          -2.835498971055436e-16,
+          0.9659258262890682,
+          0.258819045102521
+        ],
+        "urdf_name": "J4",
+        "volume_m3": 0.00013014941386457152,
+        "wants_accurate_collision": false
+      },
+      "J5": {
+        "area_m2": 0.08562502243554153,
+        "assembly": "35_20Motor_Assembly",
+        "bbox_max": [
+          0.018500000000000034,
+          0.05300000000005694,
+          0.07049999999999937
+        ],
+        "bbox_min": [
+          -0.01850000000000007,
+          -0.07699999999999804,
+          0.014200000000000119
+        ],
+        "bbox_size": [
+          0.0370000000000001,
+          0.130000000000055,
+          0.05629999999999925
+        ],
+        "body_count": 3,
+        "clean_name": "35_20",
+        "collision": {
+          "mesh_path": "meshes/35_20Motor_Assembly/J5_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.018500000000000034,
+          0.05300000000005694,
+          0.07049999999999937
+        ],
+        "collision_bbox_min": [
+          -0.01850000000000007,
+          -0.07699999999999804,
+          0.014200000000000119
+        ],
+        "collision_bbox_size": [
+          0.0370000000000001,
+          0.130000000000055,
+          0.05629999999999925
+        ],
+        "collision_body_count": 76,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 0.00012319922611609964,
+        "color_rgb": [
+          0.9607843137254902,
+          0.9607843137254902,
+          0.9647058823529412
+        ],
+        "com_link_local": [
+          -2.1396020695456443e-05,
+          -0.013410777296306941,
+          0.04487334336825704
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.6031000000001241,
+          0.06574732741045684,
+          0.18145130466546092
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 0.0013053403291603438,
+          "ixy": 7.690130560908676e-07,
+          "ixz": -2.7119890940952567e-07,
+          "iyy": 0.0002598690632342676,
+          "iyz": 3.152151490120844e-05,
+          "izz": 0.0012497153637009409
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 0.9671139250113826,
+        "material_name": "material",
+        "merged_member_paths": [
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:6",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+\u666e\u8d62min8-50 \u8c10\u6ce2\u51cf\u901f\u5668:1",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+Dummy-0026:1",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+Dummy-0027:1",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+D\u5b57\u8f745-28:1",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:7",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:8",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+NSK \u8f74\u627f 695ZZ:3",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+TB \u540c\u6b65\u8f6e GPA20GT2060-A-H5:3",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+Dummy-0036:5",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+Dummy-0036:6",
+          "J5:1+\u666e\u8d62\u6539\u8f74\u8f93\u5165:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:7",
+          "J5:1+35-20Motor Assembly:1+35Motor Driver-1:1+Dummy-0020:2",
+          "J5:1+35-20Motor Assembly:1+35Motor Driver-1:1+Dummy-0021:2",
+          "J5:1+35-20Motor Assembly:1+35-20\u6b65\u8fdb\u7535\u673a:1",
+          "J5:1+Dummy-0002:1",
+          "J5:1+Dummy-0007(\u5916\u58f3):1",
+          "J5:1+TB \u540c\u6b65\u5e26 GBN1502GT-60:1",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:3",
+          "J5:1+Dummy-0011:1",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:5",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:9",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:10",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:11",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:12",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:13",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3 x 16:14",
+          "J5:1+TB \u540c\u6b65\u8f6e GPA20GT2060-B-H5:3",
+          "J5:1+\u5e73\u57ab\u7247 M3:9",
+          "J5:1+\u5e73\u57ab\u7247 M3:10",
+          "J5:1+\u5e73\u57ab\u7247 M3:11",
+          "J5:1+\u5e73\u57ab\u7247 M3:12",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:8",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:9",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:10",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:11",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:4",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:5",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:6",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:7",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:6",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:7",
+          "J5:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:8"
+        ],
+        "mesh_bake_offset": [
+          6.245004513516506e-17,
+          -0.04950000000000004,
+          -0.03989999999999983
+        ],
+        "mesh_collision": "meshes/35_20Motor_Assembly/J5_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/35_20Motor_Assembly/J5.dae",
+        "needs_mesh_bake": true,
+        "occurrence_path": "J5:1+35-20Motor Assembly:1+35-20\u6b65\u8fdb\u7535\u673a:1",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "J5",
+        "source_world_rotation": [
+          8.719404951851749e-16,
+          -5.3307982988636194e-17,
+          1.0,
+          0.2588190451025212,
+          0.9659258262890683,
+          -1.7418324883394442e-16,
+          -0.9659258262890683,
+          0.2588190451025212,
+          8.560269645400994e-16
+        ],
+        "urdf_name": "J5",
+        "volume_m3": 0.00012319922611609964,
+        "wants_accurate_collision": false
+      },
+      "J6": {
+        "area_m2": 0.029916682942190916,
+        "assembly": "35_20Motor_Assembly_1",
+        "bbox_max": [
+          0.017600000000000022,
+          0.01760000000000004,
+          0.06650000000000002
+        ],
+        "bbox_min": [
+          -0.017600000000000015,
+          -0.029999999944063858,
+          -0.02649999999999997
+        ],
+        "bbox_size": [
+          0.03520000000000004,
+          0.0475999999440639,
+          0.09299999999999999
+        ],
+        "body_count": 3,
+        "clean_name": "35_20",
+        "collision": {
+          "mesh_path": "meshes/35_20Motor_Assembly_1/J6_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.017600000000000022,
+          0.01760000000000004,
+          0.06650000000000002
+        ],
+        "collision_bbox_min": [
+          -0.017600000000000015,
+          -0.029999999944063858,
+          -0.02649999999999997
+        ],
+        "collision_bbox_size": [
+          0.03520000000000004,
+          0.0475999999440639,
+          0.09299999999999999
+        ],
+        "collision_body_count": 15,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 5.222616251063202e-05,
+        "color_rgb": [
+          0.9607843137254902,
+          0.9607843137254902,
+          0.9647058823529412
+        ],
+        "com_link_local": [
+          -4.832973157307314e-05,
+          -0.006337409091043176,
+          0.02907832931947867
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.5642000000001238,
+          0.00392807452795747,
+          0.16488688577889984
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 0.0002245842922492186,
+          "ixy": 2.2890735087691227e-07,
+          "ixz": -6.153324828856705e-10,
+          "iyy": 0.00019143494402163908,
+          "iyz": -4.983016217107068e-05,
+          "izz": 0.00012060163385995945
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 0.40997537570846115,
+        "material_name": "material",
+        "merged_member_paths": [
+          "J6:1+Dummy-0003:1",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-5:1",
+          "J6:1+35-20Motor Assembly-1:1+35Motor Driver-2:1+Dummy-0020:3",
+          "J6:1+35-20Motor Assembly-1:1+35Motor Driver-2:1+Dummy-0021:3",
+          "J6:1+35-20Motor Assembly-1:1+35-20\u6b65\u8fdb\u7535\u673a:2",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:1",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:2",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:3",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:1",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:2",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:3",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-25:4",
+          "J6:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-5:2"
+        ],
+        "mesh_bake_offset": [
+          2.402592014227878e-16,
+          0.017100000000000337,
+          0.008999999999999996
+        ],
+        "mesh_collision": "meshes/35_20Motor_Assembly_1/J6_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/35_20Motor_Assembly_1/J6.dae",
+        "needs_mesh_bake": true,
+        "occurrence_path": "J6:1+35-20Motor Assembly-1:1+35-20\u6b65\u8fdb\u7535\u673a:2",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "J6",
+        "source_world_rotation": [
+          1.0986719210715826e-14,
+          1.0,
+          -1.2882303775285584e-16,
+          0.25881904510252085,
+          -2.968005674113486e-15,
+          -0.9659258262890684,
+          -0.9659258262890684,
+          1.0579013976198265e-14,
+          -0.25881904510252085
+        ],
+        "urdf_name": "J6",
+        "volume_m3": 5.222616251063202e-05,
+        "wants_accurate_collision": false
+      },
+      "base_link": {
+        "area_m2": 0.2104394199771152,
+        "assembly": "base_link",
+        "bbox_max": [
+          0.03500000000000003,
+          -0.033800000000000004,
+          0.015000000000000064
+        ],
+        "bbox_min": [
+          -0.06500000000000006,
+          -0.1335,
+          -0.09881848800681407
+        ],
+        "bbox_size": [
+          0.10000000000000009,
+          0.09970000000000001,
+          0.11381848800681414
+        ],
+        "body_count": 1,
+        "clean_name": "Dummy_0004",
+        "collision": {
+          "mesh_path": "meshes/base_link/base_link_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.03500000000000003,
+          -0.033800000000000004,
+          0.015000000000000064
+        ],
+        "collision_bbox_min": [
+          -0.06500000000000006,
+          -0.1335,
+          -0.09881848800681407
+        ],
+        "collision_bbox_size": [
+          0.10000000000000009,
+          0.09970000000000001,
+          0.11381848800681414
+        ],
+        "collision_body_count": 66,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 0.0004855449824086064,
+        "color_rgb": [
+          0.9647058823529412,
+          0.9647058823529412,
+          0.9529411764705882
+        ],
+        "com_link_local": [
+          -0.014953489015262757,
+          -0.0851418528345458,
+          -0.03515164150443323
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.5500000000000004,
+          -1.4210854715202004e-16,
+          0.10850000000008723
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 0.007001889852031961,
+          "ixy": 5.286073377412384e-06,
+          "ixz": 9.554388855271229e-06,
+          "iyy": 0.006883349963258165,
+          "iyz": -9.169301506308547e-05,
+          "izz": 0.006555310132086083
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 3.811528111907558,
+        "material_name": "material",
+        "merged_member_paths": [
+          "base_link:1+\u63a7\u5236\u5668:1+Metal LED Illuminated Latching 16mm Power Push Button ON-OFF Switch 1_2V (1):1",
+          "base_link:1+\u63a7\u5236\u5668:1+DC5V_JACK:1",
+          "base_link:1+\u63a7\u5236\u5668:1+Dummy-0017:1",
+          "base_link:1+\u63a7\u5236\u5668:1+Dummy-0035:1",
+          "base_link:1+\u63a7\u5236\u5668:1+hex nuts, style 1-grades ab gb(GB_FASTENER_NUT_SNAB1 M3-N):1",
+          "base_link:1+\u63a7\u5236\u5668:1+hex nuts, style 1-grades ab gb(GB_FASTENER_NUT_SNAB1 M3-N):2",
+          "base_link:1+\u63a7\u5236\u5668:1+hex nuts, style 1-grades ab gb(GB_FASTENER_NUT_SNAB1 M3-N):3",
+          "base_link:1+\u63a7\u5236\u5668:1+hex nuts, style 1-grades ab gb(GB_FASTENER_NUT_SNAB1 M3-N):4",
+          "base_link:1+42-34Motor Assembly-1:1+42-34\u6b65\u8fdb\u7535\u673a:2",
+          "base_link:1+42-34Motor Assembly-1:1+Dummy-0018:3",
+          "base_link:1+42-34Motor Assembly-1:1+Dummy-0019:3",
+          "base_link:1+Dummy-0004:1",
+          "base_link:1+Dummy-0006:1",
+          "base_link:1+Dummy-0016:1",
+          "base_link:1+Dummy-0037:1",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-20:1",
+          "base_link:1+\u666e\u8d62 \u51cf\u901f\u673a minif-11-50:3",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:5",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:6",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:7",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-12:8",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:4",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-8:5",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:1",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-10:2",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:5",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-16:6",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:5",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-40:6",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-5:3",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M3-5:4",
+          "base_link:1+\u5185\u516d\u89d2\u87ba\u4e1d M4-20:2"
+        ],
+        "mesh_bake_offset": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_collision": "meshes/base_link/base_link_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/base_link/base_link.dae",
+        "needs_mesh_bake": false,
+        "occurrence_path": "base_link:1+Dummy-0004:1",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "base_link",
+        "source_world_rotation": [
+          1.0,
+          1.1879591728798175e-32,
+          0.0,
+          0.0,
+          -4.16108502343397e-16,
+          -1.0,
+          -4.0678661118124966e-32,
+          1.0,
+          -4.1610850234339695e-16
+        ],
+        "urdf_name": "base_link",
+        "volume_m3": 0.0004855449824086064,
+        "wants_accurate_collision": false
+      },
+      "tool0": {
+        "area_m2": 0.0056600642741275,
+        "assembly": "tool0",
+        "bbox_max": [
+          0.017500000000000012,
+          0.030499999999999982,
+          -1.734723475976807e-18
+        ],
+        "bbox_min": [
+          -0.017499999999999995,
+          -0.03049999999999998,
+          -0.008000000000000007
+        ],
+        "bbox_size": [
+          0.035,
+          0.06099999999999996,
+          0.008000000000000005
+        ],
+        "body_count": 1,
+        "clean_name": "72",
+        "collision": {
+          "mesh_path": "meshes/tool0/tool0_collision.stl",
+          "origin_rpy": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "origin_xyz": null,
+          "primitive": null,
+          "source": "cached_existing"
+        },
+        "collision_bbox_max": [
+          0.017500000000000012,
+          0.030499999999999982,
+          -1.734723475976807e-18
+        ],
+        "collision_bbox_min": [
+          -0.017499999999999995,
+          -0.03049999999999998,
+          -0.008000000000000007
+        ],
+        "collision_bbox_size": [
+          0.035,
+          0.06099999999999996,
+          0.008000000000000005
+        ],
+        "collision_body_count": 1,
+        "collision_body_names": [],
+        "collision_excluded_body_names": [],
+        "collision_override": "",
+        "collision_volume_m3": 9.407332036815709e-06,
+        "color_rgb": [
+          0.6274509803921569,
+          0.6274509803921569,
+          0.6274509803921569
+        ],
+        "com_link_local": [
+          -8.40117146856667e-13,
+          4.320163990007384e-19,
+          -0.003150525021243377
+        ],
+        "frame_rebase_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_rule": "keep",
+        "global_position": [
+          -0.5642000000001242,
+          -0.0535445121362422,
+          0.1494871525953
+        ],
+        "has_collision_exclusions": false,
+        "has_explicit_collision": false,
+        "has_visual_mesh": true,
+        "inertia_at_com": {
+          "ixx": 2.8479628021794243e-05,
+          "ixy": -7.455685935848651e-09,
+          "ixz": -8.710093211480807e-17,
+          "iyy": 9.037477892606674e-06,
+          "iyz": 3.649303457212118e-21,
+          "izz": 3.7024390430892975e-05
+        },
+        "inertial_origin_xyz": null,
+        "is_empty": false,
+        "is_frame_only": false,
+        "is_merged": true,
+        "mass_kg": 0.07384755648900332,
+        "material_name": "material",
+        "merged_member_paths": [
+          "tool0:1+\u96f6\u90e8\u4ef672:1"
+        ],
+        "mesh_bake_offset": [
+          -4.119968255444917e-18,
+          -8.227512475669868e-19,
+          0.006000000000000008
+        ],
+        "mesh_collision": "meshes/tool0/tool0_collision.stl",
+        "mesh_collision_input": "",
+        "mesh_origin_rpy": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mesh_visual": "meshes/tool0/tool0.dae",
+        "needs_mesh_bake": true,
+        "occurrence_path": "tool0:1+\u96f6\u90e8\u4ef672:1",
+        "rigid_group_collision_offset": null,
+        "rigid_group_collision_path": null,
+        "rigid_group_name": "tool0",
+        "source_world_rotation": [
+          -4.510428542290569e-16,
+          -1.0,
+          -1.1102230246251565e-16,
+          -0.25881904510252074,
+          2.498001805406602e-16,
+          -0.9659258262890686,
+          0.9659258262890682,
+          -4.0245584642661925e-16,
+          -0.2588190451025208
+        ],
+        "urdf_name": "tool0",
+        "volume_m3": 9.407332036815709e-06,
+        "wants_accurate_collision": false
+      }
+    },
+    "name": "Dummy_URDF",
+    "root_link": "base_link",
+    "warnings": []
+  }
+}

@@ -26,12 +26,13 @@ except ImportError:
 JOINT_NAMES = [f'Joint{i}' for i in range(1, 7)]
 DEG2RAD = 3.141592653589793 / 180.0
 
-# FW→模型 角度映射 (Kabsch 配准, 2026-09-08; 残差 0.04mm):
+# FW→模型 角度映射:
 #   q_model[i] = SIGNS[i] * (q_fw[i] + TH_HOME[i])
-# 依据: 固件 DH 表 θ-home [0,-90,90,0,0,0]; 轴归一化符号 +,-,-,+,+,+
-# 系统关系(诊断用): p_fw ≈ p_model + (60.85, 0, 171.14)mm
+# 2026-09-10 修正: 真值链几何按 DH 修正后 (Joint4 = L_FA 沿 J4 轴 + D_EW 垂直),
+#   J3 零位约定随几何平移 90° -> TH_HOME[2] 由 90 改为 0 (其余不变)。
+#   物理(固件) REST (0,-73,180) -> 模型 (0,163,-180)。
 SIGNS = [1, -1, -1, 1, 1, 1]
-TH_HOME = [0.0, -90.0, 90.0, 0.0, 0.0, 0.0]
+TH_HOME = [0.0, -90.0, 0.0, 0.0, 0.0, 0.0]
 
 
 def fw_to_model(angles_deg):

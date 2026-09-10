@@ -8,8 +8,10 @@
 
 ## 0. 一句话状态
 
-机械臂**运动学/控制链已全部打通并实测**（ros2_control + 桥接 + 映射），
-**视觉 CAD 装配仍待精修**（现用"真值链+PCA网格"过渡版可演示）。
+机械臂**运动学/控制链已全部打通并实测**（ros2_control + 桥接 + 映射）；
+**视觉 CAD 装配已修复**（导出器 double-lift 补丁 + 离线 reframe + CAD↔模型映射；
+2026-09-10 另按 DH 修正真值链几何 J3/J4，J3 零位约定随之平移 90°，TH[2]: 90→0）。
+剩余：CAD 包并入 `dummyarm_description`（改名 Joint1..6/link_1..6/tool0 + 换 ros2_control）。
 
 ## 1. 环境与工具（都在这台 VENTUNO Q 上）
 
@@ -43,11 +45,12 @@
 
 ### 几何/映射（关键常数）
 - 图纸真值链参数(m)：L_BASE 0.0925(实测92.6) D_BASE 0.035 L_ARM 0.146 D_ELBOW 0.052(图50) L_FA 0.115 腕=公共点 tool0=+0.072 沿 J6 轴
-- FW→模型：`q_model = SIGNS·(q_fw + TH_HOME)`，SIGNS=[1,-1,-1,1,1,1]，TH=[0,-90,90,0,0,0]（Kabsch 双姿态残差 0.04mm）
+- FW→模型：`q_model = SIGNS·(q_fw + TH_HOME)`，SIGNS=[1,-1,-1,1,1,1]，TH=[0,-90,0,0,0,0]
+  （2026-09-10 修正 J3 零位约定；物理 REST (0,-73,180) ↔ 模型 (0,163,-180)）
 - 关系：p_fw ≈ p_model + (60.85, 0, 171.14)mm（诊断用）
 - 固件 DH(0.109…)与物理(92.5)差 ~16mm = 预期（固件近似）
 - REST=(0,-73,180,0,0,0) 休憩位；!HOME→(0,0,90,0,0,0)
-- 桥接读模型角实测 [0,163,−270,0,0,0]=REST
+- 桥接读模型角实测 [0,163,−180,0,0,0]=REST（2026-09-10 约定修正后；旧记 −270）
 
 ## 3. 运行命令（速查）
 
@@ -64,6 +67,16 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 ```
 
 ## 4. 视觉装配问题的完整来龙去脉（新会话必读，省 3 小时）
+
+> **2026-09-10 更新（结论已闭环）**：实际导出器为 **Adriaeik/fusion2URDF v3.1.0**（非 dheena2k2）。
+> 根因 = `core/robot_model.py::_compute_joint_global_origin` 对根组件关节 **double-lift**
+> （把已是世界坐标的 `geometryOrOrigin*` 又叠加了一次组件变换）→ 米级帧距。
+> 修复 = 17 行补丁（存 `~/dummyurdf/fusion2URDF-root-joint-fix.patch`）+ `tools/reframe.py --snapshot`
+> 离线重生成 → 关节帧与 CAD 对齐（轴残差 <1.6mm）。
+> CAD↔模型映射已解出并应用：`q_model = [+1,-1,-1,+1,+1,+1]·q_cad + (0,164.95°,-179.95°,0,0,0)`，
+> 限位按模型约定（J2 [0,163°]、J3 [-180°,-35°]），RViz 验证通过。
+> 另：真值链几何按 DH 修正（Joint3/Joint4，见 M0_spec §3），J3 零位约定平移 90°。
+> 以下为当时的分析记录（部分结论已被上面的根因取代，保留作历史）。
 
 症状：Fusion 导出 URDF（dheena2k2/fusion2urdf-ros2 工具）在 RViz 中坐标系/部件米级错位、散开。
 结论（已查明）：

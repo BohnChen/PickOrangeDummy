@@ -27,6 +27,8 @@ def generate_launch_description():
             package='joint_state_publisher_gui',
             executable='joint_state_publisher_gui',
             condition=IfCondition(LaunchConfiguration('gui')),
+            parameters=[{'zeros.Joint1': 0.0, 'zeros.Joint2': 2.844887, 'zeros.Joint3': -3.141593,
+                         'zeros.Joint4': 0.0, 'zeros.Joint5': 0.0, 'zeros.Joint6': 0.0}],
         ),
         Node(
             package='rviz2',

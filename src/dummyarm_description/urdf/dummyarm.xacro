@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<!-- dummyarm 运动学链(图纸真值版, 2026-09-08 generate_true_urdf.py) -->
-<!-- 说明: L_BASE=92.5(基座55+J1件37.5); D_BASE=35; L_ARM=146; D_ELBOW=52(图50 二选一); L_FA=115; J4/J5/J6 段为近似+待调; 固件DH与其差异属预期 -->
+<!-- dummyarm 运动学链(图纸真值版, 2026-09-08 generate_true_urdf.py; 2026-09-10 按 DH 修正 J3/J4) -->
+<!-- 说明: L_BASE=92.5(基座55+J1件37.5); D_BASE=35; L_ARM=146(J2-J3 轴距); D_EW=52(J3-J4 轴距); L_FA=117(肘-腕沿轴); 与 auk DH/固件 DOFKinematic 一致; 限位=模型约定(TH=[0,-90,0,0,0,0]); 固件 L_BASE 用原版值(近似)差异属预期 -->
 <robot name="dummyarm" xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:include filename="$(find dummyarm_description)/urdf/materials.xacro" />
 <link name="base_link"><visual><origin xyz="0 0 0" rpy="0 0 0"/><geometry><mesh filename="package://dummyarm_description/meshes/arm_base.stl" scale="0.001 0.001 0.001"/></geometry><material name="silver"/></visual></link>
@@ -32,11 +32,11 @@
   <child link="link_2"/>
   <origin xyz="0.035000 0.000000 0.092500" rpy="0 0 0"/>
   <axis xyz="0.000000 -1.000000 0.000000"/>
-  <limit lower="-1.274090" upper="1.570796" effort="150" velocity="3.15"/>
+  <limit lower="0.000000" upper="2.844887" effort="150" velocity="3.15"/>
 </joint>
 <link name="link_3">
   <visual>
-    <origin xyz="-0.017000 -0.156250 0.115000" rpy="0.0 -0.0 0.0"/>
+    <origin xyz="-0.017000 -0.156250 0.165000" rpy="0.0 -0.0 0.0"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J4.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -45,13 +45,13 @@
 <joint name="Joint3" type="revolute">
   <parent link="link_2"/>
   <child link="link_3"/>
-  <origin xyz="0.146000 0.000000 0.050000" rpy="0 0 0"/>
+  <origin xyz="0.146000 0.000000 0.000000" rpy="0 0 0"/>
   <axis xyz="0.000000 -1.000000 0.000000"/>
-  <limit lower="0.610865" upper="3.141593" effort="150" velocity="3.15"/>
+  <limit lower="-3.141593" upper="-0.610865" effort="150" velocity="3.15"/>
 </joint>
 <link name="link_4">
   <visual>
-    <origin xyz="0.006900 -0.151321 0.102530" rpy="-0.7854 -0.0 0.0"/>
+    <origin xyz="-0.162100 -0.151321 0.215530" rpy="-0.7854 -0.0 0.0"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5A.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -60,13 +60,13 @@
 <joint name="Joint4" type="revolute">
   <parent link="link_3"/>
   <child link="link_4"/>
-  <origin xyz="-0.052000 0.000000 0.115000" rpy="0 0 0"/>
+  <origin xyz="0.117000 0.000000 0.052000" rpy="0 0 0"/>
   <axis xyz="1.000000 0.000000 0.000000"/>
   <limit lower="-3.141593" upper="3.141593" effort="150" velocity="3.15"/>
 </joint>
 <link name="link_5">
   <visual>
-    <origin xyz="0.019600 -0.198000 -0.131600" rpy="0.0 -0.0 0.0"/>
+    <origin xyz="-0.149400 -0.198000 -0.018600" rpy="0.0 -0.0 0.0"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J5B.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>
@@ -81,7 +81,7 @@
 </joint>
 <link name="link_6">
   <visual>
-    <origin xyz="-0.035500 -0.198000 0.107000" rpy="3.1416 -0.0 3.1416"/>
+    <origin xyz="-0.204500 -0.198000 0.220000" rpy="3.1416 -0.0 3.1416"/>
     <geometry><mesh filename="package://dummyarm_description/meshes/arm_J6.stl" scale="0.001 0.001 0.001"/></geometry>
     <material name="silver"/>
   </visual>

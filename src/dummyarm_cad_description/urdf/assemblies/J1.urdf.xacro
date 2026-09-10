@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="J1_macro">
+
+  <xacro:macro name="J1" params="prefix">
+
+    <!-- Links -->
+    <link name="${prefix}J1">
+      <inertial>
+        <origin xyz="-0.009844 -0.009886 0.018483" rpy="0 0 0"/>
+        <mass value="0.428721"/>
+        <inertia ixx="2.491551e-04" ixy="-8.081023e-05" ixz="4.734222e-05"
+                 iyy="2.025076e-04" iyz="7.400640e-05" izz="3.003057e-04"/>
+      </inertial>
+      <visual>
+        <origin xyz="0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 0.000000"/>
+        <geometry>
+          <mesh filename="package://dummyarm_cad_description/meshes/J1/J1.dae" scale="1 1 1"/>
+        </geometry>
+        <material name="material"/>
+      </visual>
+      <collision>
+        <origin xyz="0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 0.000000"/>
+        <geometry>
+          <mesh filename="package://dummyarm_cad_description/meshes/J1/J1_collision.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>
+
+</robot>

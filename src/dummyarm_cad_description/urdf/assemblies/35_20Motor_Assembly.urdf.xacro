@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="35_20Motor_Assembly_macro">
+
+  <xacro:macro name="assembly_35_20Motor_Assembly" params="prefix">
+
+    <!-- Links -->
+    <link name="${prefix}J5">
+      <inertial>
+        <origin xyz="0.004973 0.000021 0.062911" rpy="0 0 0"/>
+        <mass value="0.967114"/>
+        <inertia ixx="1.249715e-03" ixy="2.711989e-07" ixz="-3.152151e-05"
+                 iyy="1.305340e-03" iyz="7.690131e-07" izz="2.598691e-04"/>
+      </inertial>
+      <visual>
+        <origin xyz="-0.039900 0.000000 0.049500" rpy="-1.570796 0.000000 -1.570796"/>
+        <geometry>
+          <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly/J5.dae" scale="1 1 1"/>
+        </geometry>
+        <material name="material"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.039900 0.000000 0.049500" rpy="-1.570796 0.000000 -1.570796"/>
+        <geometry>
+          <mesh filename="package://dummyarm_cad_description/meshes/35_20Motor_Assembly/J5_collision.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>
+    </link>
+
+  </xacro:macro>
+
+</robot>
