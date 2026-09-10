@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="Dummy_URDF">
+    <!-- GROUPS: Representation of a set of joints and links. -->
+    <group name="arm">
+        <chain base_link="base_link" tip_link="tool0"/>
+        <joint name="Joint1"/>
+        <joint name="Joint2"/>
+        <joint name="Joint3"/>
+        <joint name="Joint4"/>
+        <joint name="Joint5"/>
+        <joint name="Joint6"/>
+    </group>
+
+    <!-- GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. -->
+    <!-- CAD 约定下初始设计姿态为 0 -->
+    <group_state name="zero" group="arm">
+        <joint name="Joint1" value="0.0"/>
+        <joint name="Joint2" value="0.0"/>
+        <joint name="Joint3" value="0.0"/>
+        <joint name="Joint4" value="0.0"/>
+        <joint name="Joint5" value="0.0"/>
+        <joint name="Joint6" value="0.0"/>
+    </group_state>
+
+    <!-- REST 姿态 (模型角约定: Joint2 ~ 2.845 rad (163°), Joint3 ~ -3.142 rad (-180°)) -->
+    <group_state name="rest" group="arm">
+        <joint name="Joint1" value="0.0"/>
+        <joint name="Joint2" value="2.844887"/>
+        <joint name="Joint3" value="-3.141593"/>
+        <joint name="Joint4" value="0.0"/>
+        <joint name="Joint5" value="0.0"/>
+        <joint name="Joint6" value="0.0"/>
+    </group_state>
+
+    <!-- HOME 姿态 (7 字准备姿态: Joint2 ~ 1.571 rad (90°), Joint3 ~ -1.571 rad (-90°)) -->
+    <group_state name="home" group="arm">
+        <joint name="Joint1" value="0.0"/>
+        <joint name="Joint2" value="1.570796"/>
+        <joint name="Joint3" value="-1.570796"/>
+        <joint name="Joint4" value="0.0"/>
+        <joint name="Joint5" value="0.0"/>
+        <joint name="Joint6" value="0.0"/>
+    </group_state>
+
+    <!-- DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link. -->
+    <!-- 相邻连杆默认不进行自碰撞检测以大幅提升规划速度 -->
+    <disable_collisions link1="base_link" link2="J1" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="J2J3" reason="Never"/>
+    <disable_collisions link1="J1" link2="J2J3" reason="Adjacent"/>
+    <disable_collisions link1="J1" link2="J4" reason="Never"/>
+    <disable_collisions link1="J2J3" link2="J4" reason="Adjacent"/>
+    <disable_collisions link1="J4" link2="J5" reason="Adjacent"/>
+    <disable_collisions link1="J5" link2="J6" reason="Adjacent"/>
+    <disable_collisions link1="J6" link2="tool0" reason="Adjacent"/>
+    <disable_collisions link1="J4" link2="J6" reason="Never"/>
+    <disable_collisions link1="J5" link2="tool0" reason="Never"/>
+</robot>

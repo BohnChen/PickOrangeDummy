@@ -30,7 +30,7 @@
   <!-- update the include + macro call above, and adjust -->
   <!-- parent/child link names in the mount joint below. -->
 
-  <joint name="_1" type="revolute">
+  <joint name="Joint1" type="revolute">
     <parent link="base_link"/>
     <child link="J1"/>
     <origin xyz="-0.015000 0.035000 -0.037500" rpy="0.000000 0.000000 0.000000"/>
@@ -38,7 +38,7 @@
     <limit lower="-2.967060" upper="2.967060" effort="100.0" velocity="1.00"/>
   </joint>
 
-  <joint name="_2" type="revolute">
+  <joint name="Joint2" type="revolute">
     <parent link="J1"/>
     <child link="J2J3"/>
     <origin xyz="-0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 1.570796"/>
@@ -46,7 +46,7 @@
     <limit lower="0.000000" upper="2.844887" effort="100.0" velocity="1.00"/>
   </joint>
 
-  <joint name="_3" type="revolute">
+  <joint name="Joint3" type="revolute">
     <parent link="J2J3"/>
     <child link="J4"/>
     <origin xyz="0.141025 0.037788 0.033800" rpy="0.000000 0.000000 0.000000"/>
@@ -54,7 +54,7 @@
     <limit lower="-2.530727" upper="0.000000" effort="100.0" velocity="1.00"/>
   </joint>
 
-  <joint name="_4" type="revolute">
+  <joint name="Joint4" type="revolute">
     <parent link="J4"/>
     <child link="J5"/>
     <origin xyz="-0.027465 0.046475 -0.017000" rpy="0.261799 -1.570796 0.000000"/>
@@ -62,7 +62,7 @@
     <limit lower="-3.141593" upper="3.141593" effort="100.0" velocity="1.00"/>
   </joint>
 
-  <joint name="_5" type="revolute">
+  <joint name="Joint5" type="revolute">
     <parent link="J5"/>
     <child link="J6"/>
     <origin xyz="-0.018100 0.000000 0.104500" rpy="1.570796 1.308997 -1.570796"/>
@@ -70,23 +70,33 @@
     <limit lower="-1.658063" upper="1.658063" effort="100.0" velocity="1.00"/>
   </joint>
 
-  <joint name="_6" type="continuous">
+  <joint name="Joint6" type="revolute">
     <parent link="J6"/>
     <child link="tool0"/>
     <origin xyz="-0.060370 0.016176 -0.017100" rpy="-2.879793 1.570796 0.000000"/>
     <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit effort="100.0" velocity="1.00"/>
+    <limit lower="-12.566371" upper="12.566371" effort="100.0" velocity="1.00"/>
   </joint>
+
+  <xacro:arg name="use_mock_hardware" default="true"/>
+  <xacro:arg name="serial_port" default="/dev/ttyACM1"/>
 
   <!-- ROS 2 control: generated generic system -->
   <ros2_control name="Dummy_URDF_system" type="system">
     <hardware>
-      <plugin>mock_components/GenericSystem</plugin>
-      <param name="cmd_topic">sim/Dummy_URDF_system/cmd</param>
-      <param name="state_topic">sim/Dummy_URDF_system/state</param>
+      <xacro:if value="$(arg use_mock_hardware)">
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="cmd_topic">sim/Dummy_URDF_system/cmd</param>
+        <param name="state_topic">sim/Dummy_URDF_system/state</param>
+      </xacro:if>
+      <xacro:unless value="$(arg use_mock_hardware)">
+        <plugin>dummyarm_hardware/DummyArmHardware</plugin>
+        <param name="port">$(arg serial_port)</param>
+        <param name="rate">50</param>
+      </xacro:unless>
     </hardware>
 
-    <joint name="_1">
+    <joint name="Joint1">
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
@@ -95,7 +105,7 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="_2">
+    <joint name="Joint2">
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
@@ -104,7 +114,7 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="_3">
+    <joint name="Joint3">
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
@@ -113,7 +123,7 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="_4">
+    <joint name="Joint4">
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
@@ -122,7 +132,7 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="_5">
+    <joint name="Joint5">
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">
@@ -131,7 +141,7 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="_6">
+    <joint name="Joint6">
       <command_interface name="position"/>
       <command_interface name="velocity"/>
       <state_interface name="position">

@@ -19,11 +19,11 @@
   # Command topic: /position_controller/commands
   position_controller:
     ros__parameters:
-      joints: [_1, _2, _3, _4, _5, _6]
+      joints: [Joint1, Joint2, Joint3, Joint4, Joint5, Joint6]
       interface_name: position
 
   # Command topic: /velocity_controller/commands
   velocity_controller:
     ros__parameters:
-      joints: [_1, _2, _3, _4, _5, _6]
+      joints: [Joint1, Joint2, Joint3, Joint4, Joint5, Joint6]
       interface_name: velocity
