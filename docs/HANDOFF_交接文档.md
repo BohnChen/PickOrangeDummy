@@ -124,6 +124,7 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 - **MoveIt 执行超时主动掐断（waitForExecution timed out / Controller is taking too long to execute trajectory）**：当轨迹规划在底层下发给物理电机时，若底层固件执行速度过低（如 5°/s），实际运动耗时会超过 MoveIt 默认的超时上限（`allowed_execution_duration_scaling: 1.2`，约 15.9 秒），导致 MoveIt 判定超时主动向控制器下发 Cancel 强行终止运动。在真机调试低速环境下，必须将 `allowed_execution_duration_scaling` 设为 `3.0`，`allowed_goal_duration_margin` 设为 `10.0`，并将下发速度微调至匹配的 `15.0°/s`，留出充分的执行与到位收敛裕量。
 - **串口通信拥堵与 Overrun 导致执行中途卡死**：在 115200 波特率下，控制频率不宜采用 50Hz（20ms 周期），因为 `#GETJPOS` 查询与 `>` 运动指令双向打架会导致单片机 USB 环形缓冲区溢出死锁。驱动必须引入流式行切分缓冲区、限制单次超时在 10ms 以内（丢包时平滑沿用上一帧而不阻塞调度），并将控制循环设为更宽裕的 **20Hz**（50ms 周期），静止时抑制重复指令下发。
 - **J5 (手腕俯仰) 运动方向实测与符号修正**：经真机单轴动作实测验证，物理机械臂当 J5 固件角度增加时为低头，而 CAD 模型中 Joint5 正向旋转为抬头，两者在数学上符号相反。`dummyarm_hardware` 中的映射公式已修正为 `q_cad[4] = -q_fw[4]` 与 `q_fw[4] = -q_cad[4]`，彻底解决了手腕俯仰与仿真相反导致末端指向偏斜的问题。
+- **5 轴定位臂与独立旋切刀具解耦架构（方案 B）**：在 `Dummy_URDF.srdf` 中将 `arm` 规划组重构为 5 轴链（`base_link -> J6`，仅含 Joint1~Joint5），将 `Joint6` 独立拆分为末端执行器组 `cutter`（`J6 -> tool0`）。彻底解决了在 RViz 拖动定位与收纳规划时，逆解器给第 6 轴算出非预期角度导致 J6 在姿态调整中无意义空转的问题。机械臂空间定位时 J6 绝对静止，仅在需要切果时单独驱动 J6。
 
 ## 7. 仓库/工具清单速查
 
