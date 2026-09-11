@@ -124,7 +124,7 @@ public:
   std::vector<Joint> joints_;
   std::string port_;
   double rate_ = 50.0;
-  float joint_speed_ = 5.0f;   // '>' 命令速度 (极低速 5.0 绝对安全默认)
+  float joint_speed_ = 15.0f;  // '>' 命令速度 (平稳安全的 15°/s 速度)
   bool prev_set_ = false;
   std::vector<double> last_vel_;
   std::vector<double> last_sent_cmd_;
