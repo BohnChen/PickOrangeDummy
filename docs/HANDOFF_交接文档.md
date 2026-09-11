@@ -129,6 +129,8 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 - **单片机硬件梯形加减速打断与 120ms 时间窗限频**：单片机固件 `MoveJ` 原生带有平滑的梯形加减速规划（单点测试时非常丝滑）。上位机若以 20Hz（50ms）不断下发密集路点，会导致单片机每 50ms 强行打断并重置当前电机的硬件加减速时钟，引发严重的高频机械抽搐颤抖。驱动已引入 **120ms（~8Hz）前瞻下发时间窗与物理死区滤波**，避免高频打断，让单片机充分发挥原生平滑插补优势，实测使 MoveIt 轨迹执行完全达到与 `park_and_disable` 单点控制相同的平稳丝滑度。
 - **MoveIt 启动点偏差保护（Invalid Trajectory: start point deviates from current robot state more than 0.05 at joint Joint2）**：真机在大臂受重力轻微下垂或静止微差时，若 `allowed_start_tolerance` 过小（如默认 0.05 rad，仅 2.8 度），执行时极易因 3 度左右的静止偏差被校验拦截直接 abort。在真机调试中应将 `allowed_start_tolerance` 设为 **0.0**（禁用此项静态拦截），让控制器始终以当前实际姿态为基准平滑过渡执行。
 
+- **极低速 (scaling 0.1) 步进齿槽震荡与超时抢占中止机理**：当速度和加速度 Scaling 被拉到 0.1 极限低速时，实际关节速度仅 1°/s，周期位移仅 0.05°。由于 0.05° 无法越过步进电机的物理微步齿槽（Cogging Torque），FOC 电流在磁极齿谷反复拉扯激发出剧烈机械抖动；同时由于耗时严重超出预期，MoveIt 在动作进行中途判定被占用（`Cannot push a new trajectory while another is being executed`）而强行中断（PREEMPTED / CONTROL_FAILED）。因此在 `moveit.rviz` 中已将默认 Velocity/Accel Scaling 直接固化为 **1.0**（匹配 `joint_limits.yaml` 中的 0.2 rad/s 安全温和速度），彻底摆脱低速共振死区，全程连贯平滑。
+
 ## 7. 仓库/工具清单速查
 
 scripts/: build.sh generate_true_urdf.py(真值链+PCA视觉) import_export_urdf.py fix_export_frames.py
