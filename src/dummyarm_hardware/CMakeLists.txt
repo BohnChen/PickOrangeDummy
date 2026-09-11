@@ -13,13 +13,14 @@ find_package(pluginlib REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(std_srvs REQUIRED)
 
 add_library(dummyarm_hardware SHARED
   src/dummyarm_hardware.cpp
 )
 target_include_directories(dummyarm_hardware PRIVATE include)
 ament_target_dependencies(dummyarm_hardware
-  pluginlib hardware_interface rclcpp rclcpp_lifecycle
+  pluginlib hardware_interface rclcpp rclcpp_lifecycle std_srvs
 )
 
 pluginlib_export_plugin_description_file(hardware_interface dummyarm_hardware_plugin.xml)

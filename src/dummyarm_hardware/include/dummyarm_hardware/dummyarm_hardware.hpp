@@ -9,6 +9,7 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 namespace dummyarm_hardware
 {
@@ -115,6 +116,8 @@ private:
 
   bool query_positions(double period_s);
   bool send_commands();
+  bool enable_hardware();
+  bool disable_hardware();
 
 public:
   SerialPort serial_;
@@ -124,6 +127,13 @@ public:
   float joint_speed_ = 5.0f;   // '>' 命令速度 (极低速 5.0 绝对安全默认)
   bool prev_set_ = false;
   std::vector<double> last_vel_;
+  std::shared_ptr<rclcpp::Node> service_node_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
+  std::thread executor_thread_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr enable_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr disable_srv_;
+  std::atomic<bool> is_enabled_{false};
+
   rclcpp::Logger logger_ = rclcpp::get_logger("dummyarm_hardware");
   rclcpp::Clock clock_{RCL_SYSTEM_TIME};
 };

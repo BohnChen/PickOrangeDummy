@@ -131,28 +131,95 @@ CallbackReturn DummyArmHardware::on_configure(const rclcpp_lifecycle::State &)
     RCLCPP_ERROR(logger_, "无法打开串口 %s", port_.c_str());
     return CallbackReturn::ERROR;
   }
+
+  // 创建使能与失能管理服务节点
+  service_node_ = std::make_shared<rclcpp::Node>("dummyarm_hardware_service_helper");
+  enable_srv_ = service_node_->create_service<std_srvs::srv::Trigger>(
+    "/dummyarm/enable",
+    [this](const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+           std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
+      if (enable_hardware()) {
+        response->success = true;
+        response->message = "机械臂已成功使能 (!START)! 电机闭环锁轴就绪。";
+        RCLCPP_INFO(logger_, "【硬件服务】收到使能请求: 机械臂已成功使能 (!START)");
+      } else {
+        response->success = false;
+        response->message = "使能失败，串口未响应或主控拒绝。";
+        RCLCPP_ERROR(logger_, "【硬件服务】使能失败: 串口通信异常");
+      }
+    });
+
+  disable_srv_ = service_node_->create_service<std_srvs::srv::Trigger>(
+    "/dummyarm/disable",
+    [this](const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+           std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
+      disable_hardware();
+      response->success = true;
+      response->message = "机械臂已安全失能 (!STOP)! 电机力矩已断开。";
+      RCLCPP_INFO(logger_, "【硬件服务】收到失能请求: 机械臂已失能 (!STOP)");
+    });
+
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_node(service_node_);
+  executor_thread_ = std::thread([this]() { executor_->spin(); });
+
+  RCLCPP_INFO(logger_, "【硬件管理】使能服务已就绪: /dummyarm/enable, /dummyarm/disable (当前处于安全失能状态)");
   return CallbackReturn::SUCCESS;
+}
+
+bool DummyArmHardware::enable_hardware()
+{
+  if (!serial_.write("!START\n")) {
+    return false;
+  }
+  is_enabled_ = true;
+  return true;
+}
+
+bool DummyArmHardware::disable_hardware()
+{
+  serial_.write("!STOP\n");
+  is_enabled_ = false;
+  return true;
 }
 
 CallbackReturn DummyArmHardware::on_activate(const rclcpp_lifecycle::State &)
 {
-  // 仅激活读取与控制接口; 使能由管理服务(dummyarm_system)负责, 此处绝不自动 !START
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn DummyArmHardware::on_deactivate(const rclcpp_lifecycle::State &)
 {
+  disable_hardware();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn DummyArmHardware::on_cleanup(const rclcpp_lifecycle::State &)
 {
+  disable_hardware();
+  if (executor_) {
+    executor_->cancel();
+    if (executor_thread_.joinable()) {
+      executor_thread_.join();
+    }
+    executor_.reset();
+  }
+  service_node_.reset();
   serial_.close();
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn DummyArmHardware::on_shutdown(const rclcpp_lifecycle::State &)
 {
+  disable_hardware();
+  if (executor_) {
+    executor_->cancel();
+    if (executor_thread_.joinable()) {
+      executor_thread_.join();
+    }
+    executor_.reset();
+  }
+  service_node_.reset();
   serial_.close();
   return CallbackReturn::SUCCESS;
 }
@@ -191,6 +258,11 @@ bool DummyArmHardware::query_positions(double period_s)
 
 bool DummyArmHardware::send_commands()
 {
+  if (!is_enabled_) {
+    // 未通过 /dummyarm/enable 手动使能前，绝不下发任何运动命令，确保物理绝对安全
+    return true;
+  }
+
   // 仅当有命令下发时按 '>' 格式发出 (INT 模式, 速度=命令速度参数化)
   float j[6];
   for (size_t i = 0; i < joints_.size(); ++i) {

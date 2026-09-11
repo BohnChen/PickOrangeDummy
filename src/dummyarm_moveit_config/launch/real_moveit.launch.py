@@ -5,12 +5,12 @@ MoveIt 2 真机控制 Launch 文件 (通过 MoveIt 规划直接驱动真实机�
 2. 在 RViz 中规划确认轨迹无误后，方可点击 Execute 执行真机动作
 """
 import os
+import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, Command
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
 import yaml
 
 def load_yaml(package_name, file_path):
@@ -32,12 +32,13 @@ def generate_launch_description():
     desc_path = get_package_share_directory(desc_pkg)
     moveit_path = get_package_share_directory(moveit_pkg)
 
-    serial_port = LaunchConfiguration('serial_port')
-
+    # 解析 xacro 生成纯字符串，确保 controller_manager 0 延迟获取硬件定义
     xacro_file = os.path.join(desc_path, 'urdf', 'Dummy_URDF.urdf.xacro')
-    robot_description = ParameterValue(Command([
-        'xacro ', xacro_file, ' use_mock_hardware:=false serial_port:=', serial_port
-    ]), value_type=str)
+    robot_description_doc = xacro.process_file(
+        xacro_file,
+        mappings={'use_mock_hardware': 'false', 'serial_port': '/dev/ttyACM1'}
+    )
+    robot_description = robot_description_doc.toxml()
 
     robot_description_semantic = load_file(moveit_pkg, 'config/Dummy_URDF.srdf')
     kinematics_yaml = load_yaml(moveit_pkg, 'config/kinematics.yaml')
@@ -126,7 +127,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('serial_port', default_value='/dev/ttyACM1'),
         robot_state_publisher,
         ros2_control_node,
         controller_spawner,
