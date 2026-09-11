@@ -194,7 +194,17 @@ bool DummyArmHardware::send_commands()
   float j[6];
   for (size_t i = 0; i < joints_.size(); ++i) {
     double cmd_deg = joints_[i].command_position_ * 180.0 / M_PI;
-    j[i] = (float)map_model_to_fw(cmd_deg, i);
+    double fw_deg = map_model_to_fw(cmd_deg, i);
+
+    // 核心安全硬拦截：超出物理固件硬限位立即拦截并拒绝下发！
+    if (fw_deg < FW_HARD_LIMITS[i].min_deg || fw_deg > FW_HARD_LIMITS[i].max_deg) {
+      RCLCPP_ERROR_THROTTLE(
+        logger_, clock_, 1000,
+        "【安全硬拦截】关节 %zu 指令越界被丢弃! 目标固件角度: %.2f°, 允许物理区间: [%.2f°, %.2f°]",
+        i + 1, fw_deg, FW_HARD_LIMITS[i].min_deg, FW_HARD_LIMITS[i].max_deg);
+      return false; // 拒绝下发非法指令，保护机械臂
+    }
+    j[i] = (float)fw_deg;
   }
   char buf[160];
   int n = std::snprintf(buf, sizeof(buf), ">%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
