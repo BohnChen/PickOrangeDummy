@@ -29,7 +29,7 @@ inline double map_fw_to_model(double q_fw_deg, size_t i)
     case 1: return q_fw_deg + 73.0;
     case 2: return q_fw_deg - 180.0;
     case 3: return q_fw_deg;
-    case 4: return q_fw_deg;
+    case 4: return -q_fw_deg; // 实测证实: J5 物理低头与 CAD 符号相反，取反匹配
     case 5: return q_fw_deg;
     default: return q_fw_deg;
   }
@@ -42,7 +42,7 @@ inline double map_model_to_fw(double q_model_deg, size_t i)
     case 1: return q_model_deg - 73.0;
     case 2: return q_model_deg + 180.0;
     case 3: return q_model_deg;
-    case 4: return q_model_deg;
+    case 4: return -q_model_deg; // 对应取反
     case 5: return q_model_deg;
     default: return q_model_deg;
   }
