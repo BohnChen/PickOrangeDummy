@@ -285,13 +285,22 @@ bool DummyArmHardware::send_commands()
     filtered_targets[i] = target;
   }
 
-  // 2. 如果各轴均无实质位移变化，平滑跳过，节省串口带宽并让电机完全静止
+  // 2. 检查距离上次指令的时间间隔
+  auto now = std::chrono::steady_clock::now();
+  auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_cmd_time_).count();
+
+  // 如果各轴均无实质位移变化，平滑跳过
   if (!any_joint_moved) {
     idle_count_++;
-    if (idle_count_ > 5) {
+    if (idle_count_ > 3) {
       return true;
     }
   } else {
+    // 关键平滑核心：在运动期间，严格限制向下位机发送新目标的间隔不少于 120ms (约 8Hz)
+    // 彻底杜绝 50ms 频繁打断单片机内部硬件梯形加减速造成的剧烈机械抽搐！
+    if (elapsed_ms < 120) {
+      return true; // 保持单片机当前平滑执行节奏，不打断它
+    }
     idle_count_ = 0;
   }
 
@@ -321,6 +330,7 @@ bool DummyArmHardware::send_commands()
     std::string ack;
     serial_.readLine(ack, 20);
 
+    last_cmd_time_ = now; // 记录最近一次下发时间戳
     last_sent_cmd_.resize(joints_.size());
     for (size_t i = 0; i < joints_.size(); ++i) {
       last_sent_cmd_[i] = filtered_targets[i];

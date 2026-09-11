@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
@@ -129,6 +130,7 @@ public:
   bool prev_set_ = false;
   std::vector<double> last_vel_;
   std::vector<double> last_sent_cmd_;
+  std::chrono::steady_clock::time_point last_cmd_time_{std::chrono::steady_clock::now()};
   int idle_count_{0};
   rclcpp::Logger logger_ = rclcpp::get_logger("dummyarm_hardware");
   rclcpp::Clock clock_{RCL_SYSTEM_TIME};
