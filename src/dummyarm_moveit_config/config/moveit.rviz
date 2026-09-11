@@ -12,8 +12,6 @@ Panels:
         - /MotionPlanning1/Planned Path1
       Splitter Ratio: 0.5
     Tree Height: 600
-  - Class: moveit_rviz_plugin/MotionPlanning
-    Name: MotionPlanning
 Visualization Manager:
   Class: ""
   Displays:
