@@ -30,11 +30,14 @@ Visualization Manager:
         Query Start State: false
         Query Goal State: true
       Planned Path:
-        Loop Animation: false
+        Loop Animation: true
         Show Robot Collision: false
         Show Robot Visual: true
-        Show Trail: false
+        Show Trail: true
         State Display Time: 0.05
+        Trajectory Topic: /display_planned_path
+      Scene Robot:
+        Robot Alpha: 0.5
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
