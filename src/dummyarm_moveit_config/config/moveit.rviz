@@ -20,23 +20,15 @@ Visualization Manager:
       Enabled: true
       Plane: XY
       Reference Frame: <Fixed Frame>
-    - Class: rviz_default_plugins/RobotModel
-      Name: RobotModel
-      Enabled: true
-      Description Topic:
-        Depth: 5
-        Durability Policy: Transient Local
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /robot_description
-      Visual Enabled: true
-      Collision Enabled: false
     - Class: moveit_rviz_plugin/MotionPlanning
       Name: MotionPlanning
       Enabled: true
       Move Group Namespace: ""
       Planning Scene Topic: /monitored_planning_scene
       Robot Description: robot_description
+      Planning Request:
+        Query Start State: false
+        Query Goal State: true
       Planned Path:
         Loop Animation: false
         Show Robot Collision: false
