@@ -41,6 +41,7 @@ bool SerialPort::open(const std::string & device, int baud)
   cfsetospeed(&tty, B115200);
   cfsetispeed(&tty, B115200);
   tty.c_cflag = CS8 | CLOCAL | CREAD;
+  tty.c_cflag &= ~HUPCL;  // 绝不在关闭串口时释放/挂起 DTR，避免触发 STM32 复位！
   tty.c_iflag = IGNPAR | IGNBRK;
   tty.c_oflag = 0;
   tty.c_lflag = 0;
@@ -54,7 +55,12 @@ bool SerialPort::open(const std::string & device, int baud)
 
 void SerialPort::close()
 {
-  if (fd_ >= 0) { ::close(fd_); fd_ = -1; }
+  if (fd_ >= 0) {
+    tcdrain(fd_); // 等待所有指令字符发送完毕
+    set_dtr_low(fd_); // 维持 DTR 为低
+    ::close(fd_);
+    fd_ = -1;
+  }
 }
 
 bool SerialPort::write(const std::string & s) const
@@ -93,6 +99,18 @@ DummyArmHardware::DummyArmHardware()
 : joints_({
     Joint("Joint1"), Joint("Joint2"), Joint("Joint3"),
     Joint("Joint4"), Joint("Joint5"), Joint("Joint6")}) {}
+
+DummyArmHardware::~DummyArmHardware()
+{
+  if (is_enabled_) {
+    serial_.write("!STOP\n");
+    usleep(50000);
+    serial_.write("!DISABLE\n");
+    usleep(50000);
+    is_enabled_ = false;
+  }
+  serial_.close();
+}
 
 CallbackReturn DummyArmHardware::on_init(const hardware_interface::HardwareInfo & info)
 {
@@ -149,16 +167,22 @@ CallbackReturn DummyArmHardware::on_activate(const rclcpp_lifecycle::State &)
 
 CallbackReturn DummyArmHardware::on_deactivate(const rclcpp_lifecycle::State &)
 {
-  // 控制器失活时释放力矩
+  // 控制器失活时释放力矩，双保险失能
   serial_.write("!STOP\n");
+  usleep(50000); // 50ms
+  serial_.write("!DISABLE\n");
+  usleep(50000);
   is_enabled_ = false;
-  RCLCPP_INFO(logger_, "【硬件驱动】机械臂电机已失能 (!STOP)");
+  RCLCPP_INFO(logger_, "【硬件驱动】机械臂电机已失能 (!STOP / !DISABLE)，力矩已释放");
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn DummyArmHardware::on_cleanup(const rclcpp_lifecycle::State &)
 {
   serial_.write("!STOP\n");
+  usleep(50000);
+  serial_.write("!DISABLE\n");
+  usleep(50000);
   is_enabled_ = false;
   serial_.close();
   return CallbackReturn::SUCCESS;
@@ -167,6 +191,9 @@ CallbackReturn DummyArmHardware::on_cleanup(const rclcpp_lifecycle::State &)
 CallbackReturn DummyArmHardware::on_shutdown(const rclcpp_lifecycle::State &)
 {
   serial_.write("!STOP\n");
+  usleep(50000);
+  serial_.write("!DISABLE\n");
+  usleep(50000);
   is_enabled_ = false;
   serial_.close();
   return CallbackReturn::SUCCESS;

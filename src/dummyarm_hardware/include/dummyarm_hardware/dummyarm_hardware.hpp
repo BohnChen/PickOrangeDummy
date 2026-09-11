@@ -83,6 +83,7 @@ class DummyArmHardware : public hardware_interface::SystemInterface
 {
 public:
   DummyArmHardware();
+  virtual ~DummyArmHardware();
 
   hardware_interface::CallbackReturn
   on_init(const hardware_interface::HardwareInfo & info) override;
