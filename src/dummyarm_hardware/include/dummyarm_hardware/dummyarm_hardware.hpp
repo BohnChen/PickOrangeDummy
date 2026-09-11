@@ -77,6 +77,7 @@ public:
 
 private:
   int fd_;
+  mutable std::string rx_buf_;
 };
 
 class DummyArmHardware : public hardware_interface::SystemInterface
@@ -126,6 +127,7 @@ public:
   float joint_speed_ = 5.0f;   // '>' 命令速度 (极低速 5.0 绝对安全默认)
   bool prev_set_ = false;
   std::vector<double> last_vel_;
+  std::vector<double> last_sent_cmd_;
   rclcpp::Logger logger_ = rclcpp::get_logger("dummyarm_hardware");
   rclcpp::Clock clock_{RCL_SYSTEM_TIME};
   bool is_enabled_{false};

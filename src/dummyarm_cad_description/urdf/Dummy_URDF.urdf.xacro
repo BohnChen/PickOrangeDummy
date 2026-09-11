@@ -92,7 +92,7 @@
       <xacro:unless value="$(arg use_mock_hardware)">
         <plugin>dummyarm_hardware/DummyArmHardware</plugin>
         <param name="port">$(arg serial_port)</param>
-        <param name="rate">50</param>
+        <param name="rate">20</param>
       </xacro:unless>
     </hardware>
 

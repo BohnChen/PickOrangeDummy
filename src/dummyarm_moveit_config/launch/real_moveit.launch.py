@@ -5,6 +5,7 @@ MoveIt 2 真机控制 Launch 文件 (通过 MoveIt 规划直接驱动真实机�
 2. 在 RViz 中规划确认轨迹无误后，方可点击 Execute 执行真机动作
 """
 import os
+import glob
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -13,6 +14,16 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 import yaml
+
+def find_ref_serial_port():
+    # 优先使用 by-id 永久硬件标识符，彻底防止插拔导致 ACM0/ACM1 漂移
+    ref_ports = glob.glob('/dev/serial/by-id/*REF*')
+    if ref_ports:
+        return os.path.realpath(ref_ports[0])
+    for p in ['/dev/ttyACM0', '/dev/ttyACM1']:
+        if os.path.exists(p):
+            return p
+    return '/dev/ttyACM0'
 
 def load_yaml(package_name, file_path):
     pkg_path = get_package_share_directory(package_name)
@@ -33,11 +44,17 @@ def generate_launch_description():
     desc_path = get_package_share_directory(desc_pkg)
     moveit_path = get_package_share_directory(moveit_pkg)
 
+    # 动态精准锁定物理 REF 机械臂串口，防止重新插拔后在 ACM0 与 ACM1 之间漂移
+    actual_port = os.environ.get('DUMMYARM_PORT', find_ref_serial_port())
+    print(f"==================================================")
+    print(f"[Launch] 自动锁定 Dummy REF 机械臂硬件串口: {actual_port}")
+    print(f"==================================================")
+
     # 解析 xacro 生成纯字符串，确保 controller_manager 0 延迟获取硬件定义
     xacro_file = os.path.join(desc_path, 'urdf', 'Dummy_URDF.urdf.xacro')
     robot_description_doc = xacro.process_file(
         xacro_file,
-        mappings={'use_mock_hardware': 'false', 'serial_port': '/dev/ttyACM1'}
+        mappings={'use_mock_hardware': 'false', 'serial_port': actual_port}
     )
     robot_description = ParameterValue(robot_description_doc.toxml(), value_type=str)
 

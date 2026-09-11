@@ -74,24 +74,44 @@ bool SerialPort::readLine(std::string & line, int timeout_ms) const
 {
   line.clear();
   if (fd_ < 0) { return false; }
-  char buf[256];
+
+  // 1. 如果缓冲区里已经有完整的一行，直接弹出返回
+  auto pos = rx_buf_.find_first_of("\r\n");
+  if (pos != std::string::npos) {
+    line = rx_buf_.substr(0, pos);
+    // 丢弃连续的回车换行符
+    while (pos < rx_buf_.size() && (rx_buf_[pos] == '\r' || rx_buf_[pos] == '\n')) {
+      pos++;
+    }
+    rx_buf_.erase(0, pos);
+    if (!line.empty()) { return true; }
+  }
+
+  // 2. 否则通过 select 读取新数据
   fd_set fds;
   FD_ZERO(&fds);
   FD_SET(fd_, &fds);
   struct timeval tv{timeout_ms / 1000, (timeout_ms % 1000) * 1000};
   int ret = select(fd_ + 1, &fds, nullptr, nullptr, &tv);
   if (ret <= 0) { return false; }
+
+  char buf[256];
   int n = (int)::read(fd_, buf, sizeof(buf) - 1);
   if (n <= 0) { return false; }
   buf[n] = 0;
-  std::string chunk(buf);
-  auto pos = chunk.find_first_of("\r\n");
+  rx_buf_.append(buf, n);
+
+  // 再次查找换行
+  pos = rx_buf_.find_first_of("\r\n");
   if (pos != std::string::npos) {
-    line = chunk.substr(0, pos);
-  } else {
-    line = chunk;
+    line = rx_buf_.substr(0, pos);
+    while (pos < rx_buf_.size() && (rx_buf_[pos] == '\r' || rx_buf_[pos] == '\n')) {
+      pos++;
+    }
+    rx_buf_.erase(0, pos);
+    return !line.empty();
   }
-  return !line.empty();
+  return false;
 }
 
 // ------------------------------------------------------------------ Hardware
@@ -201,44 +221,65 @@ CallbackReturn DummyArmHardware::on_shutdown(const rclcpp_lifecycle::State &)
 
 bool DummyArmHardware::query_positions(double period_s)
 {
-  std::string line;
   if (!serial_.write("#GETJPOS\n")) {
-    return false;
+    return true; // 即使偶发写入失败，也不中断周期
   }
-  if (!serial_.readLine(line, 300)) {
-    return false;
-  }
-  // 期望: "ok j1 j2 j3 j4 j5 j6" (度)
-  if (line.rfind("ok ", 0) != 0) {
-    return false;
-  }
-  float v[6];
-  if (std::sscanf(line.c_str(), "ok %f %f %f %f %f %f",
-                  &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]) != 6) {
-    return false;
-  }
-  last_vel_.resize(joints_.size());
-  for (size_t i = 0; i < joints_.size(); ++i) {
-    double q_model_deg = map_fw_to_model(v[i], i);
-    double q_model = deg2rad(q_model_deg);
-    double prev = joints_[i].measured_position_;
-    if (period_s > 1e-9 && prev_set_) {
-      joints_[i].measured_velocity_ = (q_model - prev) / period_s;
+
+  std::string line;
+  // 最多尝试 2 次（过滤前一次命令残留的纯 "ok"）
+  for (int attempt = 0; attempt < 2; ++attempt) {
+    if (!serial_.readLine(line, 10)) { // 严格限制在 10ms 以内，绝不阻塞 50ms 周期！
+      break;
     }
-    joints_[i].measured_position_ = q_model;
+    // 如果是纯 "ok" (命令确认)，继续读下一行才是 #GETJPOS 回复
+    if (line == "ok") {
+      continue;
+    }
+    if (line.rfind("ok ", 0) == 0) {
+      float v[6];
+      if (std::sscanf(line.c_str(), "ok %f %f %f %f %f %f",
+                      &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]) == 6) {
+        last_vel_.resize(joints_.size());
+        for (size_t i = 0; i < joints_.size(); ++i) {
+          double q_model_deg = map_fw_to_model(v[i], i);
+          double q_model = deg2rad(q_model_deg);
+          double prev = joints_[i].measured_position_;
+          if (period_s > 1e-9 && prev_set_) {
+            joints_[i].measured_velocity_ = (q_model - prev) / period_s;
+          }
+          joints_[i].measured_position_ = q_model;
+        }
+        prev_set_ = true;
+        return true;
+      }
+    }
   }
-  prev_set_ = true;
+
+  // 若本次偶尔未收到完整行，平滑沿用上一帧数据，保证 controller_manager 不会发生 Overrun
   return true;
 }
 
 bool DummyArmHardware::send_commands()
 {
   if (!is_enabled_) {
-    // 未通过 /dummyarm/enable 手动使能前，绝不下发任何运动命令，确保物理绝对安全
     return true;
   }
 
-  // 仅当有命令下发时按 '>' 格式发出 (INT 模式, 速度=命令速度参数化)
+  // 防抖优化：如果机械臂静止处于目标位，不向下位机高频刷发相同的重复指令
+  if (last_sent_cmd_.size() == joints_.size()) {
+    bool changed = false;
+    for (size_t i = 0; i < joints_.size(); ++i) {
+      if (std::abs(joints_[i].command_position_ - last_sent_cmd_[i]) > 0.0005) { // ~0.03°
+        changed = true;
+        break;
+      }
+    }
+    if (!changed) {
+      return true; // 位置未发生变化，静默保持，释放串口总线带宽
+    }
+  }
+
+  // 仅当有命令下发且发生变化时按 '>' 格式发出 (INT 模式, 速度=命令速度参数化)
   float j[6];
   for (size_t i = 0; i < joints_.size(); ++i) {
     double cmd_deg = joints_[i].command_position_ * 180.0 / M_PI;
@@ -258,7 +299,15 @@ bool DummyArmHardware::send_commands()
   int n = std::snprintf(buf, sizeof(buf), ">%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
                         j[0], j[1], j[2], j[3], j[4], j[5], joint_speed_);
   if (n <= 0) { return false; }
-  return serial_.write(std::string(buf, n));
+  
+  if (serial_.write(std::string(buf, n))) {
+    last_sent_cmd_.resize(joints_.size());
+    for (size_t i = 0; i < joints_.size(); ++i) {
+      last_sent_cmd_[i] = joints_[i].command_position_;
+    }
+    return true;
+  }
+  return false;
 }
 
 return_type DummyArmHardware::read(const rclcpp::Time &, const rclcpp::Duration & period)

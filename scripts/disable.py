@@ -5,10 +5,21 @@ disable.py - 机械臂硬急停与释放力矩工具
 """
 import sys
 import time
+import glob
+import os
 import serial
 
+def find_ref_port():
+    ref_ports = glob.glob('/dev/serial/by-id/*REF*')
+    if ref_ports:
+        return os.path.realpath(ref_ports[0])
+    for p in ['/dev/ttyACM0', '/dev/ttyACM1']:
+        if os.path.exists(p):
+            return p
+    return '/dev/ttyACM0'
+
 def main():
-    port = '/dev/ttyACM1' if len(sys.argv) < 2 else sys.argv[1]
+    port = sys.argv[1] if len(sys.argv) > 1 else find_ref_port()
     print(f"正在向 {port} 发送安全失能与释放力矩命令...")
     try:
         s = serial.Serial(port, 115200, timeout=0.5)
