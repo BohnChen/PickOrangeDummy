@@ -11,6 +11,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 import yaml
 
 def load_yaml(package_name, file_path):
@@ -38,7 +39,7 @@ def generate_launch_description():
         xacro_file,
         mappings={'use_mock_hardware': 'false', 'serial_port': '/dev/ttyACM1'}
     )
-    robot_description = robot_description_doc.toxml()
+    robot_description = ParameterValue(robot_description_doc.toxml(), value_type=str)
 
     robot_description_semantic = load_file(moveit_pkg, 'config/Dummy_URDF.srdf')
     kinematics_yaml = load_yaml(moveit_pkg, 'config/kinematics.yaml')
