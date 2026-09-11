@@ -265,33 +265,40 @@ bool DummyArmHardware::send_commands()
     return true;
   }
 
-  // 检查是否所有轴均无实质变化
-  bool has_change = false;
-  if (last_sent_cmd_.size() == joints_.size()) {
-    for (size_t i = 0; i < joints_.size(); ++i) {
-      if (std::abs(joints_[i].command_position_ - last_sent_cmd_[i]) > 0.0001) { // 极微小变化也保证响应
-        has_change = true;
-        break;
+  // 1. 逐轴进行物理微步死区滤波 (Deadband Filter)
+  // 机械臂步进减速电机单步约 0.08° (~0.0015 rad)，过滤微米级浮点数值抖动
+  double filtered_targets[6];
+  bool any_joint_moved = false;
+
+  for (size_t i = 0; i < joints_.size(); ++i) {
+    double target = joints_[i].command_position_;
+    if (last_sent_cmd_.size() == joints_.size()) {
+      // 如果目标变动小于一个物理微步，锁定在上次值，彻底消除手腕 J4/J5/J6 悬空微调抽搐
+      if (std::abs(target - last_sent_cmd_[i]) < 0.0015) {
+        target = last_sent_cmd_[i];
+      } else {
+        any_joint_moved = true;
       }
+    } else {
+      any_joint_moved = true;
     }
-  } else {
-    has_change = true;
+    filtered_targets[i] = target;
   }
 
-  if (!has_change) {
+  // 2. 如果各轴均无实质位移变化，平滑跳过，节省串口带宽并让电机完全静止
+  if (!any_joint_moved) {
     idle_count_++;
-    // 静止超过 5 个周期 (250ms) 后进入静默模式，防止串口冗余
     if (idle_count_ > 5) {
       return true;
     }
   } else {
-    idle_count_ = 0; // 一旦有任何运动，重置计时，保证全程均匀下发
+    idle_count_ = 0;
   }
 
-  // 仅当有命令下发且发生变化时按 '>' 格式发出 (INT 模式, 速度=命令速度参数化)
+  // 3. 准备下发指令
   float j[6];
   for (size_t i = 0; i < joints_.size(); ++i) {
-    double cmd_deg = joints_[i].command_position_ * 180.0 / M_PI;
+    double cmd_deg = filtered_targets[i] * 180.0 / M_PI;
     double fw_deg = map_model_to_fw(cmd_deg, i);
 
     // 核心安全硬拦截：超出物理固件硬限位立即拦截并拒绝下发！
@@ -311,13 +318,12 @@ bool DummyArmHardware::send_commands()
   
   if (serial_.write(std::string(buf, n))) {
     // 核心事务闭环：立即消费并吃掉单片机对 '>' 回复的 "ok\r\n"
-    // 绝不让它残留在缓冲区污染后续的 #GETJPOS 遥测数据流！
     std::string ack;
-    serial_.readLine(ack, 20); // 单片机对 '>' 是立即回 ok (耗时 <1ms)
+    serial_.readLine(ack, 20);
 
     last_sent_cmd_.resize(joints_.size());
     for (size_t i = 0; i < joints_.size(); ++i) {
-      last_sent_cmd_[i] = joints_[i].command_position_;
+      last_sent_cmd_[i] = filtered_targets[i];
     }
     return true;
   }
