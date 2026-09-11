@@ -100,16 +100,21 @@ def generate_launch_description():
     )
 
     # RViz2 with MoveIt plugin
+    rviz_parameters = [
+        {'robot_description': robot_description},
+        {'robot_description_semantic': robot_description_semantic},
+        {'robot_description_kinematics': kinematics_yaml},
+        {'robot_description_planning': joint_limits_yaml},
+        ompl_planning_yaml,
+        {'planning_pipelines': ['ompl']},
+        {'default_planning_pipeline': 'ompl'},
+    ]
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         arguments=['-d', rviz_config],
-        parameters=[
-            {'robot_description': robot_description},
-            {'robot_description_semantic': robot_description_semantic},
-            {'robot_description_kinematics': kinematics_yaml},
-            {'robot_description_planning': joint_limits_yaml},
-        ],
+        parameters=rviz_parameters,
         output='screen',
     )
 
