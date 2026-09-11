@@ -24,7 +24,7 @@ joint_trajectory_controller:
       - velocity
     state_publish_rate: 20.0
     action_monitor_rate: 20.0
-    allow_partial_joints_goal: false
+    allow_partial_joints_goal: true
     allow_integration_in_goal_trajectories: false
     constraints:
       stopped_velocity_tolerance: 0.2
