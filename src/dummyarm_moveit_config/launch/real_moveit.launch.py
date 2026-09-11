@@ -83,7 +83,7 @@ def generate_launch_description():
         moveit_controllers_yaml,
         {'trajectory_execution.allowed_execution_duration_scaling': 3.0},
         {'trajectory_execution.allowed_goal_duration_margin': 10.0},
-        {'trajectory_execution.allowed_start_tolerance': 0.05},
+        {'trajectory_execution.allowed_start_tolerance': 0.15},
         {'publish_planning_scene': True},
         {'publish_geometry_updates': True},
         {'publish_state_updates': True},
