@@ -33,9 +33,9 @@ Visualization Manager:
         Loop Animation: true
         Show Robot Collision: false
         Show Robot Visual: true
-        Show Trail: true
-        State Display Time: 0.05
-        Trajectory Topic: /display_planned_path
+        Show Trail: false
+        State Display Time: 0.05 s
+        Trajectory Topic: display_planned_path
       Scene Robot:
         Robot Alpha: 0.5
   Enabled: true
