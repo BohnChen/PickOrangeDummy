@@ -133,6 +133,8 @@ public:
   rclcpp::Logger logger_ = rclcpp::get_logger("dummyarm_hardware");
   rclcpp::Clock clock_{RCL_SYSTEM_TIME};
   bool is_enabled_{false};
+  bool lock_j6_during_trajectory_{true}; // 轨迹运动期间是否锁定 J6 绝对不转
+  double cutter_target_pos_{0.0};        // J6 专用的独立切削目标位置 (rad)
 };
 
 }  // namespace dummyarm_hardware

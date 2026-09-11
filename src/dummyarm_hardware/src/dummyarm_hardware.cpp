@@ -282,7 +282,14 @@ bool DummyArmHardware::send_commands()
   // 准备下发指令 (平滑、连续、无延迟透传)
   float j[6];
   for (size_t i = 0; i < joints_.size(); ++i) {
-    double cmd_deg = joints_[i].command_position_ * 180.0 / M_PI;
+    double target_pos = joints_[i].command_position_;
+
+    // 核心架构改进：若开启了轨迹阶段 J6 锁定，J6 物理指令完全隔离为专用的切削位置！
+    if (i == 5 && lock_j6_during_trajectory_) {
+      target_pos = cutter_target_pos_;
+    }
+
+    double cmd_deg = target_pos * 180.0 / M_PI;
     double fw_deg = map_model_to_fw(cmd_deg, i);
 
     // 核心安全硬拦截：超出物理固件硬限位立即拦截并拒绝下发！

@@ -34,4 +34,4 @@ joint_trajectory_controller:
       Joint3: {goal: 0.05}
       Joint4: {goal: 0.05}
       Joint5: {goal: 0.05}
-      Joint6: {goal: 0.05}
+      Joint6: {goal: 6.28}
