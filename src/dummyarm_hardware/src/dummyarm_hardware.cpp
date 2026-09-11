@@ -222,17 +222,17 @@ CallbackReturn DummyArmHardware::on_shutdown(const rclcpp_lifecycle::State &)
 bool DummyArmHardware::query_positions(double period_s)
 {
   if (!serial_.write("#GETJPOS\n")) {
-    return true; // 即使偶发写入失败，也不中断周期
+    return true; // 偶发写入失败平滑容错
   }
 
   std::string line;
-  // 最多尝试 2 次（过滤前一次命令残留的纯 "ok"）
-  for (int attempt = 0; attempt < 2; ++attempt) {
-    if (!serial_.readLine(line, 10)) { // 严格限制在 10ms 以内，绝不阻塞 50ms 周期！
+  // 快速读取并解析回复 (超时 15ms)
+  for (int attempt = 0; attempt < 3; ++attempt) {
+    if (!serial_.readLine(line, 15)) {
       break;
     }
-    // 如果是纯 "ok" (命令确认)，继续读下一行才是 #GETJPOS 回复
-    if (line == "ok") {
+    // 过滤可能漏掉的孤立 "ok" 或空行
+    if (line == "ok" || line.empty()) {
       continue;
     }
     if (line.rfind("ok ", 0) == 0) {
@@ -255,7 +255,7 @@ bool DummyArmHardware::query_positions(double period_s)
     }
   }
 
-  // 若本次偶尔未收到完整行，平滑沿用上一帧数据，保证 controller_manager 不会发生 Overrun
+  // 偶尔丢包时平滑沿用上一帧数据，保证 ROS 2 控制器不发生 Overrun
   return true;
 }
 
@@ -301,6 +301,11 @@ bool DummyArmHardware::send_commands()
   if (n <= 0) { return false; }
   
   if (serial_.write(std::string(buf, n))) {
+    // 核心事务闭环：立即消费并吃掉单片机对 '>' 回复的 "ok\r\n"
+    // 绝不让它残留在缓冲区污染后续的 #GETJPOS 遥测数据流！
+    std::string ack;
+    serial_.readLine(ack, 20); // 单片机对 '>' 是立即回 ok (耗时 <1ms)
+
     last_sent_cmd_.resize(joints_.size());
     for (size_t i = 0; i < joints_.size(); ++i) {
       last_sent_cmd_[i] = joints_[i].command_position_;

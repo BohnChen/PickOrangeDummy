@@ -74,6 +74,7 @@ public:
   void close();
   bool write(const std::string & s) const;
   bool readLine(std::string & line, int timeout_ms) const;
+  void clearRx() { rx_buf_.clear(); }
 
 private:
   int fd_;
