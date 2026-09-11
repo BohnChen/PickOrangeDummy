@@ -27,8 +27,11 @@ Visualization Manager:
       Planning Scene Topic: /monitored_planning_scene
       Robot Description: robot_description
       Planning Request:
+        Planning Group: arm
         Query Start State: false
         Query Goal State: true
+        Velocity Scaling: 1
+        Accel. Scaling: 1
       Planned Path:
         Loop Animation: true
         Show Robot Collision: false
