@@ -265,18 +265,27 @@ bool DummyArmHardware::send_commands()
     return true;
   }
 
-  // 防抖优化：如果机械臂静止处于目标位，不向下位机高频刷发相同的重复指令
+  // 检查是否所有轴均无实质变化
+  bool has_change = false;
   if (last_sent_cmd_.size() == joints_.size()) {
-    bool changed = false;
     for (size_t i = 0; i < joints_.size(); ++i) {
-      if (std::abs(joints_[i].command_position_ - last_sent_cmd_[i]) > 0.0005) { // ~0.03°
-        changed = true;
+      if (std::abs(joints_[i].command_position_ - last_sent_cmd_[i]) > 0.0001) { // 极微小变化也保证响应
+        has_change = true;
         break;
       }
     }
-    if (!changed) {
-      return true; // 位置未发生变化，静默保持，释放串口总线带宽
+  } else {
+    has_change = true;
+  }
+
+  if (!has_change) {
+    idle_count_++;
+    // 静止超过 5 个周期 (250ms) 后进入静默模式，防止串口冗余
+    if (idle_count_ > 5) {
+      return true;
     }
+  } else {
+    idle_count_ = 0; // 一旦有任何运动，重置计时，保证全程均匀下发
   }
 
   // 仅当有命令下发且发生变化时按 '>' 格式发出 (INT 模式, 速度=命令速度参数化)

@@ -129,6 +129,7 @@ public:
   bool prev_set_ = false;
   std::vector<double> last_vel_;
   std::vector<double> last_sent_cmd_;
+  int idle_count_{0};
   rclcpp::Logger logger_ = rclcpp::get_logger("dummyarm_hardware");
   rclcpp::Clock clock_{RCL_SYSTEM_TIME};
   bool is_enabled_{false};
