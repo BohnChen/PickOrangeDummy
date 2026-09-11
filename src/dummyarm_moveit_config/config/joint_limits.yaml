@@ -4,6 +4,8 @@ joint_limits:
     max_velocity: 0.20
     has_acceleration_limits: true
     max_acceleration: 0.40
+    has_jerk_limits: true
+    max_jerk: 1.50
     has_position_limits: true
     min_position: -2.967060
     max_position: 2.967060
@@ -12,6 +14,8 @@ joint_limits:
     max_velocity: 0.20
     has_acceleration_limits: true
     max_acceleration: 0.40
+    has_jerk_limits: true
+    max_jerk: 1.50
     has_position_limits: true
     min_position: 0.000000
     max_position: 2.844887
@@ -20,6 +24,8 @@ joint_limits:
     max_velocity: 0.20
     has_acceleration_limits: true
     max_acceleration: 0.40
+    has_jerk_limits: true
+    max_jerk: 1.50
     has_position_limits: true
     min_position: -2.530727
     max_position: 0.000000
@@ -28,6 +34,8 @@ joint_limits:
     max_velocity: 0.20
     has_acceleration_limits: true
     max_acceleration: 0.40
+    has_jerk_limits: true
+    max_jerk: 1.50
     has_position_limits: true
     min_position: -3.141593
     max_position: 3.141593
@@ -36,6 +44,8 @@ joint_limits:
     max_velocity: 0.20
     has_acceleration_limits: true
     max_acceleration: 0.40
+    has_jerk_limits: true
+    max_jerk: 1.50
     has_position_limits: true
     min_position: -1.658063
     max_position: 1.658063
@@ -44,6 +54,8 @@ joint_limits:
     max_velocity: 0.30
     has_acceleration_limits: true
     max_acceleration: 0.60
+    has_jerk_limits: true
+    max_jerk: 2.00
     has_position_limits: true
     min_position: -3.141593
     max_position: 3.141593

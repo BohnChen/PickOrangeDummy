@@ -27,7 +27,7 @@ joint_trajectory_controller:
     allow_partial_joints_goal: true
     allow_integration_in_goal_trajectories: false
     constraints:
-      stopped_velocity_tolerance: 0.2
+      stopped_velocity_tolerance: 0.02
       goal_time: 0.0
       Joint1: {goal: 0.05}
       Joint2: {goal: 0.05}
