@@ -1,12 +1,5 @@
 # Dummy_URDF — Robot Description
 
-> **DummyArm 项目内用法**（2026-09-10 更新：直接采用 Fusion 导出，补丁版导出器）：
-> - `ros2 launch dummyarm_cad_description display_jsp.launch.py` — 滑块版（初始=设计姿态/REST），看模型/演示用
-> - `ros2 launch dummyarm_cad_description display.launch.py` — 导出器原版（mock ros2_control + 3 控制器），可用 `/position_controller/commands` 驱动
-> - 关节值 = **直接导出的 CAD 约定**（设计姿态/REST = 0）；限位按"相对 REST"（J1 ±170° / J2 [0,163°] / J3 [-145,0°] / J4 ±180° / J5 ±95° / J6 continuous）
-> - 关节名保持 CAD 的 `_1.._6`（真值链 `dummyarm_description` 用 `Joint1..6` + 模型约定）
-> - 导出/修复流程与坑见 `docs/fusion_export_workflow.md`
-
 ![Dummy_URDF](images/robot.png)
 
 ## Overview

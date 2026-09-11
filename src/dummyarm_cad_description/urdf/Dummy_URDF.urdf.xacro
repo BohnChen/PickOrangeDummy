@@ -3,7 +3,7 @@
 
   <!-- Materials (shared across all assemblies) -->
   <material name="material">
-    <color rgba="0.910 0.678 0.137 1.0"/>
+    <color rgba="0.941 0.031 0.031 1.0"/>
   </material>
 
   <!-- Assembly includes -->

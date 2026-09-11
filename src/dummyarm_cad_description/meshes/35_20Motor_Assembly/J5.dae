@@ -4,8 +4,8 @@
     <contributor>
       <authoring_tool>Fusion URDF/XACRO Exporter</authoring_tool>
     </contributor>
-    <created>2026-09-10T12:38:24Z</created>
-    <modified>2026-09-10T12:38:24Z</modified>
+    <created>2026-09-11T00:44:31Z</created>
+    <modified>2026-09-11T00:44:31Z</modified>
     <unit name="meter" meter="1.0"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -16,7 +16,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -30,7 +30,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -44,7 +44,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9608 0.9608 0.9647 1</color></diffuse>
+            <diffuse><color>0.1216 0.1216 0.1255 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -58,7 +58,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -72,7 +72,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -86,7 +86,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -100,7 +100,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -114,7 +114,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -128,7 +128,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -142,7 +142,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -170,7 +170,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9647 0.9647 0.9529 1</color></diffuse>
+            <diffuse><color>0.0431 0.0431 0.0431 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -184,7 +184,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9608 0.9608 0.9647 1</color></diffuse>
+            <diffuse><color>0.1216 0.1216 0.1255 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -212,7 +212,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9098 0.6784 0.1373 1</color></diffuse>
+            <diffuse><color>0.9412 0.0314 0.0314 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -226,7 +226,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9725 0.9686 0.9294 1</color></diffuse>
+            <diffuse><color>0.1804 0.1804 0.1765 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -240,7 +240,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -254,7 +254,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -268,7 +268,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9098 0.6784 0.1373 1</color></diffuse>
+            <diffuse><color>0.9412 0.0314 0.0314 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -282,7 +282,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -296,7 +296,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.9647 0.7020 0.1529 1</color></diffuse>
+            <diffuse><color>0.8588 0.8588 0.8275 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>
@@ -310,7 +310,7 @@
           <lambert>
             <emission><color>0 0 0 1</color></emission>
             <ambient><color>0.0000 0.0000 0.0000 1</color></ambient>
-            <diffuse><color>0.6275 0.6275 0.6275 1</color></diffuse>
+            <diffuse><color>0.8510 0.8392 0.8392 1</color></diffuse>
             <reflective><color>0 0 0 1</color></reflective>
             <transparent opaque="A_ONE"><color>1 1 1 1</color></transparent>
             <transparency><float>1</float></transparency>

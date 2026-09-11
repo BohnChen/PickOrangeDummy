@@ -78,7 +78,7 @@ links:
       iyz: 7.400640e-05
       izz: 3.003057e-04
     material: 'material'
-    color_rgba: [0.910, 0.678, 0.137, 1.0]
+    color_rgba: [0.941, 0.031, 0.031, 1.0]
     body_count: 1
     is_empty: false
     collision_source: primitive
@@ -104,7 +104,7 @@ links:
       iyz: 2.785837e-04
       izz: 7.714248e-03
     material: 'material'
-    color_rgba: [0.910, 0.678, 0.137, 1.0]
+    color_rgba: [0.941, 0.031, 0.031, 1.0]
     body_count: 1
     is_empty: false
     collision_source: primitive
@@ -130,7 +130,7 @@ links:
       iyz: 1.414971e-04
       izz: 8.277172e-04
     material: 'material'
-    color_rgba: [0.910, 0.678, 0.137, 1.0]
+    color_rgba: [0.941, 0.031, 0.031, 1.0]
     body_count: 1
     is_empty: false
     collision_source: primitive
@@ -156,7 +156,7 @@ links:
       iyz: 7.690131e-07
       izz: 2.598691e-04
     material: 'material'
-    color_rgba: [0.961, 0.961, 0.965, 1.0]
+    color_rgba: [0.122, 0.122, 0.125, 1.0]
     body_count: 3
     is_empty: false
     collision_source: primitive
@@ -182,7 +182,7 @@ links:
       iyz: 1.267589e-05
       izz: 1.914349e-04
     material: 'material'
-    color_rgba: [0.961, 0.961, 0.965, 1.0]
+    color_rgba: [0.122, 0.122, 0.125, 1.0]
     body_count: 3
     is_empty: false
     collision_source: primitive
@@ -208,7 +208,7 @@ links:
       iyz: 9.169302e-05
       izz: 6.883350e-03
     material: 'material'
-    color_rgba: [0.965, 0.965, 0.953, 1.0]
+    color_rgba: [0.043, 0.043, 0.043, 1.0]
     body_count: 1
     is_empty: false
     collision_source: primitive
@@ -234,7 +234,7 @@ links:
       iyz: 0.000000e+00
       izz: 3.702439e-05
     material: 'material'
-    color_rgba: [0.627, 0.627, 0.627, 1.0]
+    color_rgba: [0.914, 0.875, 0.875, 1.0]
     body_count: 1
     is_empty: false
     collision_source: primitive
