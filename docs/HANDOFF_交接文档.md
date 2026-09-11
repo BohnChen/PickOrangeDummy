@@ -121,6 +121,7 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 - **controller_manager 启动卡死在等待 robot_description**：切勿在 launch 中使用 `ParameterValue(Command(['xacro', ...]))` 给 `ros2_control_node`，必须使用 Python 的 `xacro.process_file(...).toxml()` 直接生成纯 XML 字符串传递，避免因 launch substitution 延迟导致控制器无限等待 topic。
 - **ROS 2 硬件接口声明严格匹配（Discrepancy between robot description file and actually exported HW interfaces）**：URDF 中 `<ros2_control>` 块声明的 `command_interface` 与 `state_interface` 必须与 C++ 硬件插件 `export_command_interfaces()` / `export_state_interfaces()` 完全一一对应。若 URDF 中多声明了硬件未支持的接口（如虚假的 `velocity` 或 `effort`），`resource_manager` 会直接判定硬件初始化失败并挂起 `controller_manager`，导致控制器无法启动。
 - **ROS 2 控制器并发加载冲突（Can't accept new action goals. Controller is not running）**：切勿在 launch 中并列启动多个独立 `spawner` 节点分别加载 broadcaster 和 trajectory controller，否则会引发 controller_manager 内部竞争死锁导致轨迹控制器未激活（inactive）；应在一个 `spawner` 命令中按序传入所有控制器名称并附带 `--param-file`。
+- **RViz 规划轨迹预览（Planned Path）**：默认配置若 `Loop Animation: false` 且 `Show Trail: false`，规划轨迹在 0.2 秒内播放完毕容易被误认为“没看到轨迹”。开启 `Loop Animation: true`、`Show Trail: true` 并显式指定 `Trajectory Topic: /display_planned_path` 后，每次点击 Plan 会持续循环动态展示运动过程与拖尾姿态。
 
 ## 7. 仓库/工具清单速查
 
