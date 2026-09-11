@@ -31,11 +31,19 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
+from sensor_msgs.msg import JointState
 from builtin_interfaces.msg import Duration
 import sys
 
 rclpy.init()
 node = Node('park_runner')
+
+# 先读取当前机械臂各关节实时角度
+current_positions = [0.0] * 6
+sub = node.create_subscription(JointState, '/joint_states', lambda m: current_positions.__setitem__(slice(None), m.position[:6]) if len(m.position)>=6 else None, 10)
+for _ in range(10):
+    rclpy.spin_once(node, timeout_sec=0.1)
+
 client = ActionClient(node, FollowJointTrajectory, '/joint_trajectory_controller/follow_joint_trajectory')
 
 if not client.wait_for_server(timeout_sec=5.0):
@@ -45,9 +53,14 @@ if not client.wait_for_server(timeout_sec=5.0):
 goal = FollowJointTrajectory.Goal()
 goal.trajectory.joint_names = ['Joint1', 'Joint2', 'Joint3', 'Joint4', 'Joint5', 'Joint6']
 point = JointTrajectoryPoint()
-point.positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# J1~J5 稳步回折叠收拢原点 0.0；J6 保持当前角度不变，绝不多转一圈！
+cur_j6 = current_positions[5] if len(current_positions) == 6 else 0.0
+point.positions = [0.0, 0.0, 0.0, 0.0, 0.0, cur_j6]
 point.time_from_start = Duration(sec=8, nanosec=0)
 goal.trajectory.points = [point]
+
+print(f"J6 当前角度 {cur_j6:.2f} rad，收纳时保持不动，仅各轴优雅收拢...")
 
 future = client.send_goal_async(goal)
 rclpy.spin_until_future_complete(node, future)
@@ -62,6 +75,8 @@ else:
     print("控制器拒绝了运动请求！")
 
 node.destroy_node()
+rclpy.shutdown()
+EOF
 rclpy.shutdown()
 EOF
 fi

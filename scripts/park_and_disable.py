@@ -12,6 +12,7 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
+from sensor_msgs.msg import JointState
 from builtin_interfaces.msg import Duration
 import serial
 
@@ -21,6 +22,12 @@ class ArmParker(Node):
     def __init__(self):
         super().__init__('dummyarm_parker')
         self._client = ActionClient(self, FollowJointTrajectory, '/joint_trajectory_controller/follow_joint_trajectory')
+        self._cur_positions = [0.0] * 6
+        self.create_subscription(JointState, '/joint_states', self._cb_js, 10)
+
+    def _cb_js(self, msg):
+        if len(msg.position) >= 6:
+            self._cur_positions = list(msg.position[:6])
 
     def park(self, duration_sec=8.0):
         self.get_logger().info("正在连接轨迹控制器...")
@@ -28,12 +35,17 @@ class ArmParker(Node):
             self.get_logger().error("未能连接到 /joint_trajectory_controller/follow_joint_trajectory，请确认 real_moveit 正在运行！")
             return False
 
+        # 稍微 spin 获取实时角度
+        for _ in range(10):
+            rclpy.spin_once(self, timeout_sec=0.1)
+
         goal_msg = FollowJointTrajectory.Goal()
         goal_msg.trajectory.joint_names = JOINT_NAMES
         
-        # REST 姿态: CAD 模型全关节 0 弧度
+        # REST 姿态: J1~J5 回 0，J6 保持当前角度不变 (避免无意义多圈回旋)
         point = JointTrajectoryPoint()
-        point.positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        cur_j6 = self._cur_positions[5] if len(self._cur_positions) == 6 else 0.0
+        point.positions = [0.0, 0.0, 0.0, 0.0, 0.0, cur_j6]
         sec = int(duration_sec)
         nanosec = int((duration_sec - sec) * 1e9)
         point.time_from_start = Duration(sec=sec, nanosec=nanosec)
