@@ -265,49 +265,24 @@ bool DummyArmHardware::send_commands()
     return true;
   }
 
-  // 1. 逐轴进行物理微步死区滤波 (Deadband Filter)
-  // 机械臂步进减速电机单步约 0.08° (~0.0015 rad)，过滤微米级浮点数值抖动
-  double filtered_targets[6];
-  bool any_joint_moved = false;
-
-  for (size_t i = 0; i < joints_.size(); ++i) {
-    double target = joints_[i].command_position_;
-    if (last_sent_cmd_.size() == joints_.size()) {
-      // 如果目标变动小于一个物理微步，锁定在上次值，彻底消除手腕 J4/J5/J6 悬空微调抽搐
-      if (std::abs(target - last_sent_cmd_[i]) < 0.0015) {
-        target = last_sent_cmd_[i];
-      } else {
-        any_joint_moved = true;
+  // 静止检测：如果所有关节指令与上次发送完全一致（已停止），静默不发
+  if (last_sent_cmd_.size() == joints_.size()) {
+    bool same = true;
+    for (size_t i = 0; i < joints_.size(); ++i) {
+      if (std::abs(joints_[i].command_position_ - last_sent_cmd_[i]) > 1e-5) {
+        same = false;
+        break;
       }
-    } else {
-      any_joint_moved = true;
     }
-    filtered_targets[i] = target;
-  }
-
-  // 2. 检查距离上次指令的时间间隔
-  auto now = std::chrono::steady_clock::now();
-  auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_cmd_time_).count();
-
-  // 如果各轴均无实质位移变化，平滑跳过
-  if (!any_joint_moved) {
-    idle_count_++;
-    if (idle_count_ > 3) {
+    if (same) {
       return true;
     }
-  } else {
-    // 关键平滑核心：在运动期间，严格限制向下位机发送新目标的间隔不少于 120ms (约 8Hz)
-    // 彻底杜绝 50ms 频繁打断单片机内部硬件梯形加减速造成的剧烈机械抽搐！
-    if (elapsed_ms < 120) {
-      return true; // 保持单片机当前平滑执行节奏，不打断它
-    }
-    idle_count_ = 0;
   }
 
-  // 3. 准备下发指令
+  // 准备下发指令 (平滑、连续、无延迟透传)
   float j[6];
   for (size_t i = 0; i < joints_.size(); ++i) {
-    double cmd_deg = filtered_targets[i] * 180.0 / M_PI;
+    double cmd_deg = joints_[i].command_position_ * 180.0 / M_PI;
     double fw_deg = map_model_to_fw(cmd_deg, i);
 
     // 核心安全硬拦截：超出物理固件硬限位立即拦截并拒绝下发！
@@ -326,14 +301,13 @@ bool DummyArmHardware::send_commands()
   if (n <= 0) { return false; }
   
   if (serial_.write(std::string(buf, n))) {
-    // 核心事务闭环：立即消费并吃掉单片机对 '>' 回复的 "ok\r\n"
+    // 核心事务闭环：立即消费单片机对 '>' 回复的 "ok\r\n"
     std::string ack;
     serial_.readLine(ack, 20);
 
-    last_cmd_time_ = now; // 记录最近一次下发时间戳
     last_sent_cmd_.resize(joints_.size());
     for (size_t i = 0; i < joints_.size(); ++i) {
-      last_sent_cmd_[i] = filtered_targets[i];
+      last_sent_cmd_[i] = joints_[i].command_position_;
     }
     return true;
   }
