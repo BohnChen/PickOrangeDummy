@@ -123,6 +123,7 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 - **ROS 2 控制器并发加载冲突（Can't accept new action goals. Controller is not running）**：切勿在 launch 中并列启动多个独立 `spawner` 节点分别加载 broadcaster 和 trajectory controller，否则会引发 controller_manager 内部竞争死锁导致轨迹控制器未激活（inactive）；应在一个 `spawner` 命令中按序传入所有控制器名称并附带 `--param-file`。
 - **MoveIt 执行超时主动掐断（waitForExecution timed out / Controller is taking too long to execute trajectory）**：当轨迹规划在底层下发给物理电机时，若底层固件执行速度过低（如 5°/s），实际运动耗时会超过 MoveIt 默认的超时上限（`allowed_execution_duration_scaling: 1.2`，约 15.9 秒），导致 MoveIt 判定超时主动向控制器下发 Cancel 强行终止运动。在真机调试低速环境下，必须将 `allowed_execution_duration_scaling` 设为 `3.0`，`allowed_goal_duration_margin` 设为 `10.0`，并将下发速度微调至匹配的 `15.0°/s`，留出充分的执行与到位收敛裕量。
 - **串口通信拥堵与 Overrun 导致执行中途卡死**：在 115200 波特率下，控制频率不宜采用 50Hz（20ms 周期），因为 `#GETJPOS` 查询与 `>` 运动指令双向打架会导致单片机 USB 环形缓冲区溢出死锁。驱动必须引入流式行切分缓冲区、限制单次超时在 10ms 以内（丢包时平滑沿用上一帧而不阻塞调度），并将控制循环设为更宽裕的 **20Hz**（50ms 周期），静止时抑制重复指令下发。
+- **J5 (手腕俯仰) 运动方向实测与符号修正**：经真机单轴动作实测验证，物理机械臂当 J5 固件角度增加时为低头，而 CAD 模型中 Joint5 正向旋转为抬头，两者在数学上符号相反。`dummyarm_hardware` 中的映射公式已修正为 `q_cad[4] = -q_fw[4]` 与 `q_fw[4] = -q_cad[4]`，彻底解决了手腕俯仰与仿真相反导致末端指向偏斜的问题。
 
 ## 7. 仓库/工具清单速查
 
