@@ -17,6 +17,11 @@ arm:
     - RRTstarkConfigDefault
   default_planner_config: RRTConnectkConfigDefault
 
+cutter:
+  planner_configs:
+    - RRTConnectkConfigDefault
+  default_planner_config: RRTConnectkConfigDefault
+
 planner_configs:
   RRTConnectkConfigDefault:
     type: geometric::RRTConnect

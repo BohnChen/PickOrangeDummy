@@ -77,8 +77,6 @@ else:
 node.destroy_node()
 rclpy.shutdown()
 EOF
-rclpy.shutdown()
-EOF
 fi
 
 echo ""
