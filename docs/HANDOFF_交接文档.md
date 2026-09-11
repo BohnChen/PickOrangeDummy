@@ -117,6 +117,7 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 - **ROS 2 Jazzy MoveIt 2 规划库未加载（NO PLANNING LIBRARY LOADED）**：OMPL 配置文件内容在传给 `move_group` 和 `rviz2` 节点参数时，必须嵌套在 `{'ompl': ompl_planning_yaml}` 命名空间下，否则因缺少 `ompl.` 前缀被识别为空规划器。
 - **ROS 2 Jazzy MoveIt 2 轨迹时间戳全为0被控制器拒收（Time between points 0 and 1 is not strictly increasing）**：`AddTimeOptimalParameterization` 插件在 Jazzy 中必须配置在 `response_adapters`（规划后适配器）中，不能放在 `request_adapters`，否则规划出的轨迹不带时间戳生成，控制器因首两点时间差为0直接报错 `Goal request rejected` 导致超时 abort。
 - **joint_trajectory_controller 容差配置**：`goal_time` 建议设置为 `0.0`，让控制器根据轨迹自带的 duration 和 MoveIt 裕量协同动态判定，避免硬编码超时引发误判。
+- **ROS 2 控制器并发加载冲突（Can't accept new action goals. Controller is not running）**：切勿在 launch 中并列启动多个独立 `spawner` 节点分别加载 broadcaster 和 trajectory controller，否则会引发 controller_manager 内部竞争死锁导致轨迹控制器未激活（inactive）；应在一个 `spawner` 命令中按序传入所有控制器名称并附带 `--param-file`。
 
 ## 7. 仓库/工具清单速查
 
