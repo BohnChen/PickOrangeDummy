@@ -47,16 +47,21 @@ def generate_launch_description():
     moveit_controllers_yaml = load_yaml(moveit_pkg, 'config/moveit_controllers.yaml')
     rviz_config = os.path.join(moveit_path, 'config', 'moveit.rviz')
 
+    # Planning pipeline parameters (namespaced properly for MoveIt 2 in ROS 2 Jazzy)
+    planning_pipeline_params = {
+        'planning_pipelines': ['ompl'],
+        'default_planning_pipeline': 'ompl',
+        'ompl': ompl_planning_yaml,
+    }
+
     # Planning context
     move_group_params = [
         {'robot_description': robot_description},
         {'robot_description_semantic': robot_description_semantic},
         {'robot_description_kinematics': kinematics_yaml},
         {'robot_description_planning': joint_limits_yaml},
-        ompl_planning_yaml,
+        planning_pipeline_params,
         moveit_controllers_yaml,
-        {'planning_pipelines': ['ompl']},
-        {'default_planning_pipeline': 'ompl'},
         {'trajectory_execution.allowed_execution_duration_scaling': 1.2},
         {'trajectory_execution.allowed_goal_duration_margin': 0.5},
         {'trajectory_execution.allowed_start_tolerance': 0.05},
@@ -112,9 +117,7 @@ def generate_launch_description():
         {'robot_description_semantic': robot_description_semantic},
         {'robot_description_kinematics': kinematics_yaml},
         {'robot_description_planning': joint_limits_yaml},
-        ompl_planning_yaml,
-        {'planning_pipelines': ['ompl']},
-        {'default_planning_pipeline': 'ompl'},
+        planning_pipeline_params,
     ]
 
     rviz_node = Node(

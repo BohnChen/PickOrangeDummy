@@ -12,8 +12,8 @@
     </group>
 
     <!-- GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. -->
-    <!-- CAD 约定下初始设计姿态为 0 -->
-    <group_state name="zero" group="arm">
+    <!-- 依据 docs/fusion_export_workflow.md: 导出时的 CAD 设计姿态本身就是物理 REST 姿态(全 0.0) -->
+    <group_state name="rest" group="arm">
         <joint name="Joint1" value="0.0"/>
         <joint name="Joint2" value="0.0"/>
         <joint name="Joint3" value="0.0"/>
@@ -22,20 +22,11 @@
         <joint name="Joint6" value="0.0"/>
     </group_state>
 
-    <!-- REST 姿态 (模型角约定: Joint2 ~ 2.845 rad (163°), Joint3 ~ -3.142 rad (-180°)) -->
-    <group_state name="rest" group="arm">
-        <joint name="Joint1" value="0.0"/>
-        <joint name="Joint2" value="2.844887"/>
-        <joint name="Joint3" value="-3.141593"/>
-        <joint name="Joint4" value="0.0"/>
-        <joint name="Joint5" value="0.0"/>
-        <joint name="Joint6" value="0.0"/>
-    </group_state>
-
-    <!-- HOME 姿态 (7 字准备姿态: Joint2 ~ 1.571 rad (90°), Joint3 ~ -1.571 rad (-90°)) -->
+    <!-- HOME 姿态 (7 字准备姿态: Joint2 打开 73° ~ 1.274 rad, Joint3 展开 90° ~ -1.571 rad) -->
+    <!-- 均严格在 Joint2 [0, 2.845] 和 Joint3 [-2.531, 0] 限位内 -->
     <group_state name="home" group="arm">
         <joint name="Joint1" value="0.0"/>
-        <joint name="Joint2" value="1.570796"/>
+        <joint name="Joint2" value="1.274090"/>
         <joint name="Joint3" value="-1.570796"/>
         <joint name="Joint4" value="0.0"/>
         <joint name="Joint5" value="0.0"/>
