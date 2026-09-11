@@ -88,19 +88,16 @@ def generate_launch_description():
         output='screen',
     )
 
-    # Spawner: Joint State Broadcaster
-    spawn_jsb = Node(
+    # Controller Spawner (sequential activation to prevent race condition)
+    controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_state_broadcaster', '-c', 'controller_manager'],
-        output='screen',
-    )
-
-    # Spawner: Joint Trajectory Controller
-    spawn_jtc = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_trajectory_controller', '-c', 'controller_manager'],
+        arguments=[
+            'joint_state_broadcaster',
+            'joint_trajectory_controller',
+            '--controller-manager', '/controller_manager',
+            '--param-file', controllers_yaml,
+        ],
         output='screen',
     )
 
@@ -124,8 +121,7 @@ def generate_launch_description():
     return LaunchDescription([
         robot_state_publisher,
         ros2_control_node,
-        spawn_jsb,
-        spawn_jtc,
+        controller_spawner,
         move_group_node,
         rviz_node,
     ])
