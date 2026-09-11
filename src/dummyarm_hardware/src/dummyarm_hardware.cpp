@@ -29,6 +29,7 @@ SerialPort::SerialPort() : fd_(-1) {}
 
 bool SerialPort::open(const std::string & device, int baud)
 {
+  (void)baud;
   fd_ = ::open(device.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd_ < 0) {
     return false;
