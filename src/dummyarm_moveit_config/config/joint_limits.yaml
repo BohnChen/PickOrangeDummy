@@ -45,5 +45,5 @@ joint_limits:
     has_acceleration_limits: true
     max_acceleration: 0.60
     has_position_limits: true
-    min_position: -12.566371
-    max_position: 12.566371
+    min_position: -0.350000
+    max_position: 0.350000

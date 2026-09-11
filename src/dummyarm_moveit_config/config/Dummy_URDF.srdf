@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot name="Dummy_URDF">
     <!-- GROUPS: Representation of a set of joints and links. -->
-    <!-- arm: 5 轴空间定位机械臂 (负责将手腕 J6 送达目标位姿，绝不带动机具乱转) -->
+    <!-- arm: 6 自由度完整机械臂 (大范围灵巧空间拖动，全向可达) -->
     <group name="arm">
-        <chain base_link="base_link" tip_link="J6"/>
+        <chain base_link="base_link" tip_link="tool0"/>
         <joint name="Joint1"/>
         <joint name="Joint2"/>
         <joint name="Joint3"/>
         <joint name="Joint4"/>
         <joint name="Joint5"/>
+        <joint name="Joint6"/>
     </group>
 
-    <!-- cutter: 第 6 轴独立旋切剪切刀具 (专门用于采摘时的切削动作) -->
+    <!-- cutter: 第 6 轴独立旋切剪切刀具 (用于切削动作单独调用) -->
     <group name="cutter">
         <chain base_link="J6" tip_link="tool0"/>
         <joint name="Joint6"/>
     </group>
 
-    <!-- END EFFECTOR: 将旋切刀具挂载在 5 轴机械臂手腕 J6 上 -->
     <end_effector name="cutter_ee" parent_link="J6" group="cutter" parent_group="arm"/>
 
     <!-- GROUP STATES: arm 组预设姿态 -->
@@ -27,6 +27,7 @@
         <joint name="Joint3" value="0.0"/>
         <joint name="Joint4" value="0.0"/>
         <joint name="Joint5" value="0.0"/>
+        <joint name="Joint6" value="0.0"/>
     </group_state>
 
     <group_state name="home" group="arm">
@@ -35,6 +36,7 @@
         <joint name="Joint3" value="-1.570796"/>
         <joint name="Joint4" value="0.0"/>
         <joint name="Joint5" value="0.0"/>
+        <joint name="Joint6" value="0.0"/>
     </group_state>
 
     <!-- GROUP STATES: cutter 组预设姿态 (准备 / 旋切) -->
