@@ -139,7 +139,7 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 
 - **safe_park_and_exit.sh 智能自适应机制（杜绝悬空失能断电）**：修复了在 ROS 2 节点运行时直接运行收纳脚本因串口被 `ros2_control_node` 独占导致运动未执行却提前触发失能的严重缺陷。新脚本内置双模自适应：若检测到 ROS 2 控制器正在运行，则通过 Action 驱动回位并严格阻塞等待结果返回 `SUCCEEDED`（确认物理各轴 100% 到位）；若 ROS 2 离线则自动转入串口直驱，确保无论何时何地执行，都绝对在机械臂安全着地折叠后才释放力矩并优雅清理进程。
 
-- **机械臂到位不返回 Success 导致控制器死锁超时（Cannot push new trajectory / waitForExecution timed out）**：在 20Hz 控制下，编码器读数在静止时存在 0.01° 测量微噪，差分计算出的速度常在 0.02 rad/s 附近波动。若 `stopped_velocity_tolerance` 设为过小的 0.02，控制器会误认为机械臂“一直没有停稳”，导致动作一直霸占通道无法结案（触发 `Cannot push new trajectory while another is being executed`），并在耗尽 37 秒后被看门狗掐死。修复措施：驱动增加 `< 0.03°` 静止速度归零滤波，并将 `stopped_velocity_tolerance` 放宽至健康的 **0.10 rad/s**，到位后 0.05 秒内瞬间触发完成并释放通道，下一次动作随点随到。
+- **控制器实时线程阻塞与 Action Server 假死死锁（waitForExecution timed out）**：在 ROS 2 Control 中，`write()` 与 `read()` 运行在同一个实时调度循环中。严禁在 `send_commands()` 中调用任何阻塞式读取（如等待回包的 `readLine(ack, 20)`），否则每次写操作硬拖 20ms，直接占满整个 50ms 周期，导致非实时的 ROS 2 Action 回调（`handle_goal`、`get_result`）被完全饿死，表现为动作走完后一直卡死、MoveIt 报 19s 超时强杀、随后无法进行下一次规划。修复：`send_commands()` 改为纯异步非阻塞直写（耗时 <0.05ms），`query_positions()` 读操作限制在 2ms 纯非阻塞流式提取，彻底解放 Action Server 调度，动作到位后瞬间结案并释放通道。
 
 ## 7. 仓库/工具清单速查
 
