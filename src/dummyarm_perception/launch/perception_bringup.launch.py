@@ -9,11 +9,11 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 外部支架固定在机械臂基座前方)
-    # 默认值可通过命令行传入覆盖: ros2 launch dummyarm_perception perception_bringup.launch.py cam_x:=0.40 ...
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.45', description='Camera X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='0.0', description='Camera Y relative to base_link')
-    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.35', description='Camera Z relative to base_link')
+    # 静态手眼外参 (Eye-to-Hand 外部支架固定在机械臂基座前方，2026-09-14 物理标定实测定案)
+    # 默认值可通过命令行传入覆盖: ros2 launch dummyarm_perception perception_bringup.launch.py cam_x:=0.385 ...
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.385', description='Camera X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.048', description='Camera Y relative to base_link')
+    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.193', description='Camera Z relative to base_link')
     cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.0', description='Camera Roll')
     cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.52', description='Camera Pitch (俯仰 ~30度)')
     cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='3.14159', description='Camera Yaw (朝向机械臂)')
