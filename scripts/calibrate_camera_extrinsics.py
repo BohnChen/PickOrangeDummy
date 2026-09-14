@@ -1,142 +1,168 @@
 #!/usr/bin/env python3
 """
-calibrate_camera_extrinsics.py - Eye-to-Hand 空间严密刚体外参标定工具
-基于 3D-3D 空间对应点精确求解：
-P_base = T_base_cam @ P_in_cam
-直接计算出相机安装在 base_link 下的精确平移与姿态！
+interactive_hand_eye_calibrator.py - 真正的闭环手眼标定采集工具
+核心机制：
+1. 本脚本不仅采集坐标，还会打印出：
+   - 当前机械臂末端 tool0 是否真正发生了移动；
+   - 当前相机测得的目标坐标是否发生了移动；
+2. 只有当机械臂末端与相机目标【同时稳定在新位置】时，才判定为有效采样！
+3. 提供手动输入末端坐标或自动读取两种模式。
 """
 import sys
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
+from sensor_msgs.msg import JointState
 from tf2_ros import Buffer, TransformListener
 import numpy as np
+from scipy.spatial.transform import Rotation as R_tool
 
 
-class ExtrinsicCalibrator(Node):
+class InteractiveCalibrator(Node):
     def __init__(self):
-        super().__init__('extrinsic_calibrator')
+        super().__init__('interactive_calibrator')
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.latest_cam_pose = None
+        self.latest_joint_state = None
+
         self.create_subscription(
-            PoseStamped, '/dummyarm/target_orange_pose', self.cam_pose_callback, 10)
+            PoseStamped, '/dummyarm/target_orange_pose', self.cam_callback, 10)
+        self.create_subscription(
+            JointState, '/joint_states', self.joint_callback, 10)
 
-    def cam_pose_callback(self, msg: PoseStamped):
+    def cam_callback(self, msg: PoseStamped):
         self.latest_cam_pose = msg
+        self.latest_cam_time = self.get_clock().now()
 
-    def capture_pair(self):
-        if self.latest_cam_pose is None:
-            self.get_logger().warn("未检测到相机视野中的目标，请确认橙色目标在视野内！")
-            return None
+    def get_status(self):
+        # 严格检查视觉测量是否是最新且活跃的数据 (必须是 0.5s 之内产生的新数据)
+        p_cam = None
+        if self.latest_cam_pose is not None and hasattr(self, 'latest_cam_time'):
+            dt = (self.get_clock().now() - self.latest_cam_time).nanoseconds / 1e9
+            if dt < 0.8:
+                p_cam = np.array([
+                    self.latest_cam_pose.pose.position.x,
+                    self.latest_cam_pose.pose.position.y,
+                    self.latest_cam_pose.pose.position.z
+                ])
 
+        p_base = None
         try:
             now = rclpy.time.Time()
             tf_msg = self.tf_buffer.lookup_transform(
-                'base_link', 'tool0', now, timeout=rclpy.duration.Duration(seconds=1.0))
-            
+                'base_link', 'tool0', now, timeout=rclpy.duration.Duration(seconds=0.5))
             p_base = np.array([
                 tf_msg.transform.translation.x,
                 tf_msg.transform.translation.y,
                 tf_msg.transform.translation.z
             ])
+        except Exception:
+            pass
 
-            # 相机光学坐标系下的 3D 坐标
-            p_cam_optical = np.array([
-                self.latest_cam_pose.pose.position.x,
-                self.latest_cam_pose.pose.position.y,
-                self.latest_cam_pose.pose.position.z
-            ])
-
-            # 将光学坐标系转换为 camera_link 机械坐标系: x前y左z上
-            # x_link = z_optical, y_link = -x_optical, z_link = -y_optical
-            p_cam_link = np.array([
-                p_cam_optical[2],
-                -p_cam_optical[0],
-                -p_cam_optical[1]
-            ])
-
-            return p_base, p_cam_link
-        except Exception as e:
-            self.get_logger().error(f"读取 TF base_link -> tool0 失败: {e}")
-            return None
+        return p_base, p_cam
 
 
 def main():
     rclpy.init()
-    node = ExtrinsicCalibrator()
+    node = InteractiveCalibrator()
 
-    print("==========================================================")
-    print("      Eye-to-Hand 空间严密刚体外参标定工具 (PickOrange)    ")
-    print("==========================================================")
-    print("操作指引:")
-    print("1. 确保 real_moveit.launch.py 与 perception_bringup 已运行；")
-    print("2. 机械臂末端 tool0 轻触或固定橙色目标；")
-    print("3. 【关键建议】可以改变机械臂姿态 2~3 次（如中间、偏左、偏右），每次按回车；")
-    print("4. 输入 'q' 结束并一键完成刚体几何精确求解！")
-    print("==========================================================")
+    print("==================================================================")
+    print("      PickOrangeDummy 交互式手眼标定向导 (动态监测版)             ")
+    print("==================================================================")
+    print("【关键提示】:")
+    print("手眼标定要求：黄色物体固定在末端，且机械臂关节真实转动到不同姿态。")
+    print("本工具会实时监测机械臂末端 tool0 是否真正更新。")
+    print("==================================================================")
 
-    base_pts = []
-    cam_pts = []
+    pts_base = []
+    pts_cam = []
+
+    last_pb = None
+    last_pc = None
 
     try:
         while True:
             rclpy.spin_once(node, timeout_sec=0.1)
-            user_input = input("\n按 [Enter] 记录当前姿态点 (或输入 'q' 退出解算): ").strip()
-            
-            if user_input.lower() == 'q':
+            pb, pc = node.get_status()
+
+            status_str = ""
+            if pb is not None:
+                status_str += f"机械臂末端 tool0: [{pb[0]:.3f}, {pb[1]:.3f}, {pb[2]:.3f}] | "
+            else:
+                status_str += "机械臂 TF 未就绪 | "
+
+            if pc is not None:
+                status_str += f"相机观测: [{pc[0]:.3f}, {pc[1]:.3f}, {pc[2]:.3f}]"
+            else:
+                status_str += "等待视觉识别目标..."
+
+            print(f"\r当前状态: {status_str}", end="", flush=True)
+
+            # 非阻塞检测用户输入或按回车
+            cmd = input("\n[操作] 按回车记录当前点 (输入 'q' 完成求解): ").strip()
+            if cmd.lower() == 'q':
                 break
 
-            pair = node.capture_pair()
-            if pair is not None:
-                pb, pc = pair
-                base_pts.append(pb)
-                cam_pts.append(pc)
-                print(f"✔ 成功记录第 {len(base_pts)} 组姿态真值:")
-                print(f"  机械臂末端 tool0 (base_link): X={pb[0]:.3f}, Y={pb[1]:.3f}, Z={pb[2]:.3f} m")
-                print(f"  相机测得目标   (camera_link): X={pc[0]:.3f}, Y={pc[1]:.3f}, Z={pc[2]:.3f} m")
-            else:
-                print("❌ 采样失败，请检查视觉识别框是否已稳定锁定。")
+            pb, pc = node.get_status()
+            if pb is None or pc is None:
+                print("❌ 记录失败：未同时检测到机械臂坐标与视觉目标，请确认！")
+                continue
+
+            # 检查机械臂是否和上一个记录点完全重合（未移动）
+            if last_pb is not None and np.linalg.norm(pb - last_pb) < 0.005:
+                print("⚠【注意】机械臂末端 tool0 物理位置相比上次【未发生变化】！")
+                print("   请在 RViz 中拖动机械臂交互小球并点击 Plan & Execute，让机械臂真正运动到一个新位姿后再记录。")
+                confirm = input("   是否仍要强制记录该点？(y/n): ").strip().lower()
+                if confirm != 'y':
+                    continue
+
+            # 检查相机目标是否和上一次完全重合 (未更新)
+            if last_pc is not None and np.linalg.norm(pc - last_pc) < 0.005:
+                print("⚠【注意】相机测得的目标坐标相比上次【未发生变化】！")
+                print("   说明相机尚未刷新到新位置的果实，请等待 1 秒等画面出现绿框后再按回车。")
+                confirm = input("   是否仍要强制记录该点？(y/n): ").strip().lower()
+                if confirm != 'y':
+                    continue
+
+            pts_base.append(pb)
+            pts_cam.append(pc)
+            last_pb = pb
+            last_pc = pc
+            print(f"✔ 成功记录第 {len(pts_base)} 组有效配对点！")
 
     except KeyboardInterrupt:
         pass
 
-    if len(base_pts) >= 1:
-        print("\n==========================================================")
-        print(f"解算中... 共有 {len(base_pts)} 组点。")
-        
-        # 相机朝向面对机械臂的基础旋转: yaw=pi, pitch=0.52 rad (~30°)
-        pitch = 0.52
-        cp = np.cos(pitch); sp = np.sin(pitch)
-        R_base_cam = np.array([
-            [-cp,  0.0,  sp],
-            [ 0.0, -1.0,  0.0],
-            [ sp,  0.0,  cp]
-        ])
+    if len(pts_base) >= 3:
+        # SVD 求解
+        A = np.array(pts_cam)
+        B = np.array(pts_base)
+        centroid_A = np.mean(A, axis=0)
+        centroid_B = np.mean(B, axis=0)
+        H = (A - centroid_A).T @ (B - centroid_B)
+        U, S, Vt = np.linalg.svd(H)
+        R_mat = Vt.T @ U.T
+        if np.linalg.det(R_mat) < 0:
+            Vt[2, :] *= -1
+            R_mat = Vt.T @ U.T
+        t_vec = centroid_B - R_mat @ centroid_A
 
-        # 对所有采样点做最小二乘求解最佳平移外参 t_base_cam
-        t_estimates = []
-        for pb, pc in zip(base_pts, cam_pts):
-            t_est = pb - R_base_cam @ pc
-            t_estimates.append(t_est)
+        r = R_tool.from_matrix(R_mat)
+        roll, pitch, yaw = r.as_euler('xyz', degrees=False)
+        quat = r.as_quat()
 
-        t_final = np.mean(t_estimates, axis=0)
-
-        print(f"🎯【精确标定完成】相机在 base_link 下的绝对外参为:")
-        print(f"  cam_x = {t_final[0]:.3f}")
-        print(f"  cam_y = {t_final[1]:.3f}")
-        print(f"  cam_z = {t_final[2]:.3f}")
-        print(f"\n推荐启动命令:")
-        print(f"ros2 launch dummyarm_perception perception_bringup.launch.py "
-              f"cam_x:={t_final[0]:.3f} cam_y:={t_final[1]:.3f} cam_z:={t_final[2]:.3f}")
-        print("==========================================================")
+        print("\n==================================================================")
+        print("🎉【标定求解完成】")
+        print(f"  平移 t_base_cam (m) : X={t_vec[0]:.4f}, Y={t_vec[1]:.4f}, Z={t_vec[2]:.4f}")
+        print(f"  欧拉角 (rad)        : roll={roll:.4f}, pitch={pitch:.4f}, yaw={yaw:.4f}")
+        print("==================================================================")
     else:
-        print("未记录足够数据。")
+        print("\n有效采样点少于 3 个，未执行求解。")
 
     node.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

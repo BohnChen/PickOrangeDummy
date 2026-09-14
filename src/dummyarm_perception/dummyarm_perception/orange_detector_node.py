@@ -43,12 +43,12 @@ class OrangeDetectorNode(Node):
 
         # 空间范围过滤 (单位：米)
         self.declare_parameter('min_depth', 0.15)
-        self.declare_parameter('max_depth', 1.20)
-        self.declare_parameter('min_radius_px', 15)
+        self.declare_parameter('max_depth', 1.50)
+        self.declare_parameter('min_radius_px', 10)
 
-        # 时域稳定性滤波队列长度
-        self.declare_parameter('filter_window_size', 5)
-        self.declare_parameter('stability_threshold_m', 0.01) # 1cm 抖动容限
+        # 时域稳定性滤波队列长度 (快速响应，调为3帧，静止立即输出)
+        self.declare_parameter('filter_window_size', 3)
+        self.declare_parameter('stability_threshold_m', 0.03) # 3cm 抖动容限
 
         self.color_topic = self.get_parameter('color_topic').value
         self.depth_topic = self.get_parameter('depth_topic').value
