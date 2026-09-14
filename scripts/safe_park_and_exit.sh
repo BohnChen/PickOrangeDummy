@@ -95,8 +95,8 @@ if not ros_action_available:
         time.sleep(0.15)
         s.reset_input_buffer()
 
-        # 发送原生平滑收拢指令 (J1 物理正前方对齐偏置 6.500°)
-        cmd = ">6.500,-73.000,180.000,0.000,0.000,0.000,15.0\n"
+        # 发送原生平滑收拢指令
+        cmd = ">0.000,-73.000,180.000,0.000,0.000,0.000,15.0\n"
         print(f"发送平滑收拢指令: {cmd.strip()}")
         s.write(cmd.encode())
         time.sleep(0.1)

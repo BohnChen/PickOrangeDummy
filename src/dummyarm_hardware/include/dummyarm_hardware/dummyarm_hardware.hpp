@@ -26,7 +26,7 @@ namespace dummyarm_hardware
 inline double map_fw_to_model(double q_fw_deg, size_t i)
 {
   switch (i) {
-    case 0: return q_fw_deg - 6.50; // 实测校准: 物理正前方在固件 +6.50° 处
+    case 0: return q_fw_deg; // 纯粹 1:1 直通，以电机硬件校准零位为准
     case 1: return q_fw_deg + 73.0;
     case 2: return q_fw_deg - 180.0;
     case 3: return q_fw_deg;
@@ -39,7 +39,7 @@ inline double map_fw_to_model(double q_fw_deg, size_t i)
 inline double map_model_to_fw(double q_model_deg, size_t i)
 {
   switch (i) {
-    case 0: return q_model_deg + 6.50; // 模型 0 度对应物理正前方 +6.50°
+    case 0: return q_model_deg; // 纯粹 1:1 直通
     case 1: return q_model_deg - 73.0;
     case 2: return q_model_deg + 180.0;
     case 3: return q_model_deg;
