@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 """
-direct_point_and_nod.py - 极简直达 + J5点头轻叩三下测试脚本 (Point and Nod x3)
+direct_point_and_nod.py - 视觉直达 + J5点头轻叩三下测试 (含安全自动收拢 REST 与优雅退出机制)
 
-【物理动作逻辑】:
+【核心动作与状态修复】:
 1. 空间定位: 读取目标柑橘 (X_b, Y_b, Z_b);
 2. 基础对准:
-   - J1 底座偏航角直接指向目标: theta_j1 = atan2(Y_b, X_b);
-   - J2/J3/J4 保持自然舒展前探，手腕平稳停在目标上方约 3~5cm;
-3. "像敲门/点头一样"轻点三下 (Nod x3):
-   - 保持 J1~J4 静止不动!
-   - 纯粹通过手腕 J5 电机（俯仰关节）上下微幅转动 (低头点头 12° -> 抬头复位) 重复 3 次!
-   - 驱动轴就像手指/手肘敲门一样，有节奏地轻叩目标物体 3 下!
-4. 绝对零多余绕圈与 J5 空间大翻滚。
+   - J1 底座对准目标方位角: theta_j1 = atan2(Y_b, X_b);
+   - J2/J3 自然前伸停在目标正上方，J4 彻底锁定为 0.0 (绝对杜绝空中侧翻与复杂轨迹);
+3. 点头轻叩三下 (Nod x3):
+   - J1~J4 锁死静止不动，手腕 J5 (俯仰电机) 像手肘/手指敲门一样上下轻叩 3 次!
+4. 优雅归位 REST:
+   - 单次测试完成后，可选择自动以平滑低速收拢折叠回物理 REST 位 (0, 0, 0, 0, 0, 0);
+   - 彻底释放 Action 占用，即使按下 Ctrl+C 也会无缝将控制权交还给 RViz，保证用户可随时在 RViz 中拖动真机！
 """
 
 import sys
 import time
 import math
+import signal
 import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectoryPoint
 from control_msgs.action import FollowJointTrajectory
 from tf2_ros import Buffer, TransformListener
 import tf2_geometry_msgs
@@ -36,12 +37,13 @@ class PointAndNod(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        # 直接对接底层 JointTrajectoryController (绕过 OMPL 空间翻滚)
+        # 对接底层 JointTrajectoryController
         self.traj_client = ActionClient(
             self, FollowJointTrajectory, '/joint_trajectory_controller/follow_joint_trajectory')
 
         self.latest_orange_cam_pose = None
         self.latest_joint_state = None
+        self.active_goal_handle = None
 
         self.create_subscription(
             PoseStamped, '/dummyarm/target_orange_pose', self.orange_callback, 10)
@@ -50,9 +52,9 @@ class PointAndNod(Node):
 
         self.joint_names = ['Joint1', 'Joint2', 'Joint3', 'Joint4', 'Joint5', 'Joint6']
 
-        self.get_logger().info("【直达点头轻叩执行器】正在连接控制器...")
+        self.get_logger().info("【点头轻叩执行器】正在连接控制器...")
         if not self.traj_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().error("未能连接到 joint_trajectory_controller，请确认 real_moveit 正在运行！")
+            self.get_logger().error("未能连接到控制器，请确认 real_moveit 正在运行！")
         else:
             self.get_logger().info("✔ 控制器连接就绪！")
 
@@ -78,7 +80,7 @@ class PointAndNod(Node):
             return None
 
     def send_joint_goal(self, positions, duration_sec=1.5):
-        """直接发送关节目标，路径最短最自然"""
+        """发送关节目标，路径最短最平滑"""
         goal_msg = FollowJointTrajectory.Goal()
         goal_msg.trajectory.joint_names = self.joint_names
 
@@ -91,58 +93,68 @@ class PointAndNod(Node):
 
         send_future = self.traj_client.send_goal_async(goal_msg)
         rclpy.spin_until_future_complete(self, send_future)
-        goal_handle = send_future.result()
+        self.active_goal_handle = send_future.result()
 
-        if not goal_handle.accepted:
+        if not self.active_goal_handle.accepted:
             self.get_logger().error("关节指令被拒收！")
             return False
 
-        res_future = goal_handle.get_result_async()
+        res_future = self.active_goal_handle.get_result_async()
         rclpy.spin_until_future_complete(self, res_future)
+        self.active_goal_handle = None
         return True
+
+    def return_to_rest(self):
+        """平稳低速收拢回到物理 REST 折叠位 (耗时 5 秒平滑归位)"""
+        self.get_logger().info("🔄 正在平稳回位至物理折叠位 (REST: 0, 0, 0, 0, 0, 0)...")
+        rest_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        return self.send_joint_goal(rest_positions, duration_sec=5.0)
 
 
 def solve_direct_reach(x, y, z):
-    """
-    几何解析直达解算：
-    根据目标 (x,y,z)，直接求出自然俯仰姿态，绝不产生手腕翻转！
-    """
-    # 1. J1 直接对准目标方位角
+    """几何解析直达解算：自然俯仰姿态，J4 绝对锁定为 0"""
     j1 = math.atan2(y, x)
-
-    # 水平距离与高度
-    r = math.sqrt(x*x + y*y)
-    h = z
-
-    # 2. 简易前伸几何分配 (自然舒展姿态)
-    # J2J3 前探臂长组合
-    # 保持 J4 归零 (0.0) 绝不侧翻
     j4 = 0.0
-
-    # 针对 20~28cm 桌面目标，给出平稳伸展角度 (CAD 弧度):
-    # J2 前倾约 75°~85°, J3 微曲约 -70°~-85°
     j2 = 1.35
     j3 = -1.40
-
-    # J5 自然微低头对准物体
     j5 = 0.15
     j6 = 0.0
-
     return [j1, j2, j3, j4, j5, j6]
 
 
+node = None
+
+def sigint_handler(sig, frame):
+    """优雅退出处理：释放控制器连接，恢复 RViz 控制权"""
+    print("\n\n>>> 捕获到退出信号 (Ctrl+C)，正在安全释放控制器连接...")
+    if node:
+        try:
+            # 询问或安全回位
+            user_ans = input("退出前是否需要机械臂自动收拢回 REST 姿态？(y/n，默认 y): ").strip().lower()
+            if user_ans != 'n':
+                node.return_to_rest()
+        except Exception:
+            pass
+        node.destroy_node()
+    rclpy.shutdown()
+    print("✔ 控制权已完全恢复并交还给 RViz！你现在可以在 RViz 中任意拖动真机！")
+    sys.exit(0)
+
+
 def main():
+    global node
     rclpy.init()
     node = PointAndNod()
+
+    signal.signal(signal.SIGINT, sigint_handler)
 
     print("==================================================================")
     print("     PickOrangeDummy 视觉直达 + J5 点头轻叩三下测试 (Nod x3)     ")
     print("==================================================================")
-    print("【全新动作设计】:")
-    print("1. 直达接近：J1 底座直接转向目标，机械臂自然前伸，停在目标正上方；")
-    print("2. J4 彻底锁死为 0°，手腕绝不发生侧翻与多余大角度旋转！")
-    print("3. 像敲门/点头一样：保持大臂静止，J5 连续点头轻叩 3 次 (Nod 3 次)！")
-    print("4. 完成后平稳抬起复位。")
+    print("【操作指引】:")
+    print("1. [Enter] : 机械臂直达目标并像敲门一样轻点 3 次；")
+    print("2. 'r'     : 机械臂直接平稳收拢回 REST 折叠位；")
+    print("3. 'q' 或 Ctrl+C : 安全退出脚本并立刻将真机控制权无缝交还给 RViz！")
     print("==================================================================")
 
     try:
@@ -157,9 +169,14 @@ def main():
             else:
                 print("\r等待视觉锁定目标...", end="", flush=True)
 
-            cmd = input("\n按 [Enter] 执行直达接近并点头三下 (输入 'q' 退出): ").strip()
+            cmd = input("\n[输入指令] (回车:点头测试 / r:一键回位 / q:退出): ").strip()
             if cmd.lower() == 'q':
+                sigint_handler(None, None)
                 break
+            elif cmd.lower() == 'r':
+                node.return_to_rest()
+                print("✔ 机械臂已平稳到达 REST 物理折叠位！")
+                continue
 
             target = node.get_orange_in_base()
             if target is None:
@@ -179,17 +196,17 @@ def main():
             # 步骤 1: 自然直达目标上方准备位 (J4 严格为 0，杜绝手腕翻转)
             # -------------------------------------------------------------
             reach_joints = solve_direct_reach(tx, ty, tz)
-            print(f"\n>>> [1/3] J1 转向方位角 {math.degrees(reach_joints[0]):.1f}°，自然前伸到目标正上方...")
+            print(f"\n>>> [1/4] J1 转向方位角 {math.degrees(reach_joints[0]):.1f}°，自然前伸到目标正上方...")
             node.send_joint_goal(reach_joints, duration_sec=2.0)
-            time.sleep(0.5)
+            time.sleep(0.3)
 
             # -------------------------------------------------------------
             # 步骤 2: 像敲门/点头一样轻叩三下 (纯 J5 关节转动，大臂绝对静止！)
             # -------------------------------------------------------------
-            print(">>> [2/3] 开始执行敲门/点头动作 (保持大臂不动，J5 点头 3 次)...")
+            print(">>> [2/4] 开始执行敲门/点头动作 (保持大臂不动，J5 点头 3 次)...")
             base_j5 = reach_joints[4]
 
-            # 点头角度：低头 15度 (~0.26 rad) 然后回正
+            # 点头动作：低头 15度 (~0.26 rad) 然后回正
             tap_j5 = base_j5 + 0.26
 
             nod_down_joints = list(reach_joints)
@@ -207,16 +224,20 @@ def main():
                 time.sleep(0.2)
 
             # -------------------------------------------------------------
-            # 步骤 3: 平稳复位
+            # 步骤 3: 动作完成提示
             # -------------------------------------------------------------
-            print(">>> [3/3] 点头敲门测试完毕！机械臂平稳保持在安全位。")
+            print(">>> [3/4] 点头敲门测试完毕！")
+            
+            # -------------------------------------------------------------
+            # 步骤 4: 自动平稳收回 REST 折叠位
+            # -------------------------------------------------------------
+            print(">>> [4/4] 正在自动平稳收回 REST 折叠姿态...")
+            node.return_to_rest()
+            print("✔ 机械臂已平稳折叠回到 REST 原点！")
             print("==================================================================")
 
     except KeyboardInterrupt:
-        pass
-
-    node.destroy_node()
-    rclpy.shutdown()
+        sigint_handler(None, None)
 
 
 if __name__ == '__main__':
