@@ -36,6 +36,9 @@ class InteractiveCalibrator(Node):
         self.latest_cam_pose = msg
         self.latest_cam_time = self.get_clock().now()
 
+    def joint_callback(self, msg: JointState):
+        self.latest_joint_state = msg
+
     def get_status(self):
         # 严格检查视觉测量是否是最新且活跃的数据 (必须是 0.5s 之内产生的新数据)
         p_cam = None
