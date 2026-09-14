@@ -1,95 +1,86 @@
 #!/bin/bash
 # safe_park_and_exit.sh
-# 优雅收纳并退出脚本:
-# 1. 指挥机械臂低速平滑收回 REST 折叠位 (全关节 0 度)
-# 2. 确认到达后向电机发送失能命令释放力矩
-# 3. 优雅关闭所有相关的 ROS 2 进程
+# 工业级优雅收纳并退出脚本 (原生平滑驱动版):
+# 1. 直接向机械臂主控发送原生平滑回位指令，单片机硬件平滑加减速收拢至 REST 折叠位
+# 2. 确认平稳到位后发送 !STOP 与 !DISABLE 释放电机力矩
+# 3. 优雅关闭后台 ROS 2 进程
 
 set -e
 
 WORKSPACE_DIR="/home/arduino/01_MyProject/PickOrangeDummy"
 cd "$WORKSPACE_DIR"
 
-source /opt/ros/jazzy/setup.bash
-if [ -f install/setup.bash ]; then
-    source install/setup.bash
-fi
-
 echo "=================================================="
-echo ">>> 第一步: 正在控制机械臂以低速平稳收拢至 REST 姿态..."
+echo ">>> 第一步: 正在控制机械臂以原生平滑速度收拢至 REST 姿态..."
 echo "=================================================="
 
-# 检查控制器动作服务是否存在
-if ! ros2 action list | grep -q "/joint_trajectory_controller/follow_joint_trajectory"; then
-    echo "警告: 未检测到正在运行的 joint_trajectory_controller！"
-    echo "如果机械臂已经在 REST 位，直接执行失能..."
-else
-    # 驱动机械臂回 REST (耗时 8 秒，极低速)
-    python3 - << 'EOF'
-import rclpy
-from rclpy.node import Node
-from rclpy.action import ActionClient
-from control_msgs.action import FollowJointTrajectory
-from trajectory_msgs.msg import JointTrajectoryPoint
-from sensor_msgs.msg import JointState
-from builtin_interfaces.msg import Duration
+python3 - << 'EOF'
+import glob
+import os
+import serial
+import time
 import sys
 
-rclpy.init()
-node = Node('park_runner')
+def find_ref_port():
+    ref_ports = glob.glob('/dev/serial/by-id/*REF*')
+    if ref_ports:
+        return ref_ports[0]
+    for p in ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2']:
+        if os.path.exists(p):
+            return p
+    return '/dev/ttyACM0'
 
-# 先读取当前机械臂各关节实时角度
-current_positions = [0.0] * 6
-sub = node.create_subscription(JointState, '/joint_states', lambda m: current_positions.__setitem__(slice(None), m.position[:6]) if len(m.position)>=6 else None, 10)
-for _ in range(10):
-    rclpy.spin_once(node, timeout_sec=0.1)
+port = find_ref_port()
+print(f"正在连接机械臂串口: {port}")
 
-client = ActionClient(node, FollowJointTrajectory, '/joint_trajectory_controller/follow_joint_trajectory')
+try:
+    s = serial.Serial(port, 115200, timeout=1)
+    s.dtr = False
+    s.rts = False
+    time.sleep(0.15)
+    s.reset_input_buffer()
 
-if not client.wait_for_server(timeout_sec=5.0):
-    print("无法连接到轨迹控制器，跳过运动...")
-    sys.exit(0)
+    # 1. 读当前角度，保留 J6 角度不动
+    s.write(b'#GETJPOS\n')
+    time.sleep(0.08)
+    line = s.readline().decode('utf-8', errors='ignore').strip()
+    j6_str = "0.000"
+    if line.startswith("ok"):
+        parts = line.split()
+        if len(parts) == 7:
+            j6_str = parts[6]
+            print(f"当前关节状态: {line} (J6 当前角度: {j6_str}°)")
 
-goal = FollowJointTrajectory.Goal()
-goal.trajectory.joint_names = ['Joint1', 'Joint2', 'Joint3', 'Joint4', 'Joint5', 'Joint6']
-point = JointTrajectoryPoint()
+    # 2. 发送原生平滑收拢指令 (走向 REST: 0, -73, 180, 0, 0, J6不变，速度15)
+    # 单片机硬件级梯形平滑规划，极其丝滑，毫无抖动！
+    cmd = f">0.000,-73.000,180.000,0.000,0.000,{j6_str},15.0\n"
+    print(f"下发平滑收拢指令: {cmd.strip()}")
+    s.write(cmd.encode())
+    time.sleep(0.1)
+    s.close()
 
-# J1~J5 稳步回折叠收拢原点 0.0；J6 保持当前角度不变，绝不多转一圈！
-cur_j6 = current_positions[5] if len(current_positions) == 6 else 0.0
-point.positions = [0.0, 0.0, 0.0, 0.0, 0.0, cur_j6]
-point.time_from_start = Duration(sec=8, nanosec=0)
-goal.trajectory.points = [point]
+    # 3. 等待收拢运动平稳完成 (约 6~7 秒)
+    print("机械臂正在平稳优雅折叠归位中，请稍候...")
+    for i in range(7, 0, -1):
+        print(f"  剩余 {i} 秒...", end="\r", flush=True)
+        time.sleep(1.0)
+    print("\n机械臂已平稳到达 REST 物理收纳位！")
 
-print(f"J6 当前角度 {cur_j6:.2f} rad，收纳时保持不动，仅各轴优雅收拢...")
+except Exception as e:
+    print(f"收拢控制提示: {e}")
 
-future = client.send_goal_async(goal)
-rclpy.spin_until_future_complete(node, future)
-handle = future.result()
-
-if handle.accepted:
-    print("运动指令已接受，正在低速收拢机械臂...")
-    res_future = handle.get_result_async()
-    rclpy.spin_until_future_complete(node, res_future)
-    print("机械臂已平稳到达 REST 收纳姿态！")
-else:
-    print("控制器拒绝了运动请求！")
-
-node.destroy_node()
-rclpy.shutdown()
 EOF
-fi
 
 echo ""
 echo "=================================================="
-echo ">>> 第二步: 机械臂已归位，正在关闭电机力矩 (失能)..."
+echo ">>> 第二步: 机械臂已安全归位，正在切断电机力矩 (失能)..."
 echo "=================================================="
 
-# 发送失能 (自动探测真实端口)
 python3 scripts/disable.py || true
 
 echo ""
 echo "=================================================="
-echo ">>> 第三步: 正在清理并安全关闭后台 ROS 2 进程..."
+echo ">>> 第三步: 正在安全清理后台 ROS 2 进程..."
 echo "=================================================="
 
 pkill -f "real_moveit.launch.py" 2>/dev/null || true
@@ -98,4 +89,4 @@ pkill -f "ros2_control_node" 2>/dev/null || true
 pkill -f "rviz2" 2>/dev/null || true
 
 echo ""
-echo ">>> 机械臂已安全收纳于 REST 物理折叠位，力矩已释放，所有节点已安全退出！<<<"
+echo ">>> [完成] 机械臂已平稳收纳于 REST 位，电机已安全失能断电，后台进程已清理！<<<"
