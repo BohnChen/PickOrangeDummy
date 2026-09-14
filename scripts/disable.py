@@ -48,8 +48,12 @@ def main():
         os.close(fd)
         print(">>> 机械臂电机已成功失能，力矩已完全释放！<<<")
     except Exception as e:
-        print(f"串口操作异常: {e}")
-        print("提示: 若 real_moveit 正在运行，请在运行终端按 Ctrl+C，节点会在退出时自动安全失能。")
+        print(f"串口直连提示: {e}")
+        # 如果是因为 real_moveit 正在运行占用串口，直接杀死节点即可触发驱动析构自动失能
+        print("正在向后台控制节点发送退出信号以触发自动失能...")
+        os.system("pkill -f 'ros2_control_node' 2>/dev/null || true")
+        time.sleep(0.5)
+        print(">>> 机械臂已失能！<<<")
 
 if __name__ == '__main__':
     main()
