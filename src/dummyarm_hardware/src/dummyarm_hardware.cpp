@@ -226,9 +226,9 @@ bool DummyArmHardware::query_positions(double period_s)
   }
 
   std::string line;
-  // 快速读取并解析回复 (超时 15ms)
+  // 快速非阻塞解析回复 (超时严格限制在 2ms 以内，绝不拖垮控制器线程调度)
   for (int attempt = 0; attempt < 3; ++attempt) {
-    if (!serial_.readLine(line, 15)) {
+    if (!serial_.readLine(line, 2)) {
       break;
     }
     // 过滤可能漏掉的孤立 "ok" 或空行
@@ -314,10 +314,7 @@ bool DummyArmHardware::send_commands()
   if (n <= 0) { return false; }
   
   if (serial_.write(std::string(buf, n))) {
-    // 核心事务闭环：立即消费单片机对 '>' 回复的 "ok\r\n"
-    std::string ack;
-    serial_.readLine(ack, 20);
-
+    // 纯异步写：字符直接入内核缓冲区后立即返回，绝不阻塞控制器线程
     last_sent_cmd_.resize(joints_.size());
     for (size_t i = 0; i < joints_.size(); ++i) {
       last_sent_cmd_[i] = joints_[i].command_position_;
