@@ -131,7 +131,8 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 
 - **极低速 (scaling 0.1) 步进齿槽震荡与超时抢占中止机理**：当速度和加速度 Scaling 被拉到 0.1 极限低速时，实际关节速度仅 1°/s，周期位移仅 0.05°。由于 0.05° 无法越过步进电机的物理微步齿槽（Cogging Torque），FOC 电流在磁极齿谷反复拉扯激发出剧烈机械抖动；同时由于耗时严重超出预期，MoveIt 在动作进行中途判定被占用（`Cannot push a new trajectory while another is being executed`）而强行中断（PREEMPTED / CONTROL_FAILED）。因此在 `moveit.rviz` 中已将默认 Velocity/Accel Scaling 直接固化为 **1.0**（匹配 `joint_limits.yaml` 中的 0.2 rad/s 安全温和速度），彻底摆脱低速共振死区，全程连贯平滑。
 
-- **RViz 速度/加速度滑块默认锁定 1.0**：MoveIt RViz 插件初始化时从参数 `robot_description_planning.default_velocity_scaling_factor` 与 `robot_description_planning.default_acceleration_scaling_factor` 读取滑块初值，若缺省则回退到 0.1。已在 `real_moveit.launch.py`、`demo.launch.py` 及 `joint_limits.yaml` 中显式注入 `1.0`，打开 RViz 自动为 1.0 全速平滑配置，无需手动拉动。
+- **RViz 速度/加速度滑块默认锁定 1.0**：MoveIt RViz 插件在加载视图配置时，在 `MotionPlanning` 顶层读取的字段名是 `Velocity_Scaling_Factor` 与 `Acceleration_Scaling_Factor`（带下划线，非空格）。已在 `moveit.rviz` 顶层直接配置为 1.0，打开 RViz 时滑块直接锁定在 100% 正常工作速度，再也不会回退到 0.1 极限低速死区。
+- **串口设备号插拔漂移彻底根治（直接使用 by-id 软链接）**：由于机械臂 USB 插拔后会在 `ACM0`、`ACM1`、`ACM2` 间动态变换，代码中严禁调用 `os.path.realpath` 解析出死板的绝对设备节点，必须直接将 `/dev/serial/by-id/usb-Robot_Embedded_Framework_REF_1.0_CDC_Interface_...` 软链接路径传给 C++ 驱动的 `open()` 函数，让 Linux 内核在打开瞬间动态解析当前真实硬件，彻底消灭设备号漂移导致的打不开或无法使能。
 
 ## 7. 仓库/工具清单速查
 
