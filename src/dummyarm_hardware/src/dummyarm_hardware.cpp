@@ -245,7 +245,13 @@ bool DummyArmHardware::query_positions(double period_s)
           double q_model = deg2rad(q_model_deg);
           double prev = joints_[i].measured_position_;
           if (period_s > 1e-9 && prev_set_) {
-            joints_[i].measured_velocity_ = (q_model - prev) / period_s;
+            double delta = q_model - prev;
+            // 传感器微步底噪滤波：变化小于 0.03° (~0.0005 rad) 认定为真正静止，速度干净归零
+            if (std::abs(delta) < 0.0005) {
+              joints_[i].measured_velocity_ = 0.0;
+            } else {
+              joints_[i].measured_velocity_ = delta / period_s;
+            }
           }
           joints_[i].measured_position_ = q_model;
         }

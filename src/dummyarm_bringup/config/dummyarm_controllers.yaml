@@ -25,13 +25,13 @@ joint_trajectory_controller:
     allow_partial_joints_goal: true
     allow_integration_in_goal_trajectories: false
     constraints:
-      stopped_velocity_tolerance: 0.02
+      stopped_velocity_tolerance: 0.10
       goal_time: 0.0
-      Joint1: {goal: 0.05}
-      Joint2: {goal: 0.05}
-      Joint3: {goal: 0.05}
-      Joint4: {goal: 0.05}
-      Joint5: {goal: 0.05}
+      Joint1: {goal: 0.08}
+      Joint2: {goal: 0.08}
+      Joint3: {goal: 0.08}
+      Joint4: {goal: 0.08}
+      Joint5: {goal: 0.08}
       Joint6: {goal: 6.28}
     joint_limits:
       Joint1:  {has_position_limits: true, min_position: -2.967, max_position: 2.967,  has_velocity_limits: true, max_velocity: 3.15}
