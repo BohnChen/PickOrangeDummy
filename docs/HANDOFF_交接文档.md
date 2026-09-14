@@ -134,6 +134,9 @@ dummyarm query   # 使能: dummyarm start; 动: >j1..j6,speed
 - **RViz 速度/加速度滑块默认锁定 1.0**：MoveIt RViz 插件在加载视图配置时，在 `MotionPlanning` 顶层读取的字段名是 `Velocity_Scaling_Factor` 与 `Acceleration_Scaling_Factor`（带下划线，非空格）。已在 `moveit.rviz` 顶层直接配置为 1.0，打开 RViz 时滑块直接锁定在 100% 正常工作速度，再也不会回退到 0.1 极限低速死区。
 - **串口设备号插拔漂移彻底根治（直接使用 by-id 软链接）**：由于机械臂 USB 插拔后会在 `ACM0`、`ACM1`、`ACM2` 间动态变换，代码中严禁调用 `os.path.realpath` 解析出死板的绝对设备节点，必须直接将 `/dev/serial/by-id/usb-Robot_Embedded_Framework_REF_1.0_CDC_Interface_...` 软链接路径传给 C++ 驱动的 `open()` 函数，让 Linux 内核在打开瞬间动态解析当前真实硬件，彻底消灭设备号漂移导致的打不开或无法使能。
 
+- **笛卡尔小球拖拽与关节空间规划的速度压缩差异**：在面板选择预设目标时属于关节空间规划，各轴大范围转动能跑满最大限制速度；而在 RViz 拖拽小球时属于空间笛卡尔末端微位移规划，时间参数化算法（TOTG）为了同步各轴位移，会将关节角速度大幅压缩（向最小位移轴看齐），导致原 0.2 rad/s 基准速度被压至 1°~2°/s 跌入步进齿槽共振抖动区。通过将 `joint_limits.yaml` 中的基准速度上限提升至 **0.60 rad/s**（约 35°/s），并匹配底层 `joint_speed_ = 25.0f`，让短途笛卡尔拖拽规划时的实际运行速度保持在健康的 10°~20°/s，彻底根除了拖动小球规划时的变慢与共振抖动。
+- **safe_park_and_exit.sh 原生平滑直驱升级**：回 REST 收纳位直接采用下位机原生指令（`>0,-73,180,0,0,cur_j6,15.0\n`），由单片机硬件定时器自主执行平滑梯形加减速收拢并自动失能，完全脱离中间层插值抖动，恢复到绝对稳健平滑状态。
+
 ## 7. 仓库/工具清单速查
 
 scripts/: build.sh generate_true_urdf.py(真值链+PCA视觉) import_export_urdf.py fix_export_frames.py
