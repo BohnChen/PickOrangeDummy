@@ -9,16 +9,18 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 严密刚体对齐定案值: cam_x=0.395, cam_y=0.088, cam_z=-0.249)
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.395', description='Camera X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='0.088', description='Camera Y relative to base_link')
-    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='-0.249', description='Camera Z relative to base_link')
-    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.0', description='Camera Roll')
-    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.52', description='Camera Pitch (俯仰 ~30度)')
-    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='3.14159', description='Camera Yaw (朝向机械臂)')
+    # 静态手眼外参 (Eye-to-Hand 直接建立 base_link 到相机光学中心的唯一变换)
+    # camera_color_optical_frame: Z轴向前(光轴), X轴向右, Y轴向下
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.40', description='Camera Optical Frame X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='0.0', description='Camera Optical Frame Y relative to base_link')
+    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.30', description='Camera Optical Frame Z relative to base_link')
+    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='-2.094', description='Camera Roll')
+    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.0', description='Camera Pitch')
+    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='1.5708', description='Camera Yaw')
     gui_arg = DeclareLaunchArgument('gui', default_value='true', description='Launch local rqt_image_view GUI')
 
-    # 1. 静态 TF 广播节点: base_link -> camera_link
+    # 1. 唯一且清晰的静态 TF: 直接广播 base_link -> camera_color_optical_frame
+    # 彻底杜绝 camera_link 与 optical_frame 两套坐标轴重叠混乱
     static_tf_node = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -31,7 +33,7 @@ def generate_launch_description():
             '--pitch', LaunchConfiguration('cam_pitch'),
             '--yaw', LaunchConfiguration('cam_yaw'),
             '--frame-id', 'base_link',
-            '--child-frame-id', 'camera_link'
+            '--child-frame-id', 'camera_color_optical_frame'
         ]
     )
 

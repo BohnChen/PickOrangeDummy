@@ -32,8 +32,6 @@ Visualization Manager:
           Value: true
         tool0:
           Value: true
-        camera_link:
-          Value: true
         camera_color_optical_frame:
           Value: true
     - Class: moveit_rviz_plugin/MotionPlanning
