@@ -12,8 +12,8 @@ import os
 def find_ref_port():
     ref_ports = glob.glob('/dev/serial/by-id/*REF*')
     if ref_ports:
-        return os.path.realpath(ref_ports[0])
-    for p in ['/dev/ttyACM0', '/dev/ttyACM1']:
+        return ref_ports[0]
+    for p in ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2']:
         if os.path.exists(p):
             return p
     return '/dev/ttyACM0'

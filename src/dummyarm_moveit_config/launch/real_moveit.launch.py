@@ -16,11 +16,11 @@ from launch_ros.parameter_descriptions import ParameterValue
 import yaml
 
 def find_ref_serial_port():
-    # 优先使用 by-id 永久硬件标识符，彻底防止插拔导致 ACM0/ACM1 漂移
+    # 优先直接使用 by-id 软链接路径，内核 open() 瞬间自动解析真实设备，彻底免疫设备号漂移
     ref_ports = glob.glob('/dev/serial/by-id/*REF*')
     if ref_ports:
-        return os.path.realpath(ref_ports[0])
-    for p in ['/dev/ttyACM0', '/dev/ttyACM1']:
+        return ref_ports[0]
+    for p in ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2']:
         if os.path.exists(p):
             return p
     return '/dev/ttyACM0'
