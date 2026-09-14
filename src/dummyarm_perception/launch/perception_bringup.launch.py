@@ -9,11 +9,10 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 外部支架固定在机械臂基座前方，2026-09-14 物理标定实测定案)
-    # 默认值可通过命令行传入覆盖: ros2 launch dummyarm_perception perception_bringup.launch.py cam_x:=0.385 ...
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.385', description='Camera X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.048', description='Camera Y relative to base_link')
-    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.193', description='Camera Z relative to base_link')
+    # 静态手眼外参 (Eye-to-Hand 严密刚体对齐定案值: cam_x=0.395, cam_y=0.088, cam_z=-0.249)
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.395', description='Camera X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='0.088', description='Camera Y relative to base_link')
+    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='-0.249', description='Camera Z relative to base_link')
     cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.0', description='Camera Roll')
     cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.52', description='Camera Pitch (俯仰 ~30度)')
     cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='3.14159', description='Camera Yaw (朝向机械臂)')
@@ -33,23 +32,6 @@ def generate_launch_description():
             '--yaw', LaunchConfiguration('cam_yaw'),
             '--frame-id', 'base_link',
             '--child-frame-id', 'camera_link'
-        ]
-    )
-
-    # 1.1 相机内部固定光学轴变换: camera_link -> camera_color_optical_frame
-    static_optical_tf_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='camera_link_to_optical_broadcaster',
-        arguments=[
-            '--x', '0.0',
-            '--y', '0.0',
-            '--z', '0.0',
-            '--roll', '-1.5707963',
-            '--pitch', '0.0',
-            '--yaw', '-1.5707963',
-            '--frame-id', 'camera_link',
-            '--child-frame-id', 'camera_color_optical_frame'
         ]
     )
 
@@ -105,7 +87,6 @@ def generate_launch_description():
         cam_yaw_arg,
         gui_arg,
         static_tf_node,
-        static_optical_tf_node,
         realsense_camera_node,
         orange_detector_node,
         rqt_image_view_node,
