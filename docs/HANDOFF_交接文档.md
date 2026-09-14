@@ -112,11 +112,27 @@ ros2 launch dummyarm_moveit_config real_moveit.launch.py
 
 ---
 
-## 5. 下一步推进建议
+## 5. 视觉闭环与感知接入进展 (2026-09-14 更新)
 
-1. **自研“套果-旋切”末端执行器集成**：
-   - 机械装配切刀减速机构至 J6 轴；
-   - 验证 `./scripts/cut.py` 驱动切刀旋转切削柑橘果梗的物理动作。
-2. **RGB-D 深度视觉相机接入**：
-   - 挂载 RealSense / Orbbec 深度相机；
-   - 发布果实空间坐标（PointStamped / PoseStamped），通过 MoveIt 2 C++ / Python API 实现从视觉检测到自动伺服采摘的全自动闭环作业！
+1. **视觉环境与驱动就绪**：
+   - 官方 RealSense 驱动包 `ros-jazzy-realsense2-camera` (4.58.4) 与 `ros-jazzy-librealsense2` (2.58.4) 已安装并实测通过；
+   - RealSense D435i 深度相机硬件链路正常（USB 3.2 握手，640x480 @ 30FPS RGB + 深度点云稳定输出）。
+2. **感知功能包 `dummyarm_perception`**：
+   - `orange_detector_node`：实时 HSV 阈值分割、形态学去噪、相机内参反投影（求解果心 3D 空间坐标）、时域中位数稳定滤波（方差 < 1.5cm 锁定）；
+   - 输出标准话题：`/dummyarm/target_orange_pose` (PoseStamped) 与 `/dummyarm/target_orange_marker` (Marker)；
+   - `perception_bringup.launch.py`：整合静态手眼外参广播（`base_link -> camera_link`）、官方相机驱动与柑橘检测节点；
+   - `harvest_fsm_node`：采摘有限状态机（IDLE -> SEARCH_LOCK -> PRE_APPROACH -> SERVO_ALIGN -> CUT -> VERIFY -> SUCCESS/RETRY）。
+3. **RViz 一体化工作台优化**：
+   - 彻底摆脱网络 Web 推流延迟，直接在本地 RViz 2 中嵌入 `Camera View`（左下角零拷贝实况显示）与 `Citrus Marker`（3D 实体橙色小球随动）；
+   - 提供 Eye-to-Hand 快速标定辅助脚本 `./scripts/calibrate_camera_extrinsics.py`。
+4. **数据集指南**：
+   - 输出完整的 `docs/柑橘数据集标注与处理指南_AnyLabeling.md`，指导在 Mac M4 Max 上通过 X-AnyLabeling + SAM 快速标注 14000+ 数据并使用 PyTorch MPS 训练 YOLOv11-seg。
+
+---
+
+## 6. 下一步推进建议
+
+1. **空间手眼外参微调对齐**：
+   - 运行 `./scripts/calibrate_camera_extrinsics.py`，记录机械臂末端与相机坐标，校准 `base_link -> camera_link` 刚体变换参数。
+2. **MoveIt 2 空间伺服切入集成**：
+   - 将 `harvest_fsm_node` 中的预抓取与笛卡尔微步进给动作接入 MoveIt 2 MoveGroup API，实现从检测到物理套果、旋切闭环采摘。

@@ -6,10 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /RobotModel1
         - /MotionPlanning1
-        - /MotionPlanning1/Planning Scene Topic1
-        - /MotionPlanning1/Planned Path1
+        - /Citrus Marker1
+        - /Camera View1
       Splitter Ratio: 0.5
     Tree Height: 600
 Visualization Manager:
@@ -20,6 +19,23 @@ Visualization Manager:
       Enabled: true
       Plane: XY
       Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Axes: true
+      Show Arrows: false
+      Show Names: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_link:
+          Value: true
+        tool0:
+          Value: true
+        camera_link:
+          Value: true
+        camera_color_optical_frame:
+          Value: true
     - Class: moveit_rviz_plugin/MotionPlanning
       Name: MotionPlanning
       Enabled: true
@@ -41,6 +57,25 @@ Visualization Manager:
         Trajectory Topic: display_planned_path
       Scene Robot:
         Robot Alpha: 0.5
+    - Class: rviz_default_plugins/Marker
+      Name: Citrus Marker
+      Enabled: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dummyarm/target_orange_marker
+    - Class: rviz_default_plugins/Image
+      Name: Camera View
+      Enabled: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dummyarm/vision_debug_image
+      Normalize Range: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -58,10 +93,10 @@ Visualization Manager:
       Class: rviz_default_plugins/Orbit
       Distance: 1.2
       Focal Point:
-        X: 0.0
+        X: 0.2
         Y: 0.0
-        Z: 0.3
+        Z: 0.2
       Name: Current View
-      Pitch: 0.4
+      Pitch: 0.35
       Value: Orbit (rviz)
-      Yaw: 0.8
+      Yaw: 0.6

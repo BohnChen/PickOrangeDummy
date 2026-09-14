@@ -1,0 +1,19 @@
+camera:
+  camera:
+    ros__parameters:
+      camera_name: 'camera'
+      publish_tf: true
+      enable_color: true
+      enable_depth: true
+      align_depth:
+        enable: true
+      pointcloud:
+        enable: false
+      rgb_camera:
+        color_profile: '640x480x30'
+        color_format: 'RGB8'
+      depth_module:
+        depth_profile: '640x480x30'
+        depth_format: 'Z16'
+      enable_sync: true
+      clip_distance: 2.0
