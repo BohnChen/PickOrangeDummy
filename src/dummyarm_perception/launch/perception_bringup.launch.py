@@ -9,18 +9,17 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 严密 SVD 解算实测定案值: 误差 < 1.0mm)
-    # 相机高度 Z=0.4617m (高于底座), 面对机械臂
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='-0.1665', description='Camera Optical Frame X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.2713', description='Camera Optical Frame Y relative to base_link')
-    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.4617', description='Camera Optical Frame Z relative to base_link')
-    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='-2.8963', description='Camera Roll')
-    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.1549', description='Camera Pitch')
-    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='-1.5039', description='Camera Yaw')
+    # 静态手眼外参 (Eye-to-Hand 标准树结构: base_link -> camera_link)
+    # 由实测 SVD 外参严密反解出 camera_link，使相机整棵 TF 树与机械臂基座无缝接合
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='-0.1655', description='Camera Link X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.2857', description='Camera Link Y relative to base_link')
+    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.4590', description='Camera Link Z relative to base_link')
+    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.5748', description='Camera Link Roll')
+    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='1.2849', description='Camera Link Pitch')
+    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='0.6269', description='Camera Link Yaw')
     gui_arg = DeclareLaunchArgument('gui', default_value='true', description='Launch local rqt_image_view GUI')
 
-    # 1. 唯一且清晰的静态 TF: 直接广播 base_link -> camera_color_optical_frame
-    # 彻底杜绝 camera_link 与 optical_frame 两套坐标轴重叠混乱
+    # 1. 静态 TF 广播节点: base_link -> camera_link (彻底打通两棵独立 TF 树)
     static_tf_node = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -33,7 +32,7 @@ def generate_launch_description():
             '--pitch', LaunchConfiguration('cam_pitch'),
             '--yaw', LaunchConfiguration('cam_yaw'),
             '--frame-id', 'base_link',
-            '--child-frame-id', 'camera_color_optical_frame'
+            '--child-frame-id', 'camera_link'
         ]
     )
 

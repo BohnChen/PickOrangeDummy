@@ -246,7 +246,7 @@ class OrangeDetectorNode(Node):
 
         self.target_pose_pub.publish(pose_msg)
 
-        # 2. 发布 RViz Marker
+        # 2. 发布 RViz Marker (带有生命周期持续时间，确保 RViz 即使短暂丢帧也持续可见)
         marker = Marker()
         marker.header.stamp = stamp
         marker.header.frame_id = self.camera_frame_id
@@ -255,6 +255,7 @@ class OrangeDetectorNode(Node):
         marker.type = Marker.SPHERE
         marker.action = Marker.ADD
         marker.pose = pose_msg.pose
+        marker.lifetime = rclpy.duration.Duration(seconds=2.0).to_msg()
         # 柑橘尺寸 (直径约 6.5cm)
         marker.scale.x = 0.065
         marker.scale.y = 0.065

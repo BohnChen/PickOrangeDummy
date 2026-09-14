@@ -27,13 +27,7 @@ Visualization Manager:
       Show Names: true
       Frame Timeout: 15
       Frames:
-        All Enabled: false
-        base_link:
-          Value: true
-        tool0:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
+        All Enabled: true
     - Class: moveit_rviz_plugin/MotionPlanning
       Name: MotionPlanning
       Enabled: true
