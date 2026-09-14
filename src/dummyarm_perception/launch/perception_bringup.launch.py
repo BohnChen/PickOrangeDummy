@@ -36,6 +36,23 @@ def generate_launch_description():
         ]
     )
 
+    # 1.1 相机内部固定光学轴变换: camera_link -> camera_color_optical_frame
+    static_optical_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='camera_link_to_optical_broadcaster',
+        arguments=[
+            '--x', '0.0',
+            '--y', '0.0',
+            '--z', '0.0',
+            '--roll', '-1.5707963',
+            '--pitch', '0.0',
+            '--yaw', '-1.5707963',
+            '--frame-id', 'camera_link',
+            '--child-frame-id', 'camera_color_optical_frame'
+        ]
+    )
+
     # 2. 包含官方 realsense2_camera 启动文件 (零拷贝内存共享，适配本地显示)
     rs_launch_path = os.path.join(
         get_package_share_directory('realsense2_camera'), 'launch', 'rs_launch.py')
@@ -88,6 +105,7 @@ def generate_launch_description():
         cam_yaw_arg,
         gui_arg,
         static_tf_node,
+        static_optical_tf_node,
         realsense_camera_node,
         orange_detector_node,
         rqt_image_view_node,
