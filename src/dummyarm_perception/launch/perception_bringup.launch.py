@@ -9,14 +9,14 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 直接建立 base_link 到相机光学中心的唯一变换)
-    # camera_color_optical_frame: Z轴向前(光轴), X轴向右, Y轴向下
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.40', description='Camera Optical Frame X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='0.0', description='Camera Optical Frame Y relative to base_link')
-    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.30', description='Camera Optical Frame Z relative to base_link')
-    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='-2.094', description='Camera Roll')
-    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.0', description='Camera Pitch')
-    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='1.5708', description='Camera Yaw')
+    # 静态手眼外参 (Eye-to-Hand 严密 SVD 解算实测定案值: 误差 < 1.0mm)
+    # 相机高度 Z=0.4617m (高于底座), 面对机械臂
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='-0.1665', description='Camera Optical Frame X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.2713', description='Camera Optical Frame Y relative to base_link')
+    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.4617', description='Camera Optical Frame Z relative to base_link')
+    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='-2.8963', description='Camera Roll')
+    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.1549', description='Camera Pitch')
+    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='-1.5039', description='Camera Yaw')
     gui_arg = DeclareLaunchArgument('gui', default_value='true', description='Launch local rqt_image_view GUI')
 
     # 1. 唯一且清晰的静态 TF: 直接广播 base_link -> camera_color_optical_frame
