@@ -43,7 +43,7 @@
     <child link="J2J3"/>
     <origin xyz="-0.015000 -0.035000 0.039000" rpy="1.570796 0.000000 1.570796"/>
     <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="0.000000" upper="2.844887" effort="100.0" velocity="1.00"/>
+    <limit lower="-0.050000" upper="2.844887" effort="100.0" velocity="1.00"/>
   </joint>
 
   <joint name="Joint3" type="revolute">
@@ -51,7 +51,7 @@
     <child link="J4"/>
     <origin xyz="0.141025 0.037788 0.033800" rpy="0.000000 0.000000 0.000000"/>
     <axis xyz="0.000000 0.000000 1.000000"/>
-    <limit lower="-2.530727" upper="0.000000" effort="100.0" velocity="1.00"/>
+    <limit lower="-2.530727" upper="0.050000" effort="100.0" velocity="1.00"/>
   </joint>
 
   <joint name="Joint4" type="revolute">
