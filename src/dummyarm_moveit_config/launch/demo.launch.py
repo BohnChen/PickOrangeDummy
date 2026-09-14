@@ -53,6 +53,8 @@ def generate_launch_description():
         {'robot_description_semantic': robot_description_semantic},
         {'robot_description_kinematics': kinematics_yaml},
         {'robot_description_planning': joint_limits_yaml},
+        {'robot_description_planning.default_velocity_scaling_factor': 1.0},
+        {'robot_description_planning.default_acceleration_scaling_factor': 1.0},
         planning_pipeline_params,
         moveit_controllers_yaml,
         {'trajectory_execution.allowed_execution_duration_scaling': 3.0},
@@ -107,6 +109,8 @@ def generate_launch_description():
         {'robot_description_semantic': robot_description_semantic},
         {'robot_description_kinematics': kinematics_yaml},
         {'robot_description_planning': joint_limits_yaml},
+        {'robot_description_planning.default_velocity_scaling_factor': 1.0},
+        {'robot_description_planning.default_acceleration_scaling_factor': 1.0},
         planning_pipeline_params,
     ]
 
