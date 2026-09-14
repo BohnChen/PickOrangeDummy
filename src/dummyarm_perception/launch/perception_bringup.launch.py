@@ -1,4 +1,5 @@
 import os
+import launch
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
@@ -16,6 +17,7 @@ def generate_launch_description():
     cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.0', description='Camera Roll')
     cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='0.52', description='Camera Pitch (俯仰 ~30度)')
     cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='3.14159', description='Camera Yaw (朝向机械臂)')
+    gui_arg = DeclareLaunchArgument('gui', default_value='true', description='Launch local rqt_image_view GUI')
 
     # 1. 静态 TF 广播节点: base_link -> camera_link
     static_tf_node = Node(
@@ -67,6 +69,16 @@ def generate_launch_description():
         output='screen'
     )
 
+    # 4. 本地轻量原生图像视窗 (rqt_image_view 纯 Qt/GTK 渲染，无 Ogre 冲突)
+    rqt_image_view_node = Node(
+        package='rqt_image_view',
+        executable='rqt_image_view',
+        name='rqt_image_view',
+        arguments=['/dummyarm/vision_debug_image'],
+        condition=launch.conditions.IfCondition(LaunchConfiguration('gui')),
+        output='screen'
+    )
+
     return LaunchDescription([
         cam_x_arg,
         cam_y_arg,
@@ -74,7 +86,9 @@ def generate_launch_description():
         cam_roll_arg,
         cam_pitch_arg,
         cam_yaw_arg,
+        gui_arg,
         static_tf_node,
         realsense_camera_node,
         orange_detector_node,
+        rqt_image_view_node,
     ])

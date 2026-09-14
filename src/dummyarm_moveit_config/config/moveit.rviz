@@ -66,16 +66,6 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /dummyarm/target_orange_marker
-    - Class: rviz_default_plugins/Image
-      Name: Camera View
-      Enabled: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /dummyarm/vision_debug_image
-      Normalize Range: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
