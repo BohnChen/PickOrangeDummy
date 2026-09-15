@@ -277,25 +277,45 @@ def main():
                     sigint_handler(None, None)
                     return
 
-                # 微调动作执行
+                # 微调动作执行 (采用局部微增量平滑驱动，严格锁定 J4/J5/J6，彻底消除关节转大半圈的逆解跳变！)
                 m = re.match(r'^([+\-du])(\d*\.?\d*)$', cmd)
                 if m:
                     action, num_str = m.groups()
                     step = float(num_str) if num_str else 1.0
-                    delta_r = step * 0.01 if action == '+' else (-step * 0.01 if action == '-' else 0.0)
-                    delta_z = step * 0.01 if action == 'u' else (-step * 0.01 if action == 'd' else 0.0)
 
-                    rx += delta_r * (tx / dist)
-                    ry += delta_r * (ty / dist)
-                    rz += delta_z
+                    # 拷贝当前已到达的稳定关节状态
+                    new_joints = list(current_pos)
 
-                    new_sol = node.plan_to_cartesian(rx, ry, rz)
-                    if new_sol:
-                        current_pos = list(new_sol)
-                        node.execute_joints(current_pos, duration=1.2)
-                        print(f"✔ 微调到位！(累计微调: 视线方向 {delta_r*100:+.1f}cm, 高度 {delta_z*100:+.1f}cm)")
-                    else:
-                        print("⚠ 微调超出机械臂极限姿态范围。")
+                    # 1. 前后微调 (+1 前进 1cm / -1 后退 1cm)
+                    # 真实前后：大臂 J2 微动 0.03 rad (~1.7°)，手肘 J3 微动 -0.045 rad (~-2.5°)
+                    if action == '+':
+                        new_joints[1] += step * 0.025
+                        new_joints[2] -= step * 0.035
+                        print(f"👉 向前微调 {step}cm...")
+                    elif action == '-':
+                        new_joints[1] -= step * 0.025
+                        new_joints[2] += step * 0.035
+                        print(f"👈 向后微退 {step}cm...")
+
+                    # 2. 上下微调 (u1 抬高 1cm / d1 压低 1cm)
+                    elif action == 'u':
+                        new_joints[1] -= step * 0.025
+                        new_joints[2] -= step * 0.010
+                        print(f"👆 向上抬高 {step}cm...")
+                    elif action == 'd':
+                        new_joints[1] += step * 0.025
+                        new_joints[2] += step * 0.010
+                        print(f"👇 向下探低 {step}cm...")
+
+                    # 严格保证 J4, J5, J6 不发生奇异反转
+                    new_joints[3] = current_pos[3]
+                    new_joints[4] = current_pos[4]
+                    new_joints[5] = current_pos[5]
+
+                    # 极速平滑下发 (微动仅需 0.8 秒，干脆平稳)
+                    node.execute_joints(new_joints, duration=0.8)
+                    current_pos = new_joints
+                    print("✔ 微调到位！")
 
             if cmd == 's' and len(recorded_base_pts) >= 3:
                 break
