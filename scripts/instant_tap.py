@@ -213,23 +213,18 @@ def main():
             # 1. 目标朝向计算
             j1 = math.atan2(tx, -ty)
 
-            # 注入用户实测定案的真实物理标定接触补偿 (径向 -1.0cm, 垂直高度下探 -5.5cm)
-            # 彻底抹平视觉反光质心带来的虚高与前倾，实现真正的毫米级物理对齐！
-            r_corrected = r_dist - 0.010
-            z_corrected = tz - 0.055
-
             # -------------------------------------------------------------
-            # 准备位 (Ready Pose: 停在目标正前方 2.0cm，高度精确对齐果心)
+            # 准备位 (Ready Pose: 停在目标正前方 2.5cm，高度对齐果心)
             # -------------------------------------------------------------
-            r_ready = r_corrected - 0.020
-            j2_ready, j3_ready = solve_arm_kinematics(r_ready, z_corrected)
+            r_ready = r_dist - 0.025
+            j2_ready, j3_ready = solve_arm_kinematics(r_ready, tz)
             ready_joints = [j1, j2_ready, j3_ready, 0.0, 0.0, 0.0]
 
             # -------------------------------------------------------------
             # 轻碰位 (Touch Pose: 沿进刀轴向前顶出 2.5cm，精准轻触物体正面表面)
             # -------------------------------------------------------------
-            r_touch = r_corrected + 0.005 # 略前探触碰表面
-            j2_touch, j3_touch = solve_arm_kinematics(r_touch, z_corrected)
+            r_touch = r_dist + 0.005 # 略前伸触碰
+            j2_touch, j3_touch = solve_arm_kinematics(r_touch, tz)
             touch_joints = [j1, j2_touch, j3_touch, 0.0, 0.0, 0.0]
 
             # -------------------------------------------------------------
