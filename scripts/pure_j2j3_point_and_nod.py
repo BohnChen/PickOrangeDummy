@@ -77,6 +77,10 @@ class PureJ2J3Nod(Node):
             return None
 
     def send_joint_goal(self, positions, duration_sec=1.5):
+        if not self.traj_client.server_is_ready():
+            self.get_logger().error("控制器 Action 服务不可用！请确认 real_moveit 正在运行。")
+            return False
+
         goal_msg = FollowJointTrajectory.Goal()
         goal_msg.trajectory.joint_names = self.joint_names
 
@@ -88,17 +92,27 @@ class PureJ2J3Nod(Node):
         goal_msg.trajectory.points.append(point)
 
         send_future = self.traj_client.send_goal_async(goal_msg)
+        t_start = time.time()
         while not send_future.done():
             time.sleep(0.01)
+            if time.time() - t_start > 3.0:
+                self.get_logger().error("发送轨迹请求超时！")
+                return False
+
         goal_handle = send_future.result()
 
         if not goal_handle.accepted:
-            self.get_logger().error("关节指令被拒收！")
+            self.get_logger().error("关节指令被控制器拒收！请检查限位或控制器状态。")
             return False
 
         res_future = goal_handle.get_result_async()
+        t_start = time.time()
         while not res_future.done():
             time.sleep(0.01)
+            if time.time() - t_start > (duration_sec + 3.0):
+                self.get_logger().error("等待轨迹执行完成超时！")
+                return False
+
         return True
 
     def return_to_rest(self):
@@ -211,17 +225,20 @@ def main():
                 print(f"❌ 目标距离 {dist:.2f}m 超出工作范围 [0.12, 0.33]m！")
                 continue
 
-            # 1. 目标对准
-            j1 = math.atan2(ty, tx)
+            # 1. 目标对准与方位角计算
+            # 关键修正：Dummy URDF 中机械臂的正前方方向为 -Y 方向！
+            # 目标在正前方时 (tx ~ 0, ty < 0)，J1 的对准偏航角公式为: atan2(-tx, -ty)
+            j1 = math.atan2(-tx, -ty)
             r_dist = math.sqrt(tx*tx + ty*ty)
 
             # 2. 目标上方 3cm 准备位 (Ready Pose)
             j2_ready, j3_ready = solve_2d_reach(r_dist - 0.02, tz + 0.03)
-            # 严格锁死手腕：J4=0, J5=0, J6=0
             ready_joints = [j1, j2_ready, j3_ready, 0.0, 0.0, 0.0]
 
-            print(f"\n>>> [1/3] J1 转向 {math.degrees(j1):.1f}°，J2/J3 舒展到达目标上方 3cm 处...")
-            node.send_joint_goal(ready_joints, duration_sec=2.0)
+            print(f"\n>>> [1/3] J1 转向目标方位 {math.degrees(j1):.1f}°，J2/J3 舒展到达目标上方 3cm 处...")
+            if not node.send_joint_goal(ready_joints, duration_sec=2.0):
+                print("❌ 目标轨迹下发失败，请确认 real_moveit 正在运行且机械臂无报错。")
+                continue
             time.sleep(0.3)
 
             # 3. J2/J3 协同向下微探点头 (点触位 Tap Pose)
