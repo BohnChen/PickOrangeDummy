@@ -76,8 +76,8 @@ class FlawlessTapNode(Node):
         except Exception:
             return None
 
-    def move_to_cartesian_point(self, x, y, z, vel=0.5, acc=0.5, allowed_time=4.0):
-        """调用 MoveGroup 规划并驱动末端 tool0 到达指定空间点 (放宽姿态约束，消除无解与误差)"""
+    def move_to_cartesian_point(self, x, y, z, vel=1.0, acc=1.0, allowed_time=6.0):
+        """调用 MoveGroup 规划并驱动末端 tool0 到达指定空间点 (健康速度 1.0，杜绝微步齿槽抖动)"""
         goal_msg = MoveGroup.Goal()
         req = goal_msg.request
         req.group_name = 'arm'
@@ -122,7 +122,8 @@ class FlawlessTapNode(Node):
         t_start = time.time()
         while not res_future.done():
             time.sleep(0.01)
-            if time.time() - t_start > (allowed_time + 6.0):
+            # 给足 12 秒充裕时间让物理机械臂平稳走到位
+            if time.time() - t_start > (allowed_time + 12.0):
                 self.get_logger().error("等待 MoveGroup 轨迹执行超时！")
                 self.cancel_active_goal()
                 return False
@@ -214,7 +215,7 @@ def main():
             rz = tz + 0.015
 
             print(f"\n>>> [1/3] MoveGroup 正在平滑规划到达目标前方 4cm 准备位: X={rx:.3f}, Y={ry:.3f}, Z={rz:.3f}...")
-            if not node.move_to_cartesian_point(rx, ry, rz, vel=0.4, acc=0.4, allowed_time=4.0):
+            if not node.move_to_cartesian_point(rx, ry, rz, vel=1.0, acc=1.0, allowed_time=6.0):
                 print("❌ 规划无法到达准备位，安全终止。")
                 continue
             time.sleep(0.3)
@@ -230,10 +231,10 @@ def main():
             print(">>> [2/3] 开始执行末端轻触目标物体 (Tap 3 次)...")
             for tap_i in range(1, 4):
                 print(f"    👉 [敲门 {tap_i}/3] 末端向前轻触目标表面...")
-                node.move_to_cartesian_point(touch_x, touch_y, touch_z, vel=0.2, acc=0.2, allowed_time=1.5)
+                node.move_to_cartesian_point(touch_x, touch_y, touch_z, vel=0.6, acc=0.6, allowed_time=2.0)
                 time.sleep(0.15)
                 print(f"    👈 回弹准备位...")
-                node.move_to_cartesian_point(rx, ry, rz, vel=0.3, acc=0.3, allowed_time=1.5)
+                node.move_to_cartesian_point(rx, ry, rz, vel=0.8, acc=0.8, allowed_time=2.0)
                 time.sleep(0.15)
 
             # -------------------------------------------------------------
@@ -241,7 +242,7 @@ def main():
             # -------------------------------------------------------------
             print(">>> [3/3] 敲门完成！自动平稳折叠回到 REST 原点...")
             # 回 REST 目标
-            node.move_to_cartesian_point(-0.014, -0.048, 0.043, vel=0.3, acc=0.3, allowed_time=5.0)
+            node.move_to_cartesian_point(-0.014, -0.048, 0.043, vel=0.8, acc=0.8, allowed_time=7.0)
             print("✔ 机械臂已平稳归位至 REST，RViz 控制权 100% 可用！")
             print("==================================================================")
 
