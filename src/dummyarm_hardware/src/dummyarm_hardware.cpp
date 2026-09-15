@@ -188,22 +188,26 @@ CallbackReturn DummyArmHardware::on_activate(const rclcpp_lifecycle::State &)
 CallbackReturn DummyArmHardware::on_deactivate(const rclcpp_lifecycle::State &)
 {
   // 控制器失活时释放力矩，双保险失能
-  serial_.write("!STOP\n");
-  usleep(50000); // 50ms
-  serial_.write("!DISABLE\n");
-  usleep(50000);
-  is_enabled_ = false;
-  RCLCPP_INFO(logger_, "【硬件驱动】机械臂电机已失能 (!STOP / !DISABLE)，力矩已释放");
+  if (is_enabled_) {
+    serial_.write("!STOP\n");
+    usleep(50000); // 50ms
+    serial_.write("!DISABLE\n");
+    usleep(50000);
+    is_enabled_ = false;
+    RCLCPP_INFO(logger_, "【硬件驱动】机械臂电机已失能 (!STOP / !DISABLE)，力矩已释放");
+  }
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn DummyArmHardware::on_cleanup(const rclcpp_lifecycle::State &)
 {
-  serial_.write("!STOP\n");
-  usleep(50000);
-  serial_.write("!DISABLE\n");
-  usleep(50000);
-  is_enabled_ = false;
+  if (is_enabled_) {
+    serial_.write("!STOP\n");
+    usleep(50000);
+    serial_.write("!DISABLE\n");
+    usleep(50000);
+    is_enabled_ = false;
+  }
   serial_.close();
   return CallbackReturn::SUCCESS;
 }
