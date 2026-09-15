@@ -109,7 +109,7 @@ class PureJ2J3Nod(Node):
         t_start = time.time()
         while not res_future.done():
             time.sleep(0.01)
-            if time.time() - t_start > (duration_sec + 3.0):
+            if time.time() - t_start > (duration_sec + 6.0):
                 self.get_logger().error("等待轨迹执行完成超时！")
                 return False
 
@@ -117,7 +117,8 @@ class PureJ2J3Nod(Node):
 
     def return_to_rest(self):
         self.get_logger().info("🔄 平稳折叠收拢回到 REST 原点...")
-        return self.send_joint_goal([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], duration_sec=4.0)
+        # 给足 7.0 秒平稳低速收折时间，与 safe_park_and_exit 保持完全一致，消除超时
+        return self.send_joint_goal([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], duration_sec=7.0)
 
 
 node = None
@@ -226,9 +227,9 @@ def main():
                 continue
 
             # 1. 目标对准与方位角计算
-            # 关键修正：Dummy URDF 中机械臂的正前方方向为 -Y 方向！
-            # 目标在正前方时 (tx ~ 0, ty < 0)，J1 的对准偏航角公式为: atan2(-tx, -ty)
-            j1 = math.atan2(-tx, -ty)
+            # 物理实测确认：向右移动物体时 J1 应顺时针转动(负角度)；向左移动时转动(正角度)
+            # 真实对准偏航角公式为: j1 = -atan2(-tx, -ty) = atan2(tx, -ty)
+            j1 = math.atan2(tx, -ty)
             r_dist = math.sqrt(tx*tx + ty*ty)
 
             # 2. 目标上方 3cm 准备位 (Ready Pose)
