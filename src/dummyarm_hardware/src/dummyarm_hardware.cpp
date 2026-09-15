@@ -210,11 +210,13 @@ CallbackReturn DummyArmHardware::on_cleanup(const rclcpp_lifecycle::State &)
 
 CallbackReturn DummyArmHardware::on_shutdown(const rclcpp_lifecycle::State &)
 {
-  serial_.write("!STOP\n");
-  usleep(50000);
-  serial_.write("!DISABLE\n");
-  usleep(50000);
-  is_enabled_ = false;
+  if (is_enabled_) {
+    serial_.write("!STOP\n");
+    usleep(50000);
+    serial_.write("!DISABLE\n");
+    usleep(50000);
+    is_enabled_ = false;
+  }
   serial_.close();
   return CallbackReturn::SUCCESS;
 }

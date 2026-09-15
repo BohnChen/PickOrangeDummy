@@ -9,14 +9,13 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 标准树结构: base_link -> camera_link)
-    # 由实测 SVD 外参严密反解出 camera_link，使相机整棵 TF 树与机械臂基座无缝接合
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='-0.1655', description='Camera Link X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.2857', description='Camera Link Y relative to base_link')
+    # 静态手眼外参 (Eye-to-Hand 消除 90 度相位偏角定案值: 修正前偏向-93°，修正后J1正对前方-5.7°)
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='0.2857', description='Camera Link X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.1655', description='Camera Link Y relative to base_link')
     cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.4590', description='Camera Link Z relative to base_link')
     cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.5748', description='Camera Link Roll')
     cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='1.2849', description='Camera Link Pitch')
-    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='0.6269', description='Camera Link Yaw')
+    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='2.1977', description='Camera Link Yaw')
     gui_arg = DeclareLaunchArgument('gui', default_value='true', description='Launch local rqt_image_view GUI')
 
     # 1. 静态 TF 广播节点: base_link -> camera_link (彻底打通两棵独立 TF 树)
