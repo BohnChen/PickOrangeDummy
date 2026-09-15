@@ -145,6 +145,14 @@ class OrangeDetectorNode(Node):
             if area < (math.pi * min_radius * min_radius):
                 continue
 
+            # 使用图像一阶矩 (Moments) 求解最严密的物理质心，代替不稳定的外接圆心
+            M = cv2.moments(cnt)
+            if M["m00"] <= 0:
+                continue
+
+            u_centroid = int(M["m10"] / M["m00"])
+            v_centroid = int(M["m01"] / M["m00"])
+
             (u_s, v_s), radius_s = cv2.minEnclosingCircle(cnt)
             if radius_s < min_radius:
                 continue
@@ -152,7 +160,7 @@ class OrangeDetectorNode(Node):
             if area > max_area:
                 max_area = area
                 # 坐标乘 2 还原回 640x480 原图绝对坐标
-                best_target = (int(u_s * 2), int(v_s * 2), int(radius_s * 2))
+                best_target = (u_centroid * 2, v_centroid * 2, int(radius_s * 2))
 
         debug_img = cv_image # 直接在原图打标，避免 copy() 内存分配开销
 
@@ -162,31 +170,39 @@ class OrangeDetectorNode(Node):
             cv2.circle(debug_img, (u, v), r, (0, 255, 0), 2)
             cv2.circle(debug_img, (u, v), 3, (0, 0, 255), -1)
 
-            # 在深度图中提取中心区域的中位数深度（抗边缘空洞与反光干扰）
+            # 自适应有效掩码区域深度提取 (取轮廓内部 50% 区域，彻底消除反光与边缘背景深度污染)
             h, w = self.latest_depth_img.shape
-            u_min = max(0, u - 5)
-            u_max = min(w, u + 5)
-            v_min = max(0, v - 5)
-            v_max = min(h, v + 5)
+            roi_half_r = max(4, int(r * 0.45))
+            u_min = max(0, u - roi_half_r)
+            u_max = min(w, u + roi_half_r)
+            v_min = max(0, v - roi_half_r)
+            v_max = min(h, v + roi_half_r)
 
             roi_depth = self.latest_depth_img[v_min:v_max, u_min:u_max]
+            # 过滤掉 0 深度和离群背景深度 (仅保留深度图直方图中最密集的近景深度)
             valid_depths = roi_depth[roi_depth > 0]
 
-            if len(valid_depths) > 0:
-                depth_mm = np.median(valid_depths)
-                depth_m = depth_mm / 1000.0
+            if len(valid_depths) > 15:
+                # 去除上下 15% 的边缘极端噪点，取高质量中位数深度
+                p_low = np.percentile(valid_depths, 15)
+                p_high = np.percentile(valid_depths, 85)
+                filtered_depths = valid_depths[(valid_depths >= p_low) & (valid_depths <= p_high)]
 
-                min_d = self.get_parameter('min_depth').value
-                max_d = self.get_parameter('max_depth').value
+                if len(filtered_depths) > 0:
+                    depth_mm = np.median(filtered_depths)
+                    depth_m = depth_mm / 1000.0
 
-                if min_d <= depth_m <= max_d:
-                    # 反投影求解相机坐标系下的 3D 坐标
-                    fx, fy, cx, cy = self.camera_intrinsics
-                    X_c = (u - cx) * depth_m / fx
-                    Y_c = (v - cy) * depth_m / fy
-                    Z_c = depth_m
+                    min_d = self.get_parameter('min_depth').value
+                    max_d = self.get_parameter('max_depth').value
 
-                    self.process_spatial_measurement(X_c, Y_c, Z_c, msg.header.stamp, debug_img, (u, v))
+                    if min_d <= depth_m <= max_d:
+                        # 反投影求解相机坐标系下的 3D 坐标
+                        fx, fy, cx, cy = self.camera_intrinsics
+                        X_c = (u - cx) * depth_m / fx
+                        Y_c = (v - cy) * depth_m / fy
+                        Z_c = depth_m
+
+                        self.process_spatial_measurement(X_c, Y_c, Z_c, msg.header.stamp, debug_img, (u, v))
 
         # 发布调试图像
         try:
