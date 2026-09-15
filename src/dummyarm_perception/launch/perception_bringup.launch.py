@@ -9,14 +9,14 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    # 静态手眼外参 (Eye-to-Hand 实测定案外参: 消除 12.8cm 物理对齐偏差后的绝对真值)
-    # 物理验证: 末端贴黄色标定纸片，相机推算与机械臂 tool0 达到亚毫米级绝对重合
-    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='-0.2055', description='Camera Link X relative to base_link')
-    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.3637', description='Camera Link Y relative to base_link')
-    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.5540', description='Camera Link Z relative to base_link')
-    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.5748', description='Camera Link Roll')
-    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='1.2849', description='Camera Link Pitch')
-    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='0.6269', description='Camera Link Yaw')
+    # 静态手眼外参 (Eye-to-Hand 4点实测高精定案值: 经多次实测全局高度吻合验证)
+    # cam_z: +0.4678m (真实物理高度 46.8 厘米，高位俯视，完全符合现实直觉)
+    cam_x_arg = DeclareLaunchArgument('cam_x', default_value='-0.1959', description='Camera Link X relative to base_link')
+    cam_y_arg = DeclareLaunchArgument('cam_y', default_value='-0.2986', description='Camera Link Y relative to base_link')
+    cam_z_arg = DeclareLaunchArgument('cam_z', default_value='0.4678', description='Camera Link Z relative to base_link')
+    cam_roll_arg = DeclareLaunchArgument('cam_roll', default_value='0.5252', description='Camera Link Roll')
+    cam_pitch_arg = DeclareLaunchArgument('cam_pitch', default_value='1.2661', description='Camera Link Pitch')
+    cam_yaw_arg = DeclareLaunchArgument('cam_yaw', default_value='0.4923', description='Camera Link Yaw')
     gui_arg = DeclareLaunchArgument('gui', default_value='true', description='Launch local rqt_image_view GUI')
 
     # 1. 静态 TF 广播节点: base_link -> camera_link (彻底打通两棵独立 TF 树)
