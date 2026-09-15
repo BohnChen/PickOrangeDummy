@@ -147,18 +147,30 @@ def main():
             elif cmd == 's':
                 print(f"🎉 最佳触碰补偿定案: 径向增量 {offset_r*100:+.1f}cm, 垂直增量 {offset_z*100:+.1f}cm！")
                 break
-            elif cmd.startswith('+'):
-                val = float(cmd[1:]) if len(cmd) > 1 else 1.0
-                offset_r += val * 0.01
-            elif cmd.startswith('-'):
-                val = float(cmd[1:]) if len(cmd) > 1 else 1.0
-                offset_r -= val * 0.01
-            elif cmd.startswith('d'):
-                val = float(cmd[1:]) if len(cmd) > 1 else 1.0
-                offset_z -= val * 0.01
-            elif cmd.startswith('u'):
-                val = float(cmd[1:]) if len(cmd) > 1 else 1.0
-                offset_z += val * 0.01
+
+            import re
+            m = re.match(r'^([+\-du])(\d*\.?\d*)$', cmd)
+            if m:
+                action, num_str = m.groups()
+                step = float(num_str) if num_str else 1.0
+                if action == '+':
+                    offset_r += step * 0.01
+                elif action == '-':
+                    offset_r -= step * 0.01
+                elif action == 'd':
+                    offset_z -= step * 0.01
+                elif action == 'u':
+                    offset_z += step * 0.01
+            else:
+                # 容错输入，若用户连续误敲如 dd1
+                if 'd' in cmd:
+                    offset_z -= 0.01
+                elif 'u' in cmd:
+                    offset_z += 0.01
+                elif '+' in cmd:
+                    offset_r += 0.01
+                elif '-' in cmd:
+                    offset_r -= 0.01
 
         # 平稳收回
         node.move_to_joints([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], duration=5.0)
