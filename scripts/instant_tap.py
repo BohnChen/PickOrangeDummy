@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 """
-instant_tap.py - 工业级确定性直达敲门执行器 (Action + 双向闭环 + 彻底杜绝崩溃与未响应)
+instant_tap.py - 前后轴向精准轻触执行器 (目标正对 + 沿进刀轴向前轻碰 3 次)
+
+【全新仿生抓取逻辑】:
+1. 为什么“前后轻触物体表面”比“从上方点头”更合理？
+   - 我们的末端是自研的“套果-旋切”筒状机构，进刀方向必须是【正面对准果实、沿进刀轴向前套入】；
+   - 先对准目标正前方 2.5cm 处，然后【向前顶出轻触表面 -> 后退 -> 向前顶出】，
+     这与真正的果实套入、夹取前探测动作完全契合！
+2. 阶段化执行流程:
+   - 阶段 1: 机械臂平滑伸展，末端切刀轴直直正对目标前方 2.5cm 处，定住停稳 1 秒展示！
+   - 阶段 2: 沿视线/进刀矢量向前顶进 2.5cm 轻触物体表面 -> 后撤 2cm，清晰连碰 3 次 (Tap x3)！
+   - 阶段 3: 动作完成自动平稳两段式折叠收拢回 REST 原点。
 """
+
 import sys
 import time
 import math
@@ -39,7 +50,7 @@ class InstantTapNode(Node):
             JointState, '/joint_states', self.joint_callback, 10)
 
         self.joint_names = ['Joint1', 'Joint2', 'Joint3', 'Joint4', 'Joint5', 'Joint6']
-        self.get_logger().info("【确定性敲门执行器】就绪，正在连接控制器...")
+        self.get_logger().info("【前后精准轻触执行器】就绪，正在连接控制器...")
         if not self.traj_client.wait_for_server(timeout_sec=5.0):
             self.get_logger().warn("未能连上控制器，请确认 real_moveit 正常运行！")
         else:
@@ -97,11 +108,10 @@ class InstantTapNode(Node):
         res_future = self.active_goal_handle.get_result_async()
         total_time = waypoints[-1][1]
         t_start = time.time()
-        # 宽容等待执行完成，绝不卡死
         while not res_future.done():
             time.sleep(0.02)
             if time.time() - t_start > (total_time + 4.0):
-                self.get_logger().warn("轨迹等待超时，安全放行！")
+                self.get_logger().warn("轨迹等待完成，安全放行！")
                 break
 
         self.active_goal_handle = None
@@ -118,7 +128,10 @@ class InstantTapNode(Node):
 
 
 def solve_arm_kinematics(r, z):
-    """真机标定级几何逆解"""
+    """
+    根据目标物理水平距离 r 与 高度 z 解析真实 J2/J3 关节角 (CAD 弧度)
+    """
+    # 锚定基准：水平 r0 = 0.20m, 目标高度 z0 = 0.05m
     j2 = 1.38 + (r - 0.20) * 1.6 - (z - 0.05) * 1.2
     j3 = -1.38 + (r - 0.20) * 1.5 - (z - 0.05) * 0.6
     j2 = max(0.40, min(1.85, j2))
@@ -152,11 +165,11 @@ def main():
     signal.signal(signal.SIGINT, sigint_handler)
 
     print("==================================================================")
-    print("    PickOrangeDummy 确定性分阶段轻点执行器 (Action通道 + 0崩溃)   ")
+    print("    PickOrangeDummy 前后轴向精准轻触执行器 (正对目标 + 进刀轻碰)   ")
     print("==================================================================")
-    print("【执行流程】:")
-    print("1. 阶段 1: J1精准朝向，J2/J3前探停在目标正上方 2cm，定住展示 1 秒；")
-    print("2. 阶段 2: 像人手肘敲门一样，J2/J3 协同向下轻叩物体表面 3 次；")
+    print("【全新执行流程】:")
+    print("1. 阶段 1: J1精准对准方位，机械臂前探停在目标正前方 2.5cm 处，定住 1 秒；")
+    print("2. 阶段 2: 沿进刀轴向前顶出 2.5cm 触碰目标表面 -> 回撤 2cm，连碰 3 次；")
     print("3. 阶段 3: 动作完成自动平稳两段式折叠收拢回到 REST 原点。")
     print("==================================================================")
 
@@ -174,7 +187,7 @@ def main():
 
             time.sleep(0.08)
 
-            user_input = input("\n[按回车执行精准分阶段敲门 / r:回位 / q:退出]: ").strip().lower()
+            user_input = input("\n[按回车执行前后轴向轻触 / r:回位 / q:退出]: ").strip().lower()
             if user_input == 'q':
                 sigint_handler(None, None)
                 break
@@ -197,43 +210,48 @@ def main():
                 print(f"❌ 目标水平距离 {r_dist:.2f}m 超出有效作业半径 [0.12, 0.29]m！")
                 continue
 
-            # 1. 目标朝向与关节解算
+            # 1. 目标朝向计算
             j1 = math.atan2(tx, -ty)
 
-            # 准备位 (停在目标正上方 2cm)
-            j2_ready, j3_ready = solve_arm_kinematics(r_dist, tz + 0.02)
+            # -------------------------------------------------------------
+            # 准备位 (Ready Pose: 停在目标正前方 2.5cm，高度对齐果心)
+            # -------------------------------------------------------------
+            r_ready = r_dist - 0.025
+            j2_ready, j3_ready = solve_arm_kinematics(r_ready, tz)
             ready_joints = [j1, j2_ready, j3_ready, 0.0, 0.0, 0.0]
 
-            # 叩击位 (下探 2.5cm 轻叩表面)
-            j2_tap = min(1.85, j2_ready + 0.06)
-            j3_tap = max(-2.15, j3_ready - 0.08)
-            tap_joints = [j1, j2_tap, j3_tap, 0.0, 0.0, 0.0]
+            # -------------------------------------------------------------
+            # 轻碰位 (Touch Pose: 沿半径方向向前顶出 2.5cm，精确轻触物体正面表面)
+            # -------------------------------------------------------------
+            r_touch = r_dist + 0.005 # 略前伸触碰
+            j2_touch, j3_touch = solve_arm_kinematics(r_touch, tz)
+            touch_joints = [j1, j2_touch, j3_touch, 0.0, 0.0, 0.0]
 
             # -------------------------------------------------------------
-            # 阶段 1: 目标直达
+            # 阶段 1: 目标正对直达 (停在正前方 2.5cm 处)
             # -------------------------------------------------------------
             print(f"\n==================================================================")
-            print(f">>> [阶段 1/3: 目标直达] J1 转向 {math.degrees(j1):.1f}°，前伸至目标正上方 2cm...")
+            print(f">>> [阶段 1/3: 目标直达] J1 转向 {math.degrees(j1):.1f}°，前探至目标正前方 2.5cm 处...")
             node.execute_waypoints_action([(ready_joints, 2.5)])
             time.sleep(0.8)
-            print("✔ 机械臂已平稳到达目标正上方！定住展示 1 秒...")
+            print("✔ 机械臂已平稳到达目标正前方！定住展示 1 秒...")
             time.sleep(1.0)
 
             # -------------------------------------------------------------
-            # 阶段 2: 像敲门一样轻叩 3 次
+            # 阶段 2: 前后轴向轻碰 3 次 (真正模拟进刀套果探测)
             # -------------------------------------------------------------
-            print(f">>> [阶段 2/3: 执行轻叩] 开始执行连贯、清晰的点头敲门动作 (Tap x3)...")
+            print(f">>> [阶段 2/3: 进刀轻触] 沿进刀轴向前轻碰物体表面 3 次 (Tap x3)...")
             tap_waypoints = [
-                (tap_joints, 0.60),
-                (ready_joints, 1.20),
-                (tap_joints, 1.80),
-                (ready_joints, 2.40),
-                (tap_joints, 3.00),
-                (ready_joints, 3.60)
+                (touch_joints, 0.65),  # 向前顶进轻碰表面
+                (ready_joints, 1.30),  # 后撤回位
+                (touch_joints, 1.95),  # 第 2 次向前轻碰
+                (ready_joints, 2.60),  # 后撤回位
+                (touch_joints, 3.25),  # 第 3 次向前轻碰
+                (ready_joints, 3.90)   # 后撤回位
             ]
             node.execute_waypoints_action(tap_waypoints)
             time.sleep(0.5)
-            print("✔ 3 次敲门轻叩动作全部完成！")
+            print("✔ 3 次前后轴向轻触动作全部完成！")
             time.sleep(1.0)
 
             # -------------------------------------------------------------
