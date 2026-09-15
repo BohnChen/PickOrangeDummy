@@ -89,35 +89,19 @@ class InstantTapNode(Node):
 def solve_arm_kinematics(r, z):
     """
     根据目标物理水平距离 r 与 高度 z 解析真实 J2/J3 关节角 (CAD 弧度)
-    大臂 L1 = 0.146m, 小臂+手腕 L2 = 0.165m
+    采用真机线性几何刚度标定模型，彻底消除悬空过高问题！
     """
-    L1 = 0.146
-    L2 = 0.165
+    # 锚定基准：水平 r0 = 0.20m, 桌面高度 z0 = 0.05m
+    # 距离越远，J2 前倾加大，J3 伸展展开
+    # 高度越高，J2 自然立起
+    j2 = 1.38 + (r - 0.20) * 1.6 - (z - 0.05) * 1.2
+    j3 = -1.38 + (r - 0.20) * 1.5 - (z - 0.05) * 0.6
 
-    # 目标距肩部有效距离 D
-    h = z - 0.04 # 扣除肩部抬高偏置
-    D = math.sqrt(r * r + h * h)
-    D = min(max(D, 0.14), L1 + L2 - 0.015)
+    # 严格物理安全限位裁剪 (CAD 限位)
+    j2 = max(0.40, min(1.85, j2))
+    j3 = max(-2.15, min(-0.65, j3))
 
-    # 余弦定理求肘部夹角
-    cos_elbow = (D * D - L1 * L1 - L2 * L2) / (2.0 * L1 * L2)
-    cos_elbow = max(-1.0, min(1.0, cos_elbow))
-    theta_elbow = math.acos(cos_elbow)
-
-    # 肩部俯仰角
-    alpha = math.atan2(h, r)
-    beta = math.atan2(L2 * math.sin(theta_elbow), L1 + L2 * math.cos(theta_elbow))
-    theta_shoulder = alpha + beta
-
-    # 转换为 CAD 模型角 (立姿基准: J2=1.274, J3=-1.571)
-    j2_cad = 1.274 + (1.20 - theta_shoulder) * 0.95
-    j3_cad = -1.571 + (theta_elbow - 1.571) * 0.95
-
-    # 严格物理安全限位裁剪
-    j2_cad = max(0.15, min(1.85, j2_cad))
-    j3_cad = max(-2.15, min(-0.70, j3_cad))
-
-    return j2_cad, j3_cad
+    return j2, j3
 
 
 node = None
@@ -201,33 +185,35 @@ def main():
             # -------------------------------------------------------------
             j1 = math.atan2(tx, -ty)
 
-            # 准备位 (Ready Pose: 停留在物体表面上方恰好 2.5 厘米)
-            j2_ready, j3_ready = solve_arm_kinematics(r_dist, tz + 0.025)
+            # 准备位 (Ready Pose: 停留在物体正上方 2cm 处)
+            j2_ready, j3_ready = solve_arm_kinematics(r_dist, tz + 0.02)
             ready_joints = [j1, j2_ready, j3_ready, 0.0, 0.0, 0.0]
 
-            # 敲门接触位 (Tap Pose: 精准下探触碰物体表面)
-            j2_tap, j3_tap = solve_arm_kinematics(r_dist, tz - 0.005)
+            # 敲门叩击位 (Tap Pose: J2/J3 协同向下微动下探 2.5cm 真实触碰物体表面)
+            # J2 微幅前倾 +0.06 rad (~3.4°), J3 微动 -0.08 rad (~4.5°)
+            j2_tap = min(1.85, j2_ready + 0.06)
+            j3_tap = max(-2.15, j3_ready - 0.08)
             tap_joints = [j1, j2_tap, j3_tap, 0.0, 0.0, 0.0]
 
-            print(f"\n>>> [1/3] J1 转向 {math.degrees(j1):.1f}°，J2/J3 自适应伸展到达目标正上方 2.5cm 准备位...")
+            print(f"\n>>> [1/3] J1 转向 {math.degrees(j1):.1f}°，J2/J3 自适应伸展到达目标正上方 2cm 准备位...")
             print(f"    解算关节: J2={math.degrees(j2_ready):.1f}°, J3={math.degrees(j3_ready):.1f}°")
-            node.execute_trajectory([(ready_joints, 2.8)])
-            time.sleep(3.0)
+            node.execute_trajectory([(ready_joints, 2.5)])
+            time.sleep(2.7)
 
             # -------------------------------------------------------------
             # 2. 真实接触物体表面轻叩三下 (Tap x3)
             # -------------------------------------------------------------
-            print(">>> [2/3] 开始执行自适应贴面轻叩动作 (Tap 3 次)...")
+            print(">>> [2/3] 开始执行像敲门一样的 J2/J3 协同轻点动作 (Tap 3 次)...")
             tap_waypoints = [
-                (tap_joints, 0.40),
-                (ready_joints, 0.80),
-                (tap_joints, 1.20),
-                (ready_joints, 1.60),
-                (tap_joints, 2.00),
-                (ready_joints, 2.40)
+                (tap_joints, 0.35),
+                (ready_joints, 0.70),
+                (tap_joints, 1.05),
+                (ready_joints, 1.40),
+                (tap_joints, 1.75),
+                (ready_joints, 2.10)
             ]
             node.execute_trajectory(tap_waypoints)
-            time.sleep(2.6)
+            time.sleep(2.3)
 
             # -------------------------------------------------------------
             # 3. 自动平稳收拢回到 REST
