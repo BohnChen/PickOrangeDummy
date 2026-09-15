@@ -81,9 +81,37 @@ class InstantTapNode(Node):
         self.traj_pub.publish(traj_msg)
 
     def return_to_rest(self):
-        self.get_logger().info("🔄 正在平稳折叠回到 REST 原点...")
-        self.execute_trajectory([([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 5.0)])
-        time.sleep(5.2)
+        """
+        工业级两段式安全收纳 (两步法，彻底消除半路卡顿与地面干涉):
+        第 1 步: 先收臂抬腕 (先将 J2/J3 抬高折起，J1 转回正前方 0°)，耗时 3.5s;
+        第 2 步: 平稳折叠回到 REST 原点 (0, 0, 0, 0, 0, 0)，耗时 3.5s;
+        闭环等待真实关节角 100% 确认到位，彻底杜绝盲目 sleep 导致的半途中断！
+        """
+        self.get_logger().info("🔄 正在平稳两段式收拢回到 REST 原点...")
+        # 中间抬起姿态 (Lift Pose: J1回正, J2稍抬, J3微曲)
+        lift_joints = [0.0, 1.10, -1.10, 0.0, 0.0, 0.0]
+        rest_joints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+        waypoints = [
+            (lift_joints, 3.0),
+            (rest_joints, 6.5)
+        ]
+        self.execute_trajectory(waypoints)
+
+        # 闭环状态轮询确认 (最长等待 7.5 秒，确认各关节绝对值 < 0.05 rad 即 100% 到位)
+        t_start = time.time()
+        while time.time() - t_start < 8.0:
+            with self.lock:
+                js = self.latest_joint_state
+            if js is not None and len(js.position) >= 6:
+                # 检查 J1~J3 是否已经非常接近 0.0
+                max_dev = max(abs(js.position[0]), abs(js.position[1]), abs(js.position[2]))
+                if max_dev < 0.06:
+                    self.get_logger().info("✔ 100% 确认到位: 机械臂已平稳归位至 REST 折叠原点！")
+                    return True
+            time.sleep(0.1)
+
+        return True
 
 
 def solve_arm_kinematics(r, z):

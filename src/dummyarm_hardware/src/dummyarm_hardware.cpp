@@ -218,6 +218,17 @@ CallbackReturn DummyArmHardware::on_shutdown(const rclcpp_lifecycle::State &)
   return CallbackReturn::SUCCESS;
 }
 
+CallbackReturn DummyArmHardware::on_error(const rclcpp_lifecycle::State &)
+{
+  if (is_enabled_) {
+    serial_.write("!STOP\n");
+    serial_.write("!DISABLE\n");
+    is_enabled_ = false;
+  }
+  serial_.close();
+  return CallbackReturn::SUCCESS;
+}
+
 bool DummyArmHardware::query_positions(double period_s)
 {
   if (!serial_.write("#GETJPOS\n")) {
