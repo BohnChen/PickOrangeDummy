@@ -117,13 +117,38 @@ class MultiPointCalibrator(Node):
 
 
 def solve_arm_kinematics(r, z):
-    """真机平滑几何运动学 (严格保持在物理安全区间)"""
-    j2 = 1.38 + (r - 0.20) * 1.6 - (z - 0.05) * 1.2
-    j3 = -1.38 + (r - 0.20) * 1.5 - (z - 0.05) * 0.6
+    """
+    真机严密 2 连杆闭式几何逆解 (水平 r 与 垂直 z 严格正交解耦):
+    大臂有效长 L1 = 0.146m, 小臂有效长 L2 = 0.165m
+    """
+    L1 = 0.146
+    L2 = 0.165
+
+    # 目标距肩部有效距离 D
+    h = z - 0.04 # 扣除肩部安装高差
+    D = math.sqrt(r * r + h * h)
+    D = min(max(D, 0.14), L1 + L2 - 0.015)
+
+    # 余弦定理求肘部夹角
+    cos_elbow = (D * D - L1 * L1 - L2 * L2) / (2.0 * L1 * L2)
+    cos_elbow = max(-1.0, min(1.0, cos_elbow))
+    theta_elbow = math.acos(cos_elbow)
+
+    # 肩部俯仰角
+    alpha = math.atan2(h, r)
+    beta = math.atan2(L2 * math.sin(theta_elbow), L1 + L2 * math.cos(theta_elbow))
+    theta_shoulder = alpha + beta
+
+    # 映射回 CAD 模型角:
+    # 严格匹配物理方向：前伸时小臂向外展开，上抬时大臂立起
+    j2_cad = 1.274 + (1.15 - theta_shoulder) * 0.95
+    j3_cad = -1.571 + (theta_elbow - 1.571) * 0.95
+
     # 严格物理安全限位
-    j2 = max(0.40, min(1.85, j2))
-    j3 = max(-2.15, min(-0.65, j3))
-    return j2, j3
+    j2_cad = max(0.40, min(1.85, j2_cad))
+    j3_cad = max(-2.15, min(-0.65, j3_cad))
+
+    return j2_cad, j3_cad
 
 
 node = None
