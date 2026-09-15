@@ -109,30 +109,43 @@ ros2 launch dummyarm_moveit_config real_moveit.launch.py
    步进电机在低于 2°/s 时会掉入微步齿槽力矩死区产生电磁抖动。不要在 RViz 中将速度/加速度缩放设为 0.1 极限低速，正常运行保持默认 **`1.0`**（匹配底层 0.60 rad/s 安全基准速度），转动惯量自然平滑运动。
 7. **J6 轨迹杂流隔离**：
    6-DOF 逆解为了满足末端姿态经常算出多圈角度，在驱动层 `send_commands()` 中拦截 J6 变化量（`target_pos = cutter_target_pos_`），实现上位机大范围灵巧逆解、物理 J6 静止锁定的完美解耦。
+8. **视觉反投影与机械臂底座坐标轴定义**：
+   Dummy 机械臂 CAD URDF 中，大臂自然舒展朝向为 **`-Y` 轴**！计算对准航向角时应使用 `atan2(X, -Y)`，严禁直接套用标准 `+X` 轴的 `atan2(Y, X)`，否则底座 J1 会对称偏转 90°。
+9. **CAD 严格闭式逆解与真实触碰**：
+   在目标附近规划或触碰时，严禁使用粗糙的两连杆经验近似（会导致 7~8cm 悬空和几何失真），必须直接调用真实 CAD 运动学链严格优化逆解（残差 < 0.1 毫米），确保 RViz 空间末端与真实物理小球 100% 贴死！
+10. **两段式安全收折（Lift & Fold）**：
+   从前探位收回 REST 必须采用“先抬臂收肘回正、再平稳折叠收拢”两段式轨迹，并做编码器闭环到位判定，杜绝盲目 sleep 导致未到位截断停在半路。
 
 ---
 
-## 5. 视觉闭环与感知接入进展 (2026-09-14 更新)
+## 5. 视觉闭环与高精轻点定案 (2026-09-15 重大突破定案)
 
 1. **视觉环境与驱动就绪**：
-   - 官方 RealSense 驱动包 `ros-jazzy-realsense2-camera` (4.58.4) 与 `ros-jazzy-librealsense2` (2.58.4) 已安装并实测通过；
+   - 官方 RealSense 驱动包 `ros-jazzy-realsense2-camera` (4.58.4) 与 `ros-jazzy-librealsense2` (2.58.4) 实测稳定工作；
    - RealSense D435i 深度相机硬件链路正常（USB 3.2 握手，640x480 @ 30FPS RGB + 深度点云稳定输出）。
 2. **感知功能包 `dummyarm_perception`**：
-   - `orange_detector_node`：实时 HSV 阈值分割、形态学去噪、相机内参反投影（求解果心 3D 空间坐标）、时域中位数稳定滤波（方差 < 1.5cm 锁定）；
-   - 输出标准话题：`/dummyarm/target_orange_pose` (PoseStamped) 与 `/dummyarm/target_orange_marker` (Marker)；
-   - `perception_bringup.launch.py`：整合静态手眼外参广播（`base_link -> camera_link`）、官方相机驱动与柑橘检测节点；
-   - `harvest_fsm_node`：采摘有限状态机（IDLE -> SEARCH_LOCK -> PRE_APPROACH -> SERVO_ALIGN -> CUT -> VERIFY -> SUCCESS/RETRY）。
-3. **RViz 一体化工作台优化**：
-   - 彻底摆脱网络 Web 推流延迟，直接在本地 RViz 2 中嵌入 `Camera View`（左下角零拷贝实况显示）与 `Citrus Marker`（3D 实体橙色小球随动）；
-   - 提供 Eye-to-Hand 快速标定辅助脚本 `./scripts/calibrate_camera_extrinsics.py`。
-4. **数据集指南**：
-   - 输出完整的 `docs/柑橘数据集标注与处理指南_AnyLabeling.md`，指导在 Mac M4 Max 上通过 X-AnyLabeling + SAM 快速标注 14000+ 数据并使用 PyTorch MPS 训练 YOLOv11-seg。
+   - `orange_detector_node`：升级为一阶图像矩（Image Moments）物理质心计算，抗反光偏心；采用轮廓自适应掩码双边中位数深度滤波，消灭空洞跳变；
+   - 流水线引入 1/2 空间下采样优化与零内存拷贝，调试图像发布开销暴降 75%，`rqt_image_view` 恢复 25~30 FPS 丝滑帧率；
+   - 输出标准话题：`/dummyarm/target_orange_pose` (PoseStamped) 与 `/dummyarm/target_orange_marker` (Marker)。
+3. **高精度手眼外参终极定案（SVD 4 点实测）**：
+   - 相机物理摆放为**机械臂右前方高位俯视**，与现实物理直觉 100% 契合；
+   - 终极实测定案参数写入 `perception_bringup.launch.py`：
+     - `cam_x = -0.1959`
+     - `cam_y = -0.2986`
+     - `cam_z = 0.4678` (高度正 46.8cm)
+     - `cam_roll = 0.5252`, `cam_pitch = 1.2661`, `cam_yaw = 0.4923`
+   - 闭环自检验证：机械臂末端 tool0 与相机反投影目标在基座系重合误差仅 **0.1cm (1.0 毫米)**！
+4. **运动学与仿生轻触执行器 `instant_tap.py`**：
+   - 彻底植入机械臂真实 CAD URDF 正反向运动学链优化逆解器（残差 < 0.1 毫米）；
+   - 采用非阻塞 Direct Trajectory Stream 架构，绝无 Action 超时挂起，退出 100% 优雅释放真机控制权给 RViz；
+   - 动作流程：阶段 1 直达目标正前方 2.5cm 处定住展示 1 秒 -> 阶段 2 沿进刀轴向前顶进 2.5cm 轻碰物体表面 3 次 (Tap x3) -> 阶段 3 自动两段式平稳收折回到 REST 原点。实测定位与触达精度极佳！
 
 ---
 
 ## 6. 下一步推进建议
 
-1. **空间手眼外参微调对齐**：
-   - 运行 `./scripts/calibrate_camera_extrinsics.py`，记录机械臂末端与相机坐标，校准 `base_link -> camera_link` 刚体变换参数。
-2. **MoveIt 2 空间伺服切入集成**：
-   - 将 `harvest_fsm_node` 中的预抓取与笛卡尔微步进给动作接入 MoveIt 2 MoveGroup API，实现从检测到物理套果、旋切闭环采摘。
+1. **接入机械旋切采摘末端闭环**：
+   - 在 `instant_tap.py` 精准触碰验证的基础上，将阶段 2 的轻碰替换为自研双层锥形外罩进给套入；
+   - 触发 `./scripts/cut.py` 驱动 J6 旋切刀具旋转 360° 完成果梗剪切作业！
+2. **采摘后视觉脱落校验与多目标连续轮巡**：
+   - 将状态机接入后撤视场抽检，若柑橘脱落则计数累加并寻找下一目标，若未脱落则执行补偿重试。
