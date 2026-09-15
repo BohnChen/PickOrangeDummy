@@ -201,19 +201,18 @@ def main():
             time.sleep(2.7)
 
             # -------------------------------------------------------------
-            # 2. 真实接触物体表面轻叩三下 (Tap x3)
+            # 2. 真实接触物体表面轻叩三下 (Tap x3: 敲击节奏优化，富有机械韵律)
             # -------------------------------------------------------------
-            print(">>> [2/3] 开始执行像敲门一样的 J2/J3 协同轻点动作 (Tap 3 次)...")
-            tap_waypoints = [
-                (tap_joints, 0.35),
-                (ready_joints, 0.70),
-                (tap_joints, 1.05),
-                (ready_joints, 1.40),
-                (tap_joints, 1.75),
-                (ready_joints, 2.10)
-            ]
-            node.execute_trajectory(tap_waypoints)
-            time.sleep(2.3)
+            print(">>> [2/3] 开始执行像敲门一样的 J2/J3 协同轻点动作 (清晰连敲 3 次)...")
+            # 为加减速与物理惯性留出充足时间 (每个下叩/抬手 0.65s，停顿 0.15s)，彻底消除电磁削顶与抽搐顿挫！
+            for tap_i in range(1, 4):
+                print(f"    👉 [第 {tap_i} 次敲门] 下探轻叩物体表面...")
+                node.execute_trajectory([(tap_joints, 0.65)])
+                time.sleep(0.75) # 敲中物体表面并停留 0.1s
+
+                print(f"    👈 抬起回位...")
+                node.execute_trajectory([(ready_joints, 0.65)])
+                time.sleep(0.75) # 抬起停稳
 
             # -------------------------------------------------------------
             # 3. 自动平稳收拢回到 REST
