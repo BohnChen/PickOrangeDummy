@@ -4,3 +4,9 @@ log/
 __pycache__/
 *.pyc
 .venv/
+dummyarm_AImodel/datasets/
+dummyarm_AImodel/runs/
+*.pt
+*.onnx
+yolo11*-seg.pt
+

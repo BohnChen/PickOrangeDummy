@@ -1,0 +1,5 @@
+# Citrus Picking 3-class Standard Definitions
+names:
+  0: orange           # 完整可见柑橘果体
+  1: pedicel          # 柑橘果梗 (切刀法向对准)
+  2: occluded_orange  # 遮挡 > 50% 的果实
