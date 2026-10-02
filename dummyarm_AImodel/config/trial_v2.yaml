@@ -1,0 +1,10 @@
+# YOLOv11 Instance Segmentation Dataset Config - [trial_v2]
+path: /Users/bohn/04_Project/02_My_Dummy/PickOrangeDummy/dummyarm_AImodel/datasets/trial_v2
+train: images/train
+val: images/val
+
+names:
+  0: orange
+  1: pedicel
+  2: occluded_orange
+  3: tree

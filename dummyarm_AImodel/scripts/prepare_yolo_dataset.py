@@ -22,7 +22,8 @@ from PIL import Image
 CLASS_MAP = {
     "orange": 0,
     "pedicel": 1,
-    "occluded_orange": 2
+    "occluded_orange": 2,
+    "tree": 3
 }
 
 
@@ -196,6 +197,7 @@ names:
   0: orange
   1: pedicel
   2: occluded_orange
+  3: tree
 """
     with open(yaml_dest, "w", encoding="utf-8") as yf:
         yf.write(yaml_content)
