@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-zero_j6.py - 把 J6 当前物理位置固化为永久零点（写电机 EEPROM）
+zero_j6.py - J6 刀片零点工具
+
+⚠ 2026-10-24 真机结论：本机固件 **不支持** `#OFFSET_J`（回执为通用 ok，实测无效）。
+   正式方案改为**软件零点**：把"刀片全开时的 J6 读数"记到 config/j6_blade.json，
+   由 cut.py / jog_gui.py 读取。EEPROM 方案仅保留作历史排查用（--apply）。
 
 背景（详见 docs/M2_spec_j6_blade_home.md）:
   刀片已装到 J6。约定 0° = 刀片全开（剪切起始），-60° = 合刀到底。
@@ -131,7 +135,10 @@ def clamp(v, i):
 
 def main():
     ap = argparse.ArgumentParser(description='J6 永久零位工具')
-    ap.add_argument('--apply', action='store_true', help='真正执行（默认只干跑）')
+    ap.add_argument('--measure', action='store_true',
+                    help='测量模式：把当前 J6 读数（刀片全开位）写入 config/j6_blade.json')
+    ap.add_argument('--apply', action='store_true',
+                    help='[已废弃] 尝试写电机 EEPROM；本机固件实测无效')
     ap.add_argument('--eps', type=float, default=-0.2, help='零位后 J6 目标偏移（度，默认 -0.2）')
     ap.add_argument('--speed', type=float, default=1.0, help='零位后下发速度（默认 1，最小）')
     ap.add_argument('--port', type=str, default='', help='串口（默认自动查找 REF）')
@@ -150,6 +157,23 @@ def main():
             print('[错误] 读取关节角失败，中止（未做任何修改）')
             return
         print('[姿态] J1~J6 = ' + ' '.join(f'{v:.2f}' for v in before))
+
+        # ---------- 1.5) 测量模式：写软件零点配置 ----------
+        if args.measure:
+            import json, datetime
+            cfg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                    'config', 'j6_blade.json')
+            cfg = {'j6_home_deg': round(before[5], 2), 'cut_span_deg': 60.0,
+                   'measured_at': datetime.date.today().isoformat(),
+                   'note': '刀片全开（剪切起始）时的 J6 读数；重新装配刀片/联轴器后必须重测'}
+            os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+            with open(cfg_path, 'w') as f:
+                json.dump(cfg, f, ensure_ascii=False, indent=2)
+                f.write('\n')
+            print(f'[测量] 已写入 {cfg_path}')
+            print(f'       j6_home_deg = {cfg["j6_home_deg"]:+.2f}°  '
+                  f'→ 剪切区间 [{cfg["j6_home_deg"] - 60:+.2f}, {cfg["j6_home_deg"]:+.2f}]')
+            return
 
         # ---------- 2) 只读探测 ----------
         probe = ser.ask('#OFFSET_J 99', 0.8)

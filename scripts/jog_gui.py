@@ -35,6 +35,7 @@ import termios
 import argparse
 import subprocess
 import traceback
+import json
 
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -54,6 +55,22 @@ CUT_RATE = 6.0         # 刀片合/开速度 (deg/s)
 CUT_SPAN = 60.0        # 剪切行程 (deg)
 SEND_PERIOD = 0.05     # 下发周期 (s)
 READ_TIMEOUT = 0.20    # 单次 #GETJPOS 等待上限 (s)
+
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'config', 'j6_blade.json')
+
+
+def load_blade_config():
+    """J6 零位与剪切行程（软件偏移；本机固件 #OFFSET_J 无效）"""
+    home, span = 0.0, CUT_SPAN
+    try:
+        with open(CONFIG_PATH, 'r') as f:
+            cfg = json.load(f)
+        home = float(cfg.get('j6_home_deg', home))
+        span = float(cfg.get('cut_span_deg', span))
+    except Exception:
+        pass
+    return home, span
 
 
 def find_ref_port():
@@ -223,19 +240,18 @@ class ArmWorker(threading.Thread):
             time.sleep(0.03)
         return None
 
-    def _seed_from_meas(self, status_text):
-        j = self._read_valid()
-        if not j:
-            return False
-        with self.lock:
-            self.meas = j
-            self.cmd = list(j)
-            self.target = list(j)
-            self.last_sent = None
-            self.sync = True
-            self.enabled = True
-            self.status = status_text
-        return True
+    def _wait_stable(self, timeout=4.0, tol=0.05):
+        """等待两次连续读数一致，代表驱动器已使能且反馈稳定（!START 需要 1~3s）。"""
+        deadline = time.time() + timeout
+        prev = None
+        while time.time() < deadline:
+            j = self.ser.joints(0.3)
+            if j:
+                if prev and all(abs(a - b) <= tol for a, b in zip(j, prev)):
+                    return j
+                prev = j
+            time.sleep(0.2)
+        return prev
 
     # ---------- 线程主体 ----------
     def run(self):
@@ -280,13 +296,22 @@ class ArmWorker(threading.Thread):
                     self.ser.write('!START')
                     time.sleep(0.05)
                     self.ser.drain()
-                    time.sleep(0.15)            # 等 REF 控制环把新姿态反馈上来
-                    if self._seed_from_meas('已使能（!START）'):
-                        pass
+                    # 驱动器使能需要 1~3s，必须等反馈稳定后再初始化目标，
+                    # 否则会用陈旧/默认读数把目标带偏（2026-10-24 实测 J5 被带偏 1.37°）
+                    j = self._wait_stable(timeout=4.0)
+                    if j:
+                        with self.lock:
+                            self.meas = j
+                            self.cmd = list(j)
+                            self.target = list(j)
+                            self.last_sent = None
+                            self.sync = True
+                            self.enabled = True
+                            self.status = '已使能（!START）'
                     else:
                         with self.lock:
                             self.enabled = False
-                            self.status = '使能后读不到关节角，已停止下发'
+                            self.status = '使能后读不到稳定关节角，已停止下发'
                     continue
 
                 if ev in ('home', 'rest'):
@@ -502,7 +527,8 @@ class JogApp:
 
 def main():
     ap = argparse.ArgumentParser(description='Dummy 机械臂 Jog 窗口')
-    ap.add_argument('--home', type=float, default=0.0, help='J6 零位（默认 0.0）')
+    ap.add_argument('--home', type=float, default=None,
+                    help='J6 零位（默认读取 config/j6_blade.json）')
     ap.add_argument('--port', type=str, default='', help='串口（默认自动查找 REF）')
     args = ap.parse_args()
 
@@ -518,7 +544,10 @@ def main():
         return 2
 
     port = args.port or find_ref_port()
-    worker = ArmWorker(port, args.home)
+    cfg_home, cfg_span = load_blade_config()
+    home = args.home if args.home is not None else cfg_home
+    print(f'[配置] J6 零位 = {home:+.2f}°, 剪切行程 = {cfg_span:.0f}°  ({CONFIG_PATH})')
+    worker = ArmWorker(port, home)
     worker.start()
 
     root = tk.Tk()

@@ -30,12 +30,29 @@ import glob
 import time
 import termios
 import argparse
+import json
 import subprocess
 
-# ---- 固化常量（与 M2 规格一致，改动需同步文档）----
-J6_HOME = 0.0            # 刀片全开（零位）
-CUT_SPAN = 60.0          # 剪切行程
-CUT_RANGE = (J6_HOME - CUT_SPAN, J6_HOME)   # [-60, 0]
+# ---- 刀片零点配置（软件偏移；固件 #OFFSET_J 在本机无效）----
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'config', 'j6_blade.json')
+
+
+def load_blade_config():
+    home, span = 0.0, 60.0
+    try:
+        with open(CONFIG_PATH, 'r') as f:
+            cfg = json.load(f)
+        home = float(cfg.get('j6_home_deg', home))
+        span = float(cfg.get('cut_span_deg', span))
+    except Exception:
+        pass
+    return home, span
+
+
+J6_HOME, CUT_SPAN = load_blade_config()
+CUT_RANGE = (J6_HOME - CUT_SPAN, J6_HOME)   # 合刀到底 .. 全开
+
 CUT_SPEED = 5.0          # 固件 speed 参数（约 3.6°/s，60° 约 17s）
 MOVE_SPEED = 10.0        # 非剪切移动速度
 POS_TOL = 0.2            # 到位容差(度)
