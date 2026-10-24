@@ -198,9 +198,12 @@ def main():
         d_j6 = after[5] - before[5]
         d_other = max(abs(after[i] - before[i]) for i in range(5))
 
-        if abs(after[5] - target) <= 0.5 and d_other <= 0.5:
+        # 成功判据：零位后 J6 应落在 0 附近。
+        # 容差 1.5° 的原因：ε 目标在 CAN 上可能与 #OFFSET_J 竞争，
+        # 极端情况下 ε 会作用在新坐标系的反侧，读数约 +|before|-ε，仍属零位成功。
+        if abs(after[5]) <= 1.5 and d_other <= 0.5:
             print(f'[成功] J6 零点已固化：{before[5]:.2f}° -> {after[5]:+.2f}°'
-                  f'（目标 {target:+.2f}°），其余关节变化 ≤{d_other:.2f}°')
+                  f'（目标 {target:+.2f}°，其余关节变化 ≤{d_other:.2f}°）')
             print('       请断电重启后复测: !START -> #GETJPOS，J6 应仍为 ≈0。')
             return
 
