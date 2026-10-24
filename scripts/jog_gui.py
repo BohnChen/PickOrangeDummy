@@ -169,6 +169,7 @@ class ArmWorker(threading.Thread):
         self.msg = ''
         self.sync = True
         self.send_count = 0
+        self.read_count = 0
         self.last_cmd = ''
         self.error = ''
 
@@ -206,7 +207,7 @@ class ArmWorker(threading.Thread):
             return (list(self.meas) if self.meas else None,
                     list(self.target) if self.target else None,
                     self.enabled, self.status, self.msg, self.j6_range,
-                    sync, self.send_count, self.last_cmd, self.error)
+                    sync, self.send_count, self.read_count, self.last_cmd, self.error)
 
     # ---------- worker 内部工具 ----------
     def _read_valid(self, timeout=READ_TIMEOUT, retries=3):
@@ -313,6 +314,7 @@ class ArmWorker(threading.Thread):
                 if j:
                     with self.lock:
                         self.meas = j
+                        self.read_count += 1
 
                 # 2) 限速逼近目标并下发
                 payload = None
@@ -436,7 +438,7 @@ class JogApp:
     def refresh(self):
         try:
             (meas, target, enabled, status, msg, j6_range,
-             sync, send_count, last_cmd, error) = self.worker.snapshot()
+             sync, send_count, read_count, last_cmd, error) = self.worker.snapshot()
             if meas:
                 self.pulling = True
                 for i in range(6):
@@ -453,7 +455,7 @@ class JogApp:
                 self.j6_label.configure(text='相对角: 读数丢失')
 
             self.status.configure(text=f'{status}   |   {"使能" if enabled else "失能"}')
-            self.detail.configure(text=f'已下发 {send_count} 条   |   最后: {last_cmd or "—"}')
+            self.detail.configure(text=f'读数 {read_count} 次   |   已下发 {send_count} 条   |   最后: {last_cmd or "—"}')
             self.errlabel.configure(text=(error.strip().splitlines()[-1] if error else ''))
 
             if not self.worker.is_alive():
