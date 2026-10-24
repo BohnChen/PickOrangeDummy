@@ -193,7 +193,9 @@ class Cutter:
 
         self.ser.write(cmd)
         t0 = time.time()
-        last_pos, last_move = self.ser.joints(), time.time()
+        cur = self.ser.joints()
+        last_pos = cur[5] if cur else None
+        last_move = time.time()
         while time.time() - t0 < MOVE_TIMEOUT:
             time.sleep(0.1)
             j = self.ser.joints(retries=1)
