@@ -147,7 +147,16 @@ def main():
                     help='只做一次相对转动并退出, 例如 --deg -2 表示反向转 2°')
     ap.add_argument('--port', type=str, default='', help='串口路径 (默认自动查找 REF)')
     ap.add_argument('--disable', action='store_true', help='退出后释放力矩 (默认保持使能悬停)')
+    ap.add_argument('--allow-blade', action='store_true',
+                    help='已装刀片时的强制放行开关（危险，仅在刀片已拆下或明确确认安全时使用）')
     args = ap.parse_args()
+
+    if not args.allow_blade:
+        print('[拒绝] 刀片已装在 J6 上，整圈旋转会损坏刀片/果梗。')
+        print('       本脚本已退役，仅保留作无刀片标定用途。')
+        print('       真正确认安全后可用: python3 scripts/j6_spin.py --allow-blade')
+        print('       日常剪切请用: python3 scripts/cut.py （行程 -60°~0°）')
+        return 2
 
     dps = max(0.5, min(60.0, abs(args.dps)))
     speed = max(1.0, min(100.0, dps / SPEED_TO_DPS))
@@ -314,4 +323,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())
