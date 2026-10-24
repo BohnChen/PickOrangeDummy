@@ -88,11 +88,14 @@ class RefSerial:
         self.drain()
 
     def drain(self):
-        try:
-            while os.read(self.fd, 4096):
-                pass
-        except Exception:
-            pass
+        """清空接收缓冲。**必须有界**：设备异常时可能持续输出，
+        无界 while 会把工作线程永久卡死（2026-10-24 真机复现）。"""
+        for _ in range(64):
+            try:
+                if not os.read(self.fd, 4096):
+                    break
+            except Exception:
+                break
 
     def write(self, line):
         if not line.endswith('\n'):
@@ -170,6 +173,8 @@ class ArmWorker(threading.Thread):
         self.sync = True
         self.send_count = 0
         self.read_count = 0
+        self.stall_ref = None
+        self.stall_t = 0.0
         self.last_cmd = ''
         self.error = ''
 
@@ -315,6 +320,27 @@ class ArmWorker(threading.Thread):
                     with self.lock:
                         self.meas = j
                         self.read_count += 1
+
+                        # 堵转/卡滞保护：指令在走但 J6 长时间不动 -> 立即停止下发
+                        if self.enabled and self.target is not None:
+                            gap = self.target[5] - j[5]
+                            if abs(gap) > 0.5:
+                                if self.stall_ref is None:
+                                    self.stall_ref = j[5]
+                                    self.stall_t = time.time()
+                                elif abs(j[5] - self.stall_ref) > 0.15:
+                                    self.stall_ref = j[5]
+                                    self.stall_t = time.time()
+                                elif time.time() - self.stall_t > 1.5:
+                                    self.enabled = False
+                                    self.target = list(j)
+                                    self.cmd = list(j)
+                                    self.last_sent = None
+                                    self.status = ('J6 卡滞/堵转：已停止下发（刀刃未到位，'
+                                                   '请断电检查螺丝与机械阻力）')
+                                    self.stall_ref = None
+                            else:
+                                self.stall_ref = None
 
                 # 2) 限速逼近目标并下发
                 payload = None

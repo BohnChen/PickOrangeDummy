@@ -60,11 +60,14 @@ class RefSerial:
         self.drain()
 
     def drain(self):
-        try:
-            while os.read(self.fd, 4096):
-                pass
-        except Exception:
-            pass
+        """清空接收缓冲。**必须有界**：设备异常时可能持续输出，
+        无界 while 会把工作线程永久卡死（2026-10-24 真机复现）。"""
+        for _ in range(64):
+            try:
+                if not os.read(self.fd, 4096):
+                    break
+            except Exception:
+                break
 
     def write_raw(self, data: bytes):
         try:

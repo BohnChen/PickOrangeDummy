@@ -80,11 +80,14 @@ class RefSerial:
         self.drain()
 
     def drain(self):
-        try:
-            while os.read(self.fd, 4096):
-                pass
-        except Exception:
-            pass
+        """清空接收缓冲。**必须有界**：设备异常时可能持续输出，
+        无界 while 会把工作线程永久卡死（2026-10-24 真机复现）。"""
+        for _ in range(64):
+            try:
+                if not os.read(self.fd, 4096):
+                    break
+            except Exception:
+                break
 
     def write(self, line):
         if not line.endswith('\n'):
@@ -173,12 +176,24 @@ class Cutter:
 
         self.ser.write(cmd)
         t0 = time.time()
+        last_pos, last_move = self.ser.joints(), time.time()
         while time.time() - t0 < MOVE_TIMEOUT:
             time.sleep(0.1)
             j = self.ser.joints(retries=1)
             if j and abs(j[5] - target) <= POS_TOL:
                 print(f'[到位] {label}: J6 = {j[5]:+.2f}°（{time.time() - t0:.1f}s）')
                 return True
+            # 堵转/卡滞保护：指令已下发但 1.5s 内几乎不动 -> 立即停止下发并回持当前位置
+            if j and last_pos is not None:
+                if abs(j[5] - last_pos) > 0.15:
+                    last_pos, last_move = j[5], time.time()
+                elif time.time() - last_move > 1.5:
+                    hold = [clamp(j[i], i) for i in range(6)]
+                    self.ser.write(f'>{hold[0]:.2f},{hold[1]:.2f},{hold[2]:.2f},'
+                                   f'{hold[3]:.2f},{hold[4]:.2f},{hold[5]:.2f},{MOVE_SPEED:.0f}')
+                    print(f'[卡滞] {label}: J6 停在 {j[5]:+.2f}° 已 {time.time() - last_move:.0f}s 无位移，'
+                          f'已停止下发（电机可能在堵转）。请断电检查螺丝/机械阻力。')
+                    return False
         j = self.ser.joints(retries=2)
         if j:
             print(f'[超时] {label}: {MOVE_TIMEOUT:.0f}s 内未到位，当前 J6 = {j[5]:+.2f}°')
