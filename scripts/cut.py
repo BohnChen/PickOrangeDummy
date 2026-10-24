@@ -32,6 +32,9 @@ import termios
 import argparse
 import json
 import subprocess
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from j6_homing import home_j6, save_home   # noqa: E402
 
 # ---- 刀片零点配置（软件偏移；固件 #OFFSET_J 在本机无效）----
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -164,13 +167,16 @@ def clamp(v, i):
 
 
 class Cutter:
-    def __init__(self, ser, dry_run=False):
+    def __init__(self, ser, dry_run=False, home=None, span=None):
         self.ser = ser
         self.dry_run = dry_run
+        self.home = J6_HOME if home is None else home
+        self.span = CUT_SPAN if span is None else span
+        self.range = (self.home - self.span, self.home)
 
     def move_j6(self, target, speed, label):
         """把 J6 移到 target（绝对值），J1~J5 用实测值锁死。返回是否到位。"""
-        lo, hi = CUT_RANGE
+        lo, hi = self.range
         if not (lo - 1e-6 <= target <= hi + 1e-6):
             print(f'[拒绝] {label}: 目标 {target:+.2f}° 超出剪切行程 [{lo:+.0f}, {hi:+.0f}]°')
             return False
@@ -228,6 +234,9 @@ def main():
     ap.add_argument('--dwell', type=float, default=0.3, help='合刀后保压时长(秒)，默认 0.3')
     ap.add_argument('--speed', type=float, default=CUT_SPEED, help=f'剪切速度，默认 {CUT_SPEED:.0f}')
     ap.add_argument('--dry-run', action='store_true', help='只打印计划，不动硬件')
+    ap.add_argument('--home', action='store_true',
+                    help='先顶到全开限位自整定（不推荐：堵转可能导致 J6 驱动器复位，'
+                         '实测会丢失多圈位置）')
     ap.add_argument('--port', type=str, default='', help='串口（默认自动查找 REF）')
     args = ap.parse_args()
 
@@ -242,7 +251,6 @@ def main():
     port = args.port or find_ref_port()
     print(f'[连接] {port}')
     ser = RefSerial(port)
-    cutter = Cutter(ser, dry_run=args.dry_run)
 
     try:
         ser.write('!START')
@@ -253,16 +261,29 @@ def main():
             return 1
         print('[姿态] J1~J6 = ' + ' '.join(f'{v:.2f}' for v in cur))
 
-        if not CUT_RANGE[0] - 1 <= cur[5] <= CUT_RANGE[1] + 1:
-            print(f'[注意] J6 当前 {cur[5]:+.2f}° 不在剪切行程 {CUT_RANGE} 内，先回零位')
+        # J6 多圈位置不跨上电保存（固件限制），home 取自配置/启动时读数。
+        # 不要用“顶限位”方式整定：实测堵转会让 J6 驱动器复位、再次丢失位置。
+        home = J6_HOME
+        if args.home:
+            home = home_j6(ser)
+            if home is None:
+                print('[中止] J6 归位失败，未执行剪切')
+                return 3
+            save_home(home, CUT_SPAN)
+            print(f'[归位] 本次会话 home = {home:+.2f}°，剪切区间 '
+                  f'[{home - CUT_SPAN:+.2f}, {home:+.2f}]')
+        cutter = Cutter(ser, dry_run=args.dry_run, home=home)
+
+        if not cutter.range[0] - 1 <= cur[5] <= cutter.range[1] + 1:
+            print(f'[注意] J6 当前 {cur[5]:+.2f}° 不在剪切行程 {cutter.range} 内')
 
         if args.close and not args.open:
-            steps = [('合刀', CUT_RANGE[0], float(args.speed), args.dwell)]
+            steps = [('合刀', cutter.range[0], float(args.speed), args.dwell)]
         elif args.open and not args.close:
-            steps = [('回位', J6_HOME, MOVE_SPEED, 0.2)]
+            steps = [('回位', cutter.home, MOVE_SPEED, 0.2)]
         else:
-            steps = [('合刀', CUT_RANGE[0], float(args.speed), args.dwell),
-                     ('回位', J6_HOME, MOVE_SPEED, 0.2)]
+            steps = [('合刀', cutter.range[0], float(args.speed), args.dwell),
+                     ('回位', cutter.home, MOVE_SPEED, 0.2)]
 
         ok = True
         for label, target, speed, dwell in steps:

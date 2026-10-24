@@ -36,6 +36,13 @@ import argparse
 import subprocess
 import traceback
 import json
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from j6_homing import home_j6 as _home_j6, save_home as _save_home
+except Exception:      # 允许单独拷走本文件运行
+    _home_j6 = None
+    _save_home = None
 
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -336,6 +343,31 @@ class ArmWorker(threading.Thread):
                             self.target[5] = self.j6_home
                             self.status = f'回位 -> {self.j6_home:+.0f}°'
 
+                if ev == 'j6home':
+                    if _home_j6 is None:
+                        with self.lock:
+                            self.status = '归位模块不可用（缺 j6_homing.py）'
+                        continue
+                    with self.lock:
+                        self.status = 'J6 归位中（低速顶到全开限位）...'
+                    home = _home_j6(self.ser, log=lambda m: None)
+                    if home is not None:
+                        if _save_home:
+                            _save_home(home, CUT_SPAN)
+                        with self.lock:
+                            self.j6_home = home
+                            self.j6_range = (home - CUT_SPAN, home)
+                            if self.target is not None:
+                                self.target[5] = home
+                            if self.cmd is not None:
+                                self.cmd[5] = home
+                            self.last_sent = None
+                            self.status = f'J6 归位完成：home = {home:+.2f}°'
+                    else:
+                        with self.lock:
+                            self.status = 'J6 归位失败（未找到全开限位，请人工检查）'
+                    continue
+
                 if ev == 'resync':
                     self.resync()
 
@@ -431,7 +463,8 @@ class JogApp:
         top.grid(row=0, column=0, sticky='ew')
         ttk.Button(top, text='使能 !START', command=lambda: worker.request('arm')).pack(side='left', padx=3)
         ttk.Button(top, text='失能 !DISABLE', command=lambda: worker.request('disarm')).pack(side='left', padx=3)
-        ttk.Button(top, text='回 HOME', command=lambda: worker.request('home')).pack(side='left', padx=10)
+        ttk.Button(top, text='J6 归位(全开)', command=lambda: worker.request('j6home')).pack(side='left', padx=6)
+        ttk.Button(top, text='回 HOME', command=lambda: worker.request('home')).pack(side='left', padx=6)
         ttk.Button(top, text='回 REST', command=lambda: worker.request('rest')).pack(side='left', padx=3)
         ttk.Button(top, text='目标=实测', command=lambda: worker.request('resync')).pack(side='left', padx=10)
         ttk.Button(top, text='急停 (空格)', command=self.estop).pack(side='left', padx=6)
