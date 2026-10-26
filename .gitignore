@@ -9,4 +9,4 @@ dummyarm_AImodel/runs/
 *.pt
 *.onnx
 yolo11*-seg.pt
-
+.DS_Store
