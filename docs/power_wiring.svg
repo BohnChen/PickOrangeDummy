@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1590" viewBox="0 0 1800 1590" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+  <rect width="1800" height="1590" fill="#FFFFFF"/>
+  <rect x="20" y="20" width="1760" height="1550" rx="6" fill="none" stroke="#E0E0E0" stroke-width="2"/>
+
+  <!-- ================= 标题 ================= -->
+  <text x="60" y="64" font-size="34" font-weight="700" fill="#1A1A1A">Dummy + Ventuno Q 移动供电接线图</text>
+  <text x="60" y="96" font-size="17" fill="#555">牧田 15Ah 5S 电池（21.0V 满电 / 15.0V 截止）· 主电流线 0.75mm² · v1.2 · 无 Buck 直连版 · 2026-10-28</text>
+
+  <!-- ================= 图例 ================= -->
+  <rect x="1260" y="42" width="480" height="118" rx="8" fill="#FAFAFA" stroke="#BDBDBD"/>
+  <text x="1280" y="68" font-size="16" font-weight="700" fill="#333">图例</text>
+  <line x1="1280" y1="90" x2="1330" y2="90" stroke="#D32F2F" stroke-width="4"/>
+  <text x="1344" y="95" font-size="14" fill="#333">正极（过保险 + 开关）</text>
+  <line x1="1280" y1="114" x2="1330" y2="114" stroke="#212121" stroke-width="4"/>
+  <text x="1344" y="119" font-size="14" fill="#333">负极（直通，星形汇聚）</text>
+  <line x1="1280" y1="138" x2="1330" y2="138" stroke="#EF6C00" stroke-width="3" stroke-dasharray="6 4"/>
+  <text x="1344" y="143" font-size="14" fill="#333">建议 / 注意事项</text>
+
+  <!-- ================= 主干：电池 → 底座 → XT60 ================= -->
+  <rect x="200" y="170" width="300" height="90" rx="10" fill="#FFF8E1" stroke="#F9A825" stroke-width="2"/>
+  <text x="350" y="201" font-size="20" font-weight="700" fill="#1A1A1A" text-anchor="middle">牧田 15Ah 5S 电池</text>
+  <text x="350" y="227" font-size="15" fill="#333" text-anchor="middle">21.0V 满电 · 15.0V 截止</text>
+  <text x="350" y="249" font-size="12.5" fill="#C62828" text-anchor="middle">BMS 内置过放保护（约 13V 硬切断）</text>
+
+  <line x1="350" y1="260" x2="350" y2="310" stroke="#424242" stroke-width="5"/>
+  <text x="358" y="290" font-size="11.5" fill="#757575">2 芯</text>
+
+  <rect x="190" y="310" width="320" height="66" rx="8" fill="#F5F5F5" stroke="#757575" stroke-width="2"/>
+  <text x="350" y="337" font-size="17" font-weight="700" fill="#1A1A1A" text-anchor="middle">取电器底座（XT60 母）</text>
+  <text x="350" y="359" font-size="12.5" fill="#666" text-anchor="middle">卡扣固定 · 建议加绑带防振</text>
+
+  <line x1="350" y1="376" x2="350" y2="416" stroke="#424242" stroke-width="5"/>
+
+  <rect x="230" y="416" width="240" height="90" rx="8" fill="#ECEFF1" stroke="#37474F" stroke-width="2"/>
+  <text x="350" y="442" font-size="16" font-weight="700" fill="#1A1A1A" text-anchor="middle">XT60 公头</text>
+  <text x="300" y="476" font-size="24" font-weight="700" fill="#D32F2F" text-anchor="middle">+</text>
+  <text x="410" y="476" font-size="24" font-weight="700" fill="#212121" text-anchor="middle">−</text>
+
+  <!-- ================= 保险 ================= -->
+  <line x1="300" y1="506" x2="300" y2="546" stroke="#D32F2F" stroke-width="4"/>
+  <text x="310" y="532" font-size="11.5" fill="#D32F2F">红线 ≤ 5cm</text>
+
+  <rect x="245" y="546" width="210" height="70" rx="8" fill="#FFEBEE" stroke="#C62828" stroke-width="2"/>
+  <text x="350" y="575" font-size="17" font-weight="700" fill="#1A1A1A" text-anchor="middle">F1　10A 插片保险</text>
+  <text x="350" y="599" font-size="12.5" fill="#C62828" text-anchor="middle">距 XT60 ≤ 5cm</text>
+
+  <line x1="300" y1="616" x2="300" y2="646" stroke="#D32F2F" stroke-width="4"/>
+
+  <!-- ================= 开关 ================= -->
+  <rect x="215" y="646" width="270" height="90" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="350" y="674" font-size="17" font-weight="700" fill="#1A1A1A" text-anchor="middle">SW1　20A 船型开关</text>
+  <text x="350" y="697" font-size="12.5" fill="#2E7D32" text-anchor="middle">4 脚双刀 · 只用一组 · 只切正极</text>
+  <text x="350" y="717" font-size="12" fill="#666" text-anchor="middle">250V~ T85 可用</text>
+
+  <!-- ================= 正极母线 ================= -->
+  <line x1="300" y1="736" x2="300" y2="800" stroke="#D32F2F" stroke-width="4"/>
+  <line x1="300" y1="800" x2="1470" y2="800" stroke="#D32F2F" stroke-width="4"/>
+  <text x="312" y="791" font-size="14" font-weight="700" fill="#D32F2F">D+ 正极分线</text>
+
+  <circle cx="540" cy="800" r="6" fill="#D32F2F"/>
+  <circle cx="1080" cy="800" r="6" fill="#D32F2F"/>
+  <circle cx="1470" cy="800" r="6" fill="#D32F2F"/>
+
+  <!-- ================= 负极母线（左侧绕行） ================= -->
+  <polyline points="410,506 410,516 160,516 160,1250" fill="none" stroke="#212121" stroke-width="4"/>
+  <line x1="160" y1="1250" x2="1570" y2="1250" stroke="#212121" stroke-width="4"/>
+  <text x="900" y="1241" font-size="14" font-weight="700" fill="#212121" text-anchor="middle">D− 负极分线（星形：所有负极回到这一点）</text>
+
+  <circle cx="680" cy="1250" r="6" fill="#212121"/>
+  <circle cx="1120" cy="1250" r="6" fill="#212121"/>
+  <circle cx="1570" cy="1250" r="6" fill="#212121"/>
+
+  <!-- ================= 支路 A：Dummy REF ================= -->
+  <line x1="540" y1="800" x2="540" y2="870" stroke="#D32F2F" stroke-width="4"/>
+  <rect x="460" y="870" width="280" height="140" rx="8" fill="#E3F2FD" stroke="#1565C0" stroke-width="2"/>
+  <text x="600" y="899" font-size="16" font-weight="700" fill="#1A1A1A" text-anchor="middle">5525 DC 线（30cm）</text>
+  <text x="600" y="921" font-size="12.5" fill="#555" text-anchor="middle">0.75mm² · 5.5×2.5 插头</text>
+  <text x="600" y="949" font-size="15" fill="#1A1A1A" text-anchor="middle">→ Dummy REF 板 VIN</text>
+  <text x="600" y="973" font-size="12.5" fill="#1565C0" text-anchor="middle">21V 直供（规格 12~24V）</text>
+  <text x="600" y="997" font-size="12.5" fill="#EF6C00" text-anchor="middle">并 470µF/35V + 100nF</text>
+
+  <line x1="680" y1="1010" x2="680" y2="1250" stroke="#212121" stroke-width="4"/>
+
+  <!-- ================= 支路 B：Buck → Ventuno Q ================= -->
+  <line x1="1080" y1="800" x2="1080" y2="870" stroke="#D32F2F" stroke-width="4"/>
+  <rect x="940" y="870" width="280" height="90" rx="8" fill="#E3F2FD" stroke="#1565C0" stroke-width="2"/>
+  <text x="1080" y="899" font-size="16" font-weight="700" fill="#1A1A1A" text-anchor="middle">5521 DC 线（50cm）</text>
+  <text x="1080" y="921" font-size="12.5" fill="#555" text-anchor="middle">0.75mm² · 5.5×2.1 插头</text>
+  <text x="1080" y="947" font-size="14" fill="#1A1A1A" text-anchor="middle">→ Ventuno Q　DC-IN</text>
+
+  <line x1="1080" y1="960" x2="1080" y2="1030" stroke="#D32F2F" stroke-width="4"/>
+  <text x="1092" y="1000" font-size="12.5" fill="#D32F2F">21V 直连</text>
+
+  <rect x="940" y="1030" width="280" height="130" rx="8" fill="#E3F2FD" stroke="#1565C0" stroke-width="2"/>
+  <text x="1080" y="1059" font-size="17" font-weight="700" fill="#1A1A1A" text-anchor="middle">Ventuno Q</text>
+  <text x="1080" y="1083" font-size="12.5" fill="#333" text-anchor="middle">DC 5.5×2.1 · 21V 直连</text>
+  <text x="1080" y="1107" font-size="12.5" fill="#555" text-anchor="middle">约 25W ≈ 1.2A @21V</text>
+  <text x="1080" y="1131" font-size="12.5" fill="#EF6C00" text-anchor="middle">必须并 470µF/35V</text>
+  <text x="1080" y="1153" font-size="11.5" fill="#666" text-anchor="middle">线远离电机线 · 双绞 · 加磁环</text>
+
+  <line x1="1120" y1="1160" x2="1120" y2="1250" stroke="#212121" stroke-width="4"/>
+
+  <!-- ================= 支路 C：报警器 ================= -->
+  <line x1="1470" y1="800" x2="1470" y2="870" stroke="#D32F2F" stroke-width="4"/>
+  <polyline points="1470,828 1512,828 1512,870" fill="none" stroke="#D32F2F" stroke-width="3" stroke-dasharray="5 3"/>
+  <text x="1520" y="848" font-size="10.5" fill="#D32F2F">黄线（测量）</text>
+  <rect x="1380" y="870" width="320" height="100" rx="8" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="2"/>
+  <text x="1540" y="897" font-size="15.5" font-weight="700" fill="#1A1A1A" text-anchor="middle">AL1　电压报警器（三线）</text>
+  <text x="1540" y="921" font-size="12" fill="#555" text-anchor="middle">3.5~30V · 红+黄 → D+ · 黑 → D−</text>
+  <text x="1540" y="945" font-size="13" font-weight="700" fill="#6A1B9A" text-anchor="middle">阈值设 15.0V</text>
+  <text x="1388" y="1000" font-size="11.5" fill="#666">接开关之后，关机不耗电</text>
+
+  <line x1="1570" y1="970" x2="1570" y2="1250" stroke="#212121" stroke-width="4"/>
+
+  <!-- ================= 接线要点 ================= -->
+  <rect x="60" y="1300" width="1680" height="250" rx="10" fill="#FCFCFC" stroke="#E0E0E0"/>
+  <text x="90" y="1332" font-size="16" font-weight="700" fill="#1A1A1A">接线要点</text>
+  <text x="90" y="1366" font-size="13.5" fill="#333">① 先过保险、再过开关；保险座距 XT60 ≤ 5cm。</text>
+  <text x="90" y="1398" font-size="13.5" fill="#333">② 开关只串在正极；双刀只用一组，另一组空置并绝缘，负极不进开关。</text>
+  <text x="90" y="1430" font-size="13.5" fill="#333">③ 负极星形：所有黑线回到 D− 一点，不串联、不借道。</text>
+  <text x="90" y="1462" font-size="13.5" fill="#333">④ 5525 插 5.5×2.5（REF）；5521 插 5.5×2.1（Ventuno Q），严禁混插。</text>
+  <text x="90" y="1494" font-size="13.5" fill="#333">⑤ 上电前：D+ 对 D− ≈ 21.0V；5521 输出 ≈ 21.0V；先测极性，再插设备。</text>
+  <text x="90" y="1526" font-size="13.5" fill="#C62828">⑥ 本次无 Buck：5521 直连 21V（板子 7~24V 合规，余量仅 3V），电容与走线必须按上图做。</text>
+
+  <!-- ================= 开关内部接法说明 ================= -->
+  <line x1="1080" y1="1310" x2="1080" y2="1530" stroke="#E0E0E0" stroke-width="2"/>
+  <text x="1104" y="1332" font-size="14" font-weight="700" fill="#1A1A1A">4 脚双刀：只用一组，另一组空置</text>
+
+  <line x1="1120" y1="1425" x2="1150" y2="1425" stroke="#D32F2F" stroke-width="3"/>
+  <rect x="1150" y="1403" width="190" height="44" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1.5"/>
+  <text x="1245" y="1419" font-size="12" fill="#1A1A1A" text-anchor="middle">左远 — 左近</text>
+  <text x="1245" y="1437" font-size="11" fill="#2E7D32" text-anchor="middle">使用（触点 A）</text>
+  <line x1="1340" y1="1425" x2="1400" y2="1425" stroke="#D32F2F" stroke-width="3"/>
+
+  <rect x="1150" y="1462" width="190" height="34" rx="6" fill="#F5F5F5" stroke="#9E9E9E" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="1245" y="1484" font-size="11.5" fill="#757575" text-anchor="middle">右远 / 右近：空置，绝缘</text>
+
+  <text x="1104" y="1418" font-size="11" fill="#D32F2F">来自 F1</text>
+  <text x="1408" y="1418" font-size="11" fill="#D32F2F">去 D+</text>
+  <text x="1104" y="1522" font-size="11.5" fill="#666">另一组可并联使用以降低接触电阻（可选）；负极不进开关，直通 D−。</text>
+
+  <!-- ================= 页脚 ================= -->
+  <text x="1740" y="1572" font-size="11" fill="#9E9E9E" text-anchor="end">PickOrangeDummy · docs/power_wiring.svg · 2026-10-28</text>
+</svg>
