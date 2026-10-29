@@ -1,3 +1,6 @@
+> ⚠️ **已修订（2026-10-29）**：本文部分内容已被实车验证结果取代——5 号通道应接 **D6**（非 D9），
+> 且必须打开小车板 **SW2 拨码第 8 位**。最新结论见 [`chassis_control_verified.md`](chassis_control_verified.md)。
+
 # 移动底盘硬件接线与信号控制技术规范
 # Mobile Chassis Wiring & Signal Control Specification
 
