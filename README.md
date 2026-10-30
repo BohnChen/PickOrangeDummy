@@ -1,35 +1,74 @@
 # PickOrangeDummy
 
-Dummy 机械臂（auk/国产化版）ROS2 真机控制与操作实验平台。
+低位柑橘采摘机器人：**移动底盘 + 六轴机械臂 + 双相机（结构光 + RGB-D）+ 离线语音**，
+全部跑在一台 **Arduino VENTUNO Q** 上（Ubuntu 24.04 / ROS 2 Jazzy / aarch64）。
 
-目标（详见 `docs/`）：把一台基于 peng-zhihui Dummy-Robot 复刻的超紧凑六轴机械臂
-建设成 **ROS2 机械臂任务执行与安全监控系统**——经典 pick-and-place 闭环起步，
-远期面向低位柑橘采摘（RGB-D 视觉 + 旋转剪切末端执行器 + 移动底盘）。
+起点是 peng-zhihui Dummy-Robot 复刻的超紧凑六轴臂，现在扩展到整机自主作业。
+
+## 先读哪几篇
+
+| 文档 | 内容 |
+|---|---|
+| [`docs/architecture_v2.md`](docs/architecture_v2.md) | **整机软件架构 v2.0（当前）**：分层、进程模型、TF、双相机分工、停车策略、语音、里程碑、待确认项 |
+| [`docs/safety_and_incidents.md`](docs/safety_and_incidents.md) | 事故史 + 硬性安全约束（**必读**） |
+| [`docs/HANDOFF_交接文档.md`](docs/HANDOFF_交接文档.md) | 机械臂真值表、映射、避坑清单（**必读**） |
+| [`docs/chassis_control_verified.md`](docs/chassis_control_verified.md) | 底盘接线与信号实测结论 |
+| [`docs/architecture.md`](docs/architecture.md) | v1.0 机械臂阶段架构（历史，决定 D1–D6 仍有效） |
 
 ## 仓库布局
 
 ```
-docs/
-  architecture.md           # 架构决策（混合架构 C：桥接 → ros2_control）
-  safety_and_incidents.md   # 事故史 + 硬性安全约束（先读）
+docs/         架构 / 安全 / 底盘 / 视觉模型 / 数据集 文档
+firmware/     底盘 MCU 固件（VENTUNO Q / STM32H5 / Zephyr）
+scripts/      标定、诊断、标定工具与一次性脚本
+config/       运行期配置（J6 刀片零点等）
+models/       末端执行器与结构件 CAD / 打印文件
+dummyarm_AImodel/  柑橘实例分割模型工程（训练/数据/导出）
 src/
-  dummyarm_description/     # URDF/Xacro 数字样机（CAD 网格 + 真机固件限位）
-  dummyarm_bridge/          # [开发中] 真机桥接节点（joint_states + 管理服务）
-  dummyarm_hardware/        # [规划] ros2_control SystemInterface (C++)
-  dummyarm_bringup/         # [规划] launch 聚合
+  dummyarm_description/     URDF/Xacro 数字样机（固件限位对齐）
+  dummyarm_cad_description/ CAD 导出高质量网格版
+  dummyarm_hardware/        ros2_control SystemInterface (C++)
+  dummyarm_moveit_config/   MoveIt 2 配置（真机可用）
+  dummyarm_perception/      [迁移中] 现有感知节点（HSV 检测器）
+  dummyarm_bridge/          3a 阶段桥接（保留，非主路径）
+  dummyarm_bringup/         机械臂专属 launch
 ```
 
-## 硬件/环境基线
+> 整机层新增包（`pickorange_interfaces` / `_chassis` / `_perception` / `_skills` /
+> `_mission` / `_voice` / `_safety` / `_bringup`）见架构文档 §7，按 S0–S3 逐步落地。
 
-- 机械臂：Dummy V2 复刻（STM32F405 REF 主控，USB-CDC ASCII 协议 @115200）
-- 控制主机：VENTUNO Q（Ubuntu 24.04 / ROS 2 Jazzy / arm64）
-- 独立控制库：`dummyarm_link`（见个人工具目录，pyserial 封装已验证协议）
+## 硬件基线（实测）
 
-## 状态
+- **计算**：VENTUNO Q（8 核 Kryo：4×A78C + 4×A55 / 16 GB LPDDR5 / Hexagon NPU 40 TOPS）
+- **机械臂**：Dummy V2 复刻，STM32F405 REF，USB-CDC ASCII @115200
+  （串口必须用 `/dev/serial/by-id/*REF*`，禁止 `ttyACM*`）
+- **底盘**：3 通道 50 Hz 舵机 PWM（油门 / 转向 / 档位），STM32H5 生成，
+  500 ms 看门狗 + 斜率限制；**无轮速编码器**
+- **相机**：Orbbec Astra Pro Plus（正前方，避障）+ RealSense D435i（朝左 100°，找果）
+- **语音**：USB 声卡，离线 KWS + 预生成反馈语
 
-- [x] 阶段 0 环境就绪（Jazzy + xacro + ros2_control）
-- [x] 阶段 1 真机链路正规化（dummyarm_link，自测通过）
-- [x] 阶段 2 架构批准（v1.0）
-- [x] M1 数字样机骨架（description 包，TF 验证通过）
-- [ ] 3a 真机桥接节点（进行中）
-- [ ] 3b ros2_control 工程化
+## 当前状态
+
+- [x] 机械臂真机链路（`dummyarm_link` 协议验证）
+- [x] 数字样机 + TF 验证
+- [x] **ros2_control（C++）+ MoveIt 2 真机闭环**，J6 驱动层隔离锁定
+- [x] 视觉测距与高精度触碰验证（SVD 4 点手眼标定，误差 1 mm）
+- [x] 底盘 PWM 驱动 + 固件（实车验证）
+- [x] **整机架构 v2.0 定稿（待确认 12 项）**
+- [ ] S0 地基：interfaces + TF 树 + chassis_node + 顶层 launch
+- [ ] S1 感知：Astra 避障 + YOLO 接入
+- [ ] S2 采摘：`/cutter` Action（废弃串口子进程）+ 单目标闭环
+- [ ] S3 编排：状态机 + 一停多采 + 语音
+
+## 快速开始（机械臂单机调试）
+
+```bash
+cd ~/01_MyProject/PickOrangeDummy
+source /opt/ros/jazzy/setup.bash && source install/setup.bash
+ros2 launch dummyarm_moveit_config real_moveit.launch.py
+
+# 收工：平稳回 REST → 确认到位 → 失能
+./scripts/safe_park_and_exit.sh
+```
+
+> ⚠️ 动臂前先读 `docs/safety_and_incidents.md`：**J3 固件角 < 35° 绝对禁止**（历史断臂）。
