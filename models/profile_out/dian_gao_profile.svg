@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="531" height="1038" viewBox="0 0 531 1038">
+<rect width="100%%" height="100%%" fill="#ffffff"/>
+<defs><style>.ol{fill:#eef2f7;stroke:#1f2933;stroke-width:2.2;stroke-linejoin:round}.rib{fill:#fff7ed;stroke:#ea580c;stroke-width:1.8;stroke-dasharray:7 5}.dim{stroke:#0b7285;stroke-width:1;fill:none}.ext{stroke:#0b7285;stroke-width:.6;fill:none;stroke-dasharray:4 4}.t{font:600 15px -apple-system,Helvetica,Arial;fill:#0b7285}.vt{font:700 13px Helvetica;fill:#c92a2a}.nt{font:600 14px -apple-system,Helvetica,Arial;fill:#1f2933}</style></defs>
+<path class="ol" d="M 142.22 882.17 L 395.55 882.17 L 395.55 388.54 L 337.07 135.20 L 306.67 142.22 L 358.14 365.15 L 135.20 416.62 L 142.22 447.02 Z"/>
+<path class="rib" d="M 142.22 902.97 L 395.55 902.97 L 395.55 882.17 L 142.22 882.17 Z"/>
+<circle cx="142.22" cy="882.17" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="149.22" y="875.17">A</text>
+<circle cx="395.55" cy="882.17" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="402.55" y="875.17">B</text>
+<circle cx="395.55" cy="388.54" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="402.55" y="381.54">C</text>
+<circle cx="337.07" cy="135.20" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="344.07" y="128.20">D</text>
+<circle cx="306.67" cy="142.22" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="313.67" y="135.22">E</text>
+<circle cx="358.14" cy="365.15" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="365.14" y="358.15">F</text>
+<circle cx="135.20" cy="416.62" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="142.20" y="409.62">G</text>
+<circle cx="142.22" cy="447.02" r="3.2" fill="#c92a2a"/>
+<text class="vt" x="149.22" y="440.02">H</text>
+<line class="ext" x1="142.22" y1="882.17" x2="142.22" y2="939.37"/>
+<line class="ext" x1="395.55" y1="882.17" x2="395.55" y2="939.37"/>
+<line class="dim" x1="142.22" y1="939.37" x2="395.55" y2="939.37"/>
+<line class="dim" x1="142.22" y1="939.37" x2="157.82" y2="939.37"/>
+<line class="dim" x1="395.55" y1="939.37" x2="379.95" y2="939.37"/>
+<text class="t" transform="translate(268.89 960.17) rotate(-0.00)" text-anchor="middle">48.718</text>
+<line class="ext" x1="395.55" y1="882.17" x2="452.75" y2="882.17"/>
+<line class="ext" x1="395.55" y1="388.54" x2="452.75" y2="388.54"/>
+<line class="dim" x1="452.75" y1="882.17" x2="452.75" y2="388.54"/>
+<line class="dim" x1="452.75" y1="882.17" x2="452.75" y2="866.57"/>
+<line class="dim" x1="452.75" y1="388.54" x2="452.75" y2="404.14"/>
+<text class="t" transform="translate(473.55 635.35) rotate(-90.00)" text-anchor="middle">94.929</text>
+<line class="ext" x1="395.55" y1="388.54" x2="451.29" y2="375.67"/>
+<line class="ext" x1="337.07" y1="135.20" x2="392.80" y2="122.33"/>
+<line class="dim" x1="451.29" y1="375.67" x2="392.80" y2="122.33"/>
+<line class="dim" x1="451.29" y1="375.67" x2="447.78" y2="360.47"/>
+<line class="dim" x1="392.80" y1="122.33" x2="396.31" y2="137.53"/>
+<text class="t" transform="translate(442.31 244.32) rotate(77.00)" text-anchor="middle">50.000  (13°)</text>
+<line class="ext" x1="337.07" y1="135.20" x2="324.20" y2="79.47"/>
+<line class="ext" x1="306.67" y1="142.22" x2="293.80" y2="86.48"/>
+<line class="dim" x1="324.20" y1="79.47" x2="293.80" y2="86.48"/>
+<line class="dim" x1="324.20" y1="79.47" x2="309.00" y2="82.98"/>
+<line class="dim" x1="293.80" y1="86.48" x2="309.00" y2="82.98"/>
+<text class="t" transform="translate(304.32 62.71) rotate(0.00)" text-anchor="middle">6.000</text>
+<line class="ext" x1="306.67" y1="142.22" x2="362.40" y2="129.35"/>
+<line class="ext" x1="358.14" y1="365.15" x2="413.87" y2="352.29"/>
+<line class="dim" x1="362.40" y1="129.35" x2="413.87" y2="352.29"/>
+<line class="dim" x1="362.40" y1="129.35" x2="365.91" y2="144.55"/>
+<line class="dim" x1="413.87" y1="352.29" x2="410.36" y2="337.09"/>
+<text class="t" transform="translate(408.40 236.14) rotate(77.00)" text-anchor="middle">44.000</text>
+<line class="ext" x1="358.14" y1="365.15" x2="345.27" y2="309.42"/>
+<line class="ext" x1="135.20" y1="416.62" x2="122.33" y2="360.89"/>
+<line class="dim" x1="345.27" y1="309.42" x2="122.33" y2="360.89"/>
+<line class="dim" x1="345.27" y1="309.42" x2="330.07" y2="312.93"/>
+<line class="dim" x1="122.33" y1="360.89" x2="137.53" y2="357.38"/>
+<text class="t" transform="translate(229.12 314.89) rotate(347.00)" text-anchor="middle">44.000</text>
+<line class="ext" x1="135.20" y1="416.62" x2="79.47" y2="429.49"/>
+<line class="ext" x1="142.22" y1="447.02" x2="86.48" y2="459.89"/>
+<line class="dim" x1="79.47" y1="429.49" x2="86.48" y2="459.89"/>
+<line class="dim" x1="79.47" y1="429.49" x2="82.98" y2="444.69"/>
+<line class="dim" x1="86.48" y1="459.89" x2="82.98" y2="444.69"/>
+<text class="t" transform="translate(62.71 449.37) rotate(0.00)" text-anchor="middle">6.000</text>
+<line class="ext" x1="142.22" y1="447.02" x2="85.02" y2="447.02"/>
+<line class="ext" x1="142.22" y1="882.17" x2="85.02" y2="882.17"/>
+<line class="dim" x1="85.02" y1="447.02" x2="85.02" y2="882.17"/>
+<line class="dim" x1="85.02" y1="447.02" x2="85.02" y2="462.62"/>
+<line class="dim" x1="85.02" y1="882.17" x2="85.02" y2="866.57"/>
+<text class="t" transform="translate(64.22 664.60) rotate(270.00)" text-anchor="middle">83.682</text>
+<text class="nt" x="18" y="1020">垫高 2D profile &#183; 6t walls &#183; extrude 30 mm &#183; units mm</text>
+<text class="nt" x="18" y="998" fill="#ea580c">orange dashed = 4 mm locating rib (only 6.5 mm wide in Y)</text>
+</svg>
