@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> PRE_APPROACH
+    PRE_APPROACH --> INSERT : 到达 Pre-Grasp
+    INSERT --> HOLD : 套筒到位
+    HOLD --> CUT : approve_cut / 语音「剪切」
+    HOLD --> RETREAT : 30 s 超时
+    CUT --> RETREAT : 刀片已张开且确认
+    CUT --> CUT : 未切断 ∧ 重试 < 2
+    RETREAT --> [*]

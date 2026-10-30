@@ -1,0 +1,12 @@
+graph LR
+    MIC["USB 声卡<br/>麦克风"] --> KWS["sherpa-onnx KWS<br/>常开 · <100 ms"]
+    KWS --> GATE{"指令闸门<br/>当前状态允许？"}
+    GATE -- "拒绝" --> FB1["语音反馈<br/>「当前不可执行」"]
+    GATE -- "剪切" --> AP["/mission/approve_cut"]
+    GATE -- "进刀 / 退刀" --> ARM["/arm 笛卡尔 ±25 mm"]
+    GATE -- "前进 / 后退" --> CREEP["/chassis/creep ±0.2 m<br/>有限步进 + 超时"]
+    GATE -- "停止" --> ES["/safety/estop"]
+    GATE -- "暂停 / 继续" --> MS["/mission/pause / resume"]
+
+    TTS["预生成 WAV<br/>15 句固定反馈"] --> SPK["USB 声卡<br/>扬声器"]
+    SPK -. "半双工：播放时停 ASR" .-> KWS

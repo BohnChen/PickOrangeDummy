@@ -1,0 +1,19 @@
+graph TD
+    ODOM["odom<br/>占位：单位静态变换"]
+    BF["base_footprint<br/>后轴中心地面投影"]
+    CL["chassis_link<br/>车体"]
+    BL["base_link<br/>机械臂基座法兰 · J1 轴线"]
+    A1["astra_link<br/>立杆顶 · 离地约 310 mm"]
+    A1D["astra_depth_optical_frame"]
+    D1["d435i_link<br/>Astra 下方约 15 mm"]
+    D1C["camera_color_<br/>optical_frame<br/>yaw ≈ +100°"]
+    T["tool0 / tcp<br/>末端执行器"]
+
+    ODOM --> BF
+    BF --> CL
+    BF --> BL
+    BF --> A1
+    BF --> D1
+    A1 --> A1D
+    D1 --> D1C
+    BL --> T

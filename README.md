@@ -10,6 +10,7 @@
 | 文档 | 内容 |
 |---|---|
 | [`docs/architecture_v2.md`](docs/architecture_v2.md) | **整机软件架构 v2.0（当前）**：分层、进程模型、TF、双相机分工、停车策略、语音、里程碑、待确认项 |
+| [`docs/architecture_diagrams.md`](docs/architecture_diagrams.md) | **架构图册**：11 张图（分层 / 进程 / 通信 / TF / 状态机 / 时序 / 安全 / 语音 / 里程碑） |
 | [`docs/safety_and_incidents.md`](docs/safety_and_incidents.md) | 事故史 + 硬性安全约束（**必读**） |
 | [`docs/HANDOFF_交接文档.md`](docs/HANDOFF_交接文档.md) | 机械臂真值表、映射、避坑清单（**必读**） |
 | [`docs/chassis_control_verified.md`](docs/chassis_control_verified.md) | 底盘接线与信号实测结论 |

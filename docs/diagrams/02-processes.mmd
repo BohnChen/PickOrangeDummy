@@ -1,0 +1,30 @@
+graph LR
+    subgraph A78["CPU 0–3 · Cortex-A78C · 控制与通信"]
+        RC["ros2_control_node<br/>20–50 Hz"]
+        CH["chassis_node<br/>20 Hz 心跳线程"]
+        SS["safety_supervisor<br/>50 Hz"]
+        MI["mission<br/>10 Hz"]
+    end
+
+    subgraph A55["CPU 4–7 · Cortex-A55 · 重负载"]
+        TD["target_detector<br/>15–30 Hz"]
+        AG["astra_guard<br/>30 Hz"]
+        VO["voice_io<br/>常开 KWS"]
+    end
+
+    subgraph MCU["MCU 侧"]
+        H5["STM32H5<br/>PWM 生成 + 看门狗"]
+        REF["STM32F405<br/>关节伺服"]
+    end
+
+    RTR["arduino-router<br/>独占 /dev/ttySTM0"]
+
+    CH -- "msgpack-RPC" --> RTR
+    RTR -- "串行" --> H5
+    RC -- "USB-CDC 115200" --> REF
+    MI -- "Action" --> RC
+    MI -- "Action" --> CH
+    TD -- "targets" --> MI
+    AG -- "hazards" --> MI
+    VO -- "指令" --> MI
+    SS -. "取消 + 制动" .-> CH

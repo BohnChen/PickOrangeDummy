@@ -1,0 +1,26 @@
+gantt
+    title PickOrangeDummy 落地计划（S0–S4）
+    dateFormat  YYYY-MM-DD
+    axisFormat  %m/%d
+
+    section S0 地基
+    接口包 + TF 树        :s0a, 2026-11-01, 5d
+    chassis_node 接入     :s0b, after s0a, 4d
+    顶层 launch + 绑核    :s0c, after s0b, 3d
+
+    section S1 感知
+    Astra 驱动 + 避障     :s1a, after s0c, 5d
+    ONNX 导出 + 接入      :s1b, after s0c, 4d
+    可采性 + 停车窗口标定 :s1c, after s1b, 4d
+
+    section S2 采摘
+    cutter Action 打通    :s2a, after s1c, 4d
+    单目标闭环            :s2b, after s2a, 5d
+
+    section S3 编排
+    状态机 + 队列         :s3a, after s2b, 5d
+    语音 KWS + TTS        :s3b, after s3a, 4d
+    楼道连续采摘验收      :s3c, after s3b, 3d
+
+    section S4 演进（可选）
+    行为树 / NPU / 力感知 :s4a, after s3c, 20d

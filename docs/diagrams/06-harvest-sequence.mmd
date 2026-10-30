@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    participant O as 操作员 / 语音
+    participant MI as mission
+    participant CH as chassis_node
+    participant AR as arm (MoveIt)
+    participant CT as cutter
+    participant VO as voice_io
+
+    MI->>CH: /cmd_vel 巡航
+    Note over MI: target_detector 报目标<br/>x_base ≈ +0.42 m
+    MI->>CH: brake（发现即停）
+    loop creep 逼近
+        MI->>CH: Action /chassis/creep +30 mm
+        CH-->>MI: traveled_m
+        Note over MI: 重测 x_base
+    end
+
+    loop 队列中的每个目标
+        MI->>AR: Action /arm/move_to_pose (Pre-Grasp)
+        AR-->>MI: success
+        MI->>AR: Action /arm/move_to_pose (INSERT)
+        AR-->>MI: success
+        MI->>VO: speak「套住完成，等待剪切指令」
+        O->>MI: Service /mission/approve_cut
+        MI->>CT: Action /cutter/cut(span=-60, dwell=0.5)
+        CT-->>MI: feedback current_angle
+        CT-->>MI: result success, final_angle=home
+        MI->>AR: Action /arm/move_to_pose (RETREAT)
+        AR-->>MI: success
+    end
+
+    MI->>AR: 回 REST
+    MI->>CH: 解除刹车，继续巡航

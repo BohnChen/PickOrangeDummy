@@ -1,0 +1,24 @@
+graph TD
+    subgraph 软件
+        VO["voice_io"]
+        MI["mission"]
+        CT["cutter"]
+        SS["safety_supervisor"]
+    end
+    subgraph 硬件
+        CH["chassis_node"]
+        H5["STM32H5<br/>500 ms 看门狗"]
+        REF["STM32F405<br/>!STOP"]
+        MOT["底盘电机 / 六轴电机"]
+    end
+
+    VO -- "心跳" --> SS
+    MI -- "心跳" --> SS
+    CT -- "心跳" --> SS
+    SS -- "心跳 + 否决" --> CH
+    CH -- "20 Hz drive" --> H5
+    H5 -- "6 路 PWM" --> MOT
+    REF -- "限位 / 失能" --> MOT
+    SS -. "取消 goal" .-> REF
+
+    SW["SW1 总开关<br/>（最后手段）"] -. "⚠ 关电 = 臂失力下坠" .-> MOT

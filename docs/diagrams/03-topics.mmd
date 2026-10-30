@@ -1,0 +1,32 @@
+graph LR
+    subgraph 感知
+        AG["astra_guard"]
+        TD["target_detector"]
+    end
+
+    subgraph 决策
+        MI["mission"]
+        SS["safety_supervisor"]
+        VO["voice_io"]
+    end
+
+    subgraph 执行
+        CH["chassis_node"]
+        RC["ros2_control_node"]
+        CT["cutter（硬件插件内）"]
+    end
+
+    AG -- "/perception/hazards" --> MI
+    TD -- "/perception/targets" --> MI
+
+    MI -- "/cmd_vel" --> CH
+    MI -- "Action /arm/move_to_pose" --> RC
+    MI -- "Action /cutter/cut" --> CT
+    MI -- "Action /voice/speak" --> VO
+    VO -- "Service /mission/approve_cut" --> MI
+    VO -- "Service /safety/estop" --> SS
+
+    SS -- "取消全部 goal + brake" --> CH
+    SS -- "取消全部 goal + !STOP" --> RC
+    MI -- "/robot_state" --> VO
+    MI -- "/robot_state" --> SS

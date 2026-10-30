@@ -1,0 +1,20 @@
+stateDiagram-v2
+    direction LR
+    [*] --> BOOT
+    BOOT --> IDLE : 臂在 REST ∧ 已 enable
+    IDLE --> CRUISE : mission/start
+    CRUISE --> SLOW : 目标接近窗口
+    CRUISE --> FAULT : hazards 建议 STOP
+    SLOW --> STOP : 已停稳 500 ms
+    STOP --> PICK : 臂在 REST
+    PICK --> PICK : 队列非空
+    PICK --> RESUME : 队列空
+    RESUME --> CRUISE : 臂确认在 REST
+    PICK --> FAULT : 超时 / 不可达 / 失败超限
+    FAULT --> IDLE : safety/reset + enable
+    ESTOP --> IDLE : reset + enable
+
+    note right of ESTOP
+        任意状态均可进入
+        /safety/estop 或语音「停止」
+    end note
