@@ -1,8 +1,8 @@
 graph LR
-    A["DETECT<br/>D435i 首次捕获目标"] --> B["STOP<br/>0 油门 + brake"]
+    A["DETECT<br/>D435i 首次捕获目标"] --> B["STOP<br/>0 油门 + 中位"]
     B --> C{"x_base 在窗口内？<br/>[-0.08, +0.08]"}
     C -- "是" --> D["稳定 500 ms<br/>→ PICK"]
-    C -- "否" --> E["CREEP +30 mm"]
+    C -- "否" --> E["CREEP +30 mm<br/>油门 ≥ 最小有效值"]
     E --> F["等 300 ms · 重测"]
     F --> C
     C -- "跳变 > 100 mm" --> B

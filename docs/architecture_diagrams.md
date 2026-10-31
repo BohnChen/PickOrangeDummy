@@ -18,7 +18,7 @@ graph TB
     L3["L3　任务编排<br/>mission：10 Hz tick · 转移表 · 状态守卫"]
     L2["L2　能力层（全部 Action）<br/>arm_move · cutter · chassis_creep · speak"]
     L1["L1　抽象层（设备与硬件抽象）<br/>ros2_control · chassis_node · astra_guard · target_detector"]
-    L0["L0　实时层（MCU 固件，永不进 ROS）<br/>STM32H5 六路 PWM + 看门狗 · STM32F405 六轴 + 硬限位"]
+    L0["L0　实时层（MCU 固件，永不进 ROS）<br/>STM32H5 三路 PWM + 300 ms 租约 · STM32F405 六轴 + 硬限位"]
 
     L4 ==>|"指令请求"| L3
     L3 ==>|"下发 Action"| L2
@@ -69,7 +69,7 @@ graph LR
     end
 
     subgraph MCU["MCU 侧"]
-        H5["STM32H5<br/>PWM 生成 + 看门狗"]
+        H5["STM32H5<br/>三路 PWM + 300 ms 租约"]
         REF["STM32F405<br/>关节伺服"]
     end
 
@@ -277,10 +277,10 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    A["DETECT<br/>D435i 首次捕获目标"] --> B["STOP<br/>0 油门 + brake"]
+    A["DETECT<br/>D435i 首次捕获目标"] --> B["STOP<br/>0 油门 + 中位"]
     B --> C{"x_base 在窗口内？<br/>[-0.08, +0.08]"}
     C -- "是" --> D["稳定 500 ms<br/>→ PICK"]
-    C -- "否" --> E["CREEP +30 mm"]
+    C -- "否" --> E["CREEP +30 mm<br/>油门 ≥ 最小有效值"]
     E --> F["等 300 ms · 重测"]
     F --> C
     C -- "跳变 > 100 mm" --> B
@@ -291,6 +291,8 @@ graph LR
 
 - 每步 3 cm，**误差不会累积超过一步**，天然免疫"没有里程计"。
 - 每步都用视觉重新测量 ⇒ `throttle→v` 标定不准也无所谓。
+- **油门有最小值**：实测 15% 车不动、30% 才起步。所以 creep 只能"走一小段再停"，
+  不能用极低油门"慢慢挪"——那会变成发着指令不走，最后超时。
 - "跳过"是一等公民：卡在一个摘不到的果子上是这类系统最常见的死锁。
 
 ---
@@ -309,8 +311,9 @@ graph TD
     end
     subgraph 硬件
         CH["chassis_node"]
-        H5["STM32H5<br/>500 ms 看门狗"]
-        REF["STM32F405<br/>!STOP"]
+        H5["STM32H5<br/>租约 300 ms → 硬停"]
+        LATCH["固件锁存 estop<br/>必须 arm() 才解除"]
+        REF["STM32F405<br/>!STOP 保持力矩"]
         MOT["底盘电机 / 六轴电机"]
     end
 
@@ -318,19 +321,23 @@ graph TD
     MI -- "心跳" --> SS
     CT -- "心跳" --> SS
     SS -- "心跳 + 否决" --> CH
-    CH -- "20 Hz drive" --> H5
-    H5 -- "6 路 PWM" --> MOT
+    CH -- "20 Hz drive（续租约）" --> H5
+    H5 -- "3 路 PWM" --> MOT
+    SS -. "estop()" .-> LATCH
+    LATCH -. "拒绝一切运动指令" .-> H5
     REF -- "限位 / 失能" --> MOT
     SS -. "取消 goal" .-> REF
 
-    SW["SW1 总开关<br/>（最后手段）"] -. "⚠ 关电 = 臂失力下坠" .-> MOT
+    SW["物理急停 / SW1<br/>（唯一对硬件故障有效）"] -. "断底盘动力" .-> MOT
+    SW2["⚠ 断整车电 = 臂失力下坠"] -.-> MOT
 ```
 
 **要点**
 
-- `/safety/estop` 的语义是 **"底盘停车 + 机械臂 `!STOP` 保持力矩"**，**绝不失能、绝不切电**。
-- 物理断电只能作为最后手段，且必须先把机械臂收回 REST。
-- BMS 约 13 V 硬切断属被动断电，软件必须在 15.5 V 主动停车。
+- `/safety/estop` 的语义是 **"底盘锁存停车 + 机械臂 `!STOP` 保持力矩"**，**绝不失能、绝不切电**。
+- **锁存在固件里**：即使控制程序崩溃前正在 20 Hz 猛发 `drive()`，每条指令也会返回 `false`。
+- **软件链只覆盖软件故障。** 档位信号浮空/越界可能让车继续前进，这只能靠物理急停。
+- 物理断电仍须先把机械臂收回 REST。
 
 ---
 

@@ -3,7 +3,7 @@ graph TB
     L3["L3　任务编排<br/>mission：10 Hz tick · 转移表 · 状态守卫"]
     L2["L2　能力层（全部 Action）<br/>arm_move · cutter · chassis_creep · speak"]
     L1["L1　抽象层（设备与硬件抽象）<br/>ros2_control · chassis_node · astra_guard · target_detector"]
-    L0["L0　实时层（MCU 固件，永不进 ROS）<br/>STM32H5 六路 PWM + 看门狗 · STM32F405 六轴 + 硬限位"]
+    L0["L0　实时层（MCU 固件，永不进 ROS）<br/>STM32H5 三路 PWM + 300 ms 租约 · STM32F405 六轴 + 硬限位"]
 
     L4 ==>|"指令请求"| L3
     L3 ==>|"下发 Action"| L2

@@ -13,7 +13,7 @@ graph LR
     end
 
     subgraph MCU["MCU 侧"]
-        H5["STM32H5<br/>PWM 生成 + 看门狗"]
+        H5["STM32H5<br/>三路 PWM + 300 ms 租约"]
         REF["STM32F405<br/>关节伺服"]
     end
 

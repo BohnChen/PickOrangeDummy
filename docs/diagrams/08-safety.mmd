@@ -7,8 +7,9 @@ graph TD
     end
     subgraph 硬件
         CH["chassis_node"]
-        H5["STM32H5<br/>500 ms 看门狗"]
-        REF["STM32F405<br/>!STOP"]
+        H5["STM32H5<br/>租约 300 ms → 硬停"]
+        LATCH["固件锁存 estop<br/>必须 arm() 才解除"]
+        REF["STM32F405<br/>!STOP 保持力矩"]
         MOT["底盘电机 / 六轴电机"]
     end
 
@@ -16,9 +17,12 @@ graph TD
     MI -- "心跳" --> SS
     CT -- "心跳" --> SS
     SS -- "心跳 + 否决" --> CH
-    CH -- "20 Hz drive" --> H5
-    H5 -- "6 路 PWM" --> MOT
+    CH -- "20 Hz drive（续租约）" --> H5
+    H5 -- "3 路 PWM" --> MOT
+    SS -. "estop()" .-> LATCH
+    LATCH -. "拒绝一切运动指令" .-> H5
     REF -- "限位 / 失能" --> MOT
     SS -. "取消 goal" .-> REF
 
-    SW["SW1 总开关<br/>（最后手段）"] -. "⚠ 关电 = 臂失力下坠" .-> MOT
+    SW["物理急停 / SW1<br/>（唯一对硬件故障有效）"] -. "断底盘动力" .-> MOT
+    SW2["⚠ 断整车电 = 臂失力下坠"] -.-> MOT
