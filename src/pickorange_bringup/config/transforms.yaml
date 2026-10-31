@@ -45,11 +45,11 @@ chassis:
 astra:
   parent: base_footprint
   child: astra_link
-  xyz: [0.670, 0.0, 0.450]
+  xyz: [0.786, 0.0, 0.450]
   rpy: [0.0, 0.0, 0.0]
   accuracy: ASSUMED
   note: >
-    x 按立杆中心算（0.800 - 0.130 = 0.670）。
+    x = 臂底座 0.600 + 实测间距 0.186 = 0.786（立杆就在车架最前方，距前端 14mm）。
     支架把镜头往前/后偏了多少还没量，先按 0。
     pitch 假设为 0（水平），实测若俯冲需填 pitch。
   optical_frame: astra_depth_optical_frame
@@ -59,13 +59,13 @@ astra:
 d435i:
   parent: base_footprint
   child: d435i_link
-  xyz: [0.670, 0.0, 0.435]
+  xyz: [0.786, 0.0, 0.435]
   rpy: [0.0, 0.0, 1.7453292519943295]
   accuracy: ASSUMED
   note: >
     yaw = 100° = 1.7453 rad。这是**相对车头正前方**的逆时针角，
     按用户描述算的；若实际是相对 Astra 光轴，需要改。
-    相对 base_link 的等效偏移：(+0.070, -0.040, +0.233)。
+    相对臂底座车体系偏移：(+0.186, -0.040, +0.233)。
   optical_frame: camera_color_optical_frame
 
 # --- 里程计占位 ---

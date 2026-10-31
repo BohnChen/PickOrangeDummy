@@ -27,7 +27,8 @@ models/       末端执行器与结构件 CAD / 打印文件
 dummyarm_AImodel/  柑橘实例分割模型工程（训练/数据/导出）
 src/
   pickorange_interfaces/     接口定义（msg / action / srv）— S0 已完成
-  pickorange_bringup/        顶层 launch + config/transforms.yaml — S0 进行中
+  pickorange_bringup/        顶层 launch + config/transforms.yaml — S0 已完成
+  pickorange_chassis/        底盘唯一写者：/cmd_vel ⇄ RouterBridge RPC — S0 已完成
   dummyarm_description/     URDF/Xacro 数字样机（固件限位对齐）
   dummyarm_cad_description/ CAD 导出高质量网格版
   dummyarm_hardware/        ros2_control SystemInterface (C++)
@@ -60,7 +61,7 @@ src/
 - [x] **整机架构 v2.3 定稿**（几何已实测，P0 清空）
 - [x] **S0-a 接口包** `pickorange_interfaces`（5 msg / 3 action / 1 srv，编译通过）
 - [x] **S0-b 整车 TF 树** `pickorange_bringup`（`ros2 launch pickorange_bringup tf.launch.py`）
-- [ ] S0-c `chassis_node`（传输层 + 20 Hz 续租约 + `/cmd_vel`）
+- [x] **S0-c `chassis_node`**（unix/tcp 双传输 + 20 Hz 续租约 + 锁存急停 + Creep）
 - [ ] S1 感知：Astra 避障 + YOLO 接入
 - [ ] S2 采摘：`/cutter` Action（废弃串口子进程）+ 单目标闭环
 - [ ] S3 编排：状态机 + 一停多采 + 语音
