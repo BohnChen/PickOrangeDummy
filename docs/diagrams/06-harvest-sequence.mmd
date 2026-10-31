@@ -8,12 +8,12 @@ sequenceDiagram
     participant VO as voice_io
 
     MI->>CH: /cmd_vel 巡航
-    Note over MI: target_detector 报目标<br/>x_base ≈ +0.42 m
+    Note over MI: target_detector 报目标<br/>x ≈ +0.33 m（相对臂底座）
     MI->>CH: brake（发现即停）
     loop creep 逼近
         MI->>CH: Action /chassis/creep +30 mm
         CH-->>MI: traveled_m
-        Note over MI: 重测 x_base
+        Note over MI: 重测 x（相对臂底座）
     end
 
     loop 队列中的每个目标

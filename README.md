@@ -26,6 +26,8 @@ config/       运行期配置（J6 刀片零点等）
 models/       末端执行器与结构件 CAD / 打印文件
 dummyarm_AImodel/  柑橘实例分割模型工程（训练/数据/导出）
 src/
+  pickorange_interfaces/     接口定义（msg / action / srv）— S0 已完成
+  pickorange_bringup/        顶层 launch + config/transforms.yaml — S0 进行中
   dummyarm_description/     URDF/Xacro 数字样机（固件限位对齐）
   dummyarm_cad_description/ CAD 导出高质量网格版
   dummyarm_hardware/        ros2_control SystemInterface (C++)
@@ -55,8 +57,10 @@ src/
 - [x] **ros2_control（C++）+ MoveIt 2 真机闭环**，J6 驱动层隔离锁定
 - [x] 视觉测距与高精度触碰验证（SVD 4 点手眼标定，误差 1 mm）
 - [x] 底盘 PWM 驱动 + 固件（实车验证）
-- [x] **整机架构 v2.0 定稿（待确认 12 项）**
-- [ ] S0 地基：interfaces + TF 树 + chassis_node + 顶层 launch
+- [x] **整机架构 v2.3 定稿**（几何已实测，P0 清空）
+- [x] **S0-a 接口包** `pickorange_interfaces`（5 msg / 3 action / 1 srv，编译通过）
+- [x] **S0-b 整车 TF 树** `pickorange_bringup`（`ros2 launch pickorange_bringup tf.launch.py`）
+- [ ] S0-c `chassis_node`（传输层 + 20 Hz 续租约 + `/cmd_vel`）
 - [ ] S1 感知：Astra 避障 + YOLO 接入
 - [ ] S2 采摘：`/cutter` Action（废弃串口子进程）+ 单目标闭环
 - [ ] S3 编排：状态机 + 一停多采 + 语音

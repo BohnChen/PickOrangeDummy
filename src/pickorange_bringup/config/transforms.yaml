@@ -1,0 +1,80 @@
+# =============================================================================
+# 整车静态 TF 树
+#
+# 原点约定（见 docs/architecture_v2.md §9）：
+#   base_footprint = 后轴中心地面投影
+#   +X = 车头方向　+Y = 车体左侧　+Z = 向上（REP-103）
+#
+# 所有数值单位：米 / 弧度
+#
+# ⚠️ ASSUMED 标记的项是手量估算，S0 之后用相机 4 点标定精修。
+#    精修结果直接改本文件即可，不需要改代码。
+# =============================================================================
+
+# --- 机械臂 ---
+# base_link 沿用现有 URDF 的根（= 臂底座法兰中心），不重新定义。
+# 位置：车架前端后退 200mm、车架中线左 40mm、离地 202mm
+#       （车架上平面离地 140mm + 臂底座中心高 62mm）
+arm:
+  parent: base_footprint
+  child: base_link
+  xyz: [0.600, 0.040, 0.202]
+  rpy: [0.0, 0.0, 3.141592653589793]
+  accuracy: ASSUMED
+  note: >
+    yaw=180° 是**假设**：Dummy 的 URDF 里大臂自然舒展方向是 -Y，
+    绕 Z 转 180° 后指向车体左侧（+Y），与左侧采摘一致。
+    必须实测确认：让 J1 转 +45°，看末端往车头还是往左走。
+    如果方向反了，把 yaw 改成 0。
+
+# --- 车体（仅供碰撞包围盒与可视化）---
+chassis:
+  parent: base_footprint
+  child: chassis_link
+  xyz: [0.400, 0.0, 0.140]
+  rpy: [0.0, 0.0, 0.0]
+  accuracy: MEASURED
+  note: >
+    800 x 300 mm 车架，原点在后轴；车架上平面离地 140mm。
+    车架沿 X 从 -0.010（后端）到 +0.790（前端），
+    所以中心在 +0.400，尺寸 0.800 x 0.300 x 0.040（占位厚度）。
+  box: [0.800, 0.300, 0.040]
+
+# --- Astra Pro Plus（正前方避障）---
+# 立杆中心在车架前端后退 130mm；光心离地 450mm（架平面上 310mm）
+astra:
+  parent: base_footprint
+  child: astra_link
+  xyz: [0.670, 0.0, 0.450]
+  rpy: [0.0, 0.0, 0.0]
+  accuracy: ASSUMED
+  note: >
+    x 按立杆中心算（0.800 - 0.130 = 0.670）。
+    支架把镜头往前/后偏了多少还没量，先按 0。
+    pitch 假设为 0（水平），实测若俯冲需填 pitch。
+  optical_frame: astra_depth_optical_frame
+
+# --- RealSense D435i（朝左 100°）---
+# 在 Astra 正下方 15mm；从车头方向逆时针 100°
+d435i:
+  parent: base_footprint
+  child: d435i_link
+  xyz: [0.670, 0.0, 0.435]
+  rpy: [0.0, 0.0, 1.7453292519943295]
+  accuracy: ASSUMED
+  note: >
+    yaw = 100° = 1.7453 rad。这是**相对车头正前方**的逆时针角，
+    按用户描述算的；若实际是相对 Astra 光轴，需要改。
+    相对 base_link 的等效偏移：(+0.070, -0.040, +0.233)。
+  optical_frame: camera_color_optical_frame
+
+# --- 里程计占位 ---
+# 现在没有编码器，这是一条单位变换。将来接里程计或 VIO 时替换掉它，
+# 下游（MoveIt / RViz / 碰撞检测）一行都不用改。
+odom:
+  parent: odom
+  child: base_footprint
+  xyz: [0.0, 0.0, 0.0]
+  rpy: [0.0, 0.0, 0.0]
+  accuracy: PLACEHOLDER
+  note: 无里程计，占位。

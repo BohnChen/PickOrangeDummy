@@ -1,0 +1,17 @@
+# 机械臂笛卡尔移动（由 MoveIt MoveGroup 实现）
+#
+# 契约：
+#   - 非阻塞，带 feedback，可 cancel，有超时
+#   - 目标不可达时必须**立刻拒绝**（error_code=UNREACHABLE），不要先动再失败
+
+geometry_msgs/PoseStamped target
+geometry_msgs/Vector3    approach_dir   # 进刀方向（base_link 下单位向量），空=按径向
+float32                  vel_scale      # 0..1
+
+---
+bool   success
+string error_code      # SUCCESS | UNREACHABLE | COLLISION | TIMEOUT | PREEMPTED | HARDWARE
+string message
+---
+float32 progress       # 0..1
+geometry_msgs/PoseStamped current_pose

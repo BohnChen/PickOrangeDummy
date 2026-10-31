@@ -1,0 +1,20 @@
+# 果梗剪切（在 dummyarm_hardware 内部实现，走 ros2_control，不另开串口）
+#
+# 语义是**原子**的：合刀 → 保压 → 张刀 → 确认到位。
+# 任务层不得自己拼接这几个步骤，否则任务层崩了刀片会停在合刀状态。
+#
+# J6 语义（见 docs/M2_spec_j6_blade_home.md）：
+#   home（刀片全开）= config/j6_blade.json 里本次开机测得的 j6_home_deg
+#   合刀到底 = home − span_deg
+
+float32 span_deg     # 默认 60；必须落在 [0, 60]
+float32 dwell_s      # 合刀后保压时长，默认 0.5
+
+---
+bool   success
+float32 final_angle_deg   # 结束时 J6 角度（相对本次会话零点）
+string error_code         # SUCCESS | NOT_HOMED | TIMEOUT | STALL | PREEMPTED
+string message
+---
+float32 current_angle_deg
+string  phase             # close | dwell | open | verify

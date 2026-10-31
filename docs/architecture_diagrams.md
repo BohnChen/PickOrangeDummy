@@ -237,12 +237,12 @@ sequenceDiagram
     participant VO as voice_io
 
     MI->>CH: /cmd_vel 巡航
-    Note over MI: target_detector 报目标<br/>x_base ≈ +0.42 m
+    Note over MI: target_detector 报目标<br/>x ≈ +0.33 m（相对臂底座）
     MI->>CH: brake（发现即停）
     loop creep 逼近
         MI->>CH: Action /chassis/creep +30 mm
         CH-->>MI: traveled_m
-        Note over MI: 重测 x_base
+        Note over MI: 重测 x（相对臂底座）
     end
 
     loop 队列中的每个目标
@@ -278,7 +278,7 @@ sequenceDiagram
 ```mermaid
 graph LR
     A["DETECT<br/>D435i 首次捕获目标"] --> B["STOP<br/>0 油门 + 中位"]
-    B --> C{"x_base 在窗口内？<br/>[-0.08, +0.08]"}
+    B --> C{"x 在窗口内？<br/>[-0.08, +0.08]"}
     C -- "是" --> D["稳定 500 ms<br/>→ PICK"]
     C -- "否" --> E["CREEP +30 mm<br/>油门 ≥ 最小有效值"]
     E --> F["等 300 ms · 重测"]
@@ -378,10 +378,9 @@ graph LR
                        车头 ↑ +X
                                 
         ┌───────────────────────────────────────────────┐
-        │                                               │
         │        [Astra]  ▲ 正前方（避障，只测距离）       │
         │           │                                   │
-        │           │ 165 mm                            │
+        │           │ 70 mm（立杆中心 → 臂底座中心）        │
         │           ↓                                   │
         │      ┌─────────┐                              │
         │      │ 机械臂   │  ← base_link（J1 轴心）       │
@@ -402,16 +401,17 @@ graph LR
                       目标
 
   换算（已核算，详见 architecture_v2.md §3.5）：
-      相机相对 base_link：(+0.165, −0.040) m
+      相机相对臂底座：(+0.070, −0.040) m
       光轴方向：(cos100°, sin100°) = (−0.174, +0.985)
 
-      x_base = 0.165 − 0.174·d
-      y_base = −0.040 + 0.985·d
+      x = 0.070 − 0.174·d
+      y = −0.040 + 0.985·d
 
-      d = 0.40 m → (x, y) = (+0.096, +0.354)  ✅ 窗口中心
-      d = 0.60 m → (x, y) = (+0.061, +0.552)  ❌ 超臂展
+      d = 0.40 m → (x, y) = (0.000, +0.354)  ✅ 窗口中心
+      d = 0.60 m → (x, y) = (−0.034, +0.552)  ❌ 超臂展
 
-  结论：目标在 base_link x ≈ +0.42 m 时才首次进入视场
+  结论：目标在相对臂底座 x ≈ +0.33 m 时才首次进入视场
+        （车头前方约 13 cm），到窗口只剩 33 cm 行程
         ⇒ 巡航阶段是「侧扫」不是「前视」⇒ 不能远距离预判
 ```
 

@@ -1,0 +1,19 @@
+# 底盘有限步进（语音「前进/后退一点」、停车微调都走它）
+#
+# 硬约束（来自实测）：
+#   1. 必须是**有限步进**，绝不允许「发了就一直走」
+#   2. 油门有最小有效值：实测 15% 车不动、30% 才起步 ⇒ 内部会把 |max_speed| 抬到下限
+#   3. 无编码器 ⇒ 距离只能用时间近似（distance / v_nominal），到点即停
+#   4. 超时兜底：max(duration, 1.0) + 1.0 秒后强制 stop()
+
+float32 distance_m   # 正值前进，负值后退
+float32 max_speed    # 0..100，0 = 用默认（30）
+
+---
+bool   success
+float32 traveled_m_est   # 时间积分估计值，不是测量值
+string error_code        # SUCCESS | TIMEOUT | ESTOP | BUSY | HAZARD
+string message
+---
+float32 traveled_m_est
+float32 remaining_m
