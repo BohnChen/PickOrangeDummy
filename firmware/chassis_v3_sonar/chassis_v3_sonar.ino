@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Arduino_RouterBridge.h>
+#include <zephyr/drivers/pwm.h>
 
 /* 底盘控制固件 v3 —— v2 + 前向超声波补盲 + 9G 舵机
  *
@@ -80,6 +81,12 @@ static int16_t  g_scanMin = 0, g_scanMax = 180, g_scanStep = 15;
 static uint16_t g_scanDwellMs = 300;
 static uint32_t g_nextScanMs = 0;
 
+static bool     g_autoScan = true;      // 头部跟随车速自动切换扫描模式
+static bool     g_sonarGuard = true;    // 近距自动停车保护
+static uint16_t g_sonarGuardBaseMm = 250;
+static uint16_t g_sonarThrPerPct   = 5; // 每 1% 油门增加的刹车距离
+static uint32_t g_sonarStops = 0;
+
 static uint32_t g_lastPingMs = 0;
 static uint16_t g_sonarMm = 0;
 static bool     g_sonarValid = false;
@@ -116,11 +123,11 @@ static inline void waitFrame() {
   nextFrameUs += FRAME_US;
   if ((int32_t)(micros() - nextFrameUs) > 0) nextFrameUs = micros() + FRAME_US;
 }
-static void sendFrame(uint16_t thrUs, uint16_t steerUs, uint16_t gearUs, uint16_t servoUs) {
+// 注意：舵机走硬件 PWM，不在这里发；发帧只剩 3 路 → 5.1ms，留给超声的窗口更大
+static void sendFrame(uint16_t thrUs, uint16_t steerUs, uint16_t gearUs) {
   pulse(PIN_THR,   thrUs);   delayMicroseconds(GAP_US);
   pulse(PIN_STEER, steerUs); delayMicroseconds(GAP_US);
-  pulse(PIN_GEAR,  gearUs);  delayMicroseconds(GAP_US);
-  pulse(PIN_SERVO, servoUs);
+  pulse(PIN_GEAR,  gearUs);
 }
 
 // ---------------- 超声测距（有界阻塞，只在空闲窗口用）----------------
@@ -163,6 +170,23 @@ static void sonarMeasureOnce() {
 }
 
 // ---------------- 停车 ----------------
+static void hardStop();   // 前向声明
+
+// 近距保护：只有前进方向需要（超声波朝前，倒车看不到后面）
+static uint16_t sonarGuardMm() {
+  int16_t t = (g_outThr < 0) ? (int16_t)(-g_outThr) : g_outThr;
+  return (uint16_t)(g_sonarGuardBaseMm + g_sonarThrPerPct * t);
+}
+
+static void sonarGuardTick() {
+  if (!g_sonarGuard || !g_sonarValid) return;
+  if (g_outThr <= 0) return;                       // 只在前进时生效
+  if (g_sonarMm < sonarGuardMm()) {
+    hardStop();
+    g_sonarStops++;
+  }
+}
+
 static void hardStop() {
   g_leased = false; g_tgtThr = 0; g_tgtSteer = 0;
   g_outThr = 0; g_outSteer = 0; g_dir = 0;
@@ -201,16 +225,84 @@ static void updateOutputs(uint32_t nowMs) {
   int32_t steerUs = US_MID + (int32_t)g_outSteer * STEER_MAX_US / 100;
   uint16_t gearUs = (g_outThr < 0) ? GEAR_REV : GEAR_FWD;
 
-  sendFrame(clampUs(thrUs), clampUs(steerUs), gearUs, g_servoUs);
+  sendFrame(clampUs(thrUs), clampUs(steerUs), gearUs);
 }
 
 // ---------------- 舵机 / 扫描 ----------------
+// ---- 舵机：走硬件定时器 PWM（TIM4_CH2 = PB7 = D9）----
+// 软件 delayMicroseconds 生成舵机脉冲会被中断打断，脉宽抖动 ±tens of us，
+// 表现为舵机持续颤抖。改用硬件 PWM 后脉宽由定时器决定，零抖动。
+static const struct device *g_servoPwm = DEVICE_DT_GET(DT_NODELABEL(pwm4));
+static uint64_t g_servoCycPerSec = 0;
+static bool     g_servoHwOk = false;
+static bool     g_servoPowered = false;
+static uint32_t g_lastServoMoveMs = 0;
+static const uint32_t SERVO_IDLE_OFF_MS = 1500;   // 静止这么久就断电，避免 SG90 自激抖动
+
+static void servoInit() {
+  analogWrite(PIN_SERVO, 0);      // 让 Arduino core 应用 "arduino" pinctrl 复用
+  delay(10);
+  if (device_is_ready(g_servoPwm) &&
+      pwm_get_cycles_per_sec(g_servoPwm, 2, &g_servoCycPerSec) == 0 &&
+      g_servoCycPerSec > 0) {
+    g_servoHwOk = true;
+  }
+}
+
+static void servoWritePulseUs(uint16_t us) {
+  if (!g_servoHwOk) {             // 兜底：硬件 PWM 不可用时退回软件脉冲
+    pulse(PIN_SERVO, us);
+    return;
+  }
+  uint32_t period = (uint32_t)(g_servoCycPerSec / 50);        // 20ms
+  uint64_t pulse  = (uint64_t)g_servoCycPerSec * us / 1000000ULL;
+  if (pulse > period) pulse = period;
+  pwm_set_cycles(g_servoPwm, 2, period, (uint32_t)pulse, PWM_POLARITY_NORMAL);
+  g_servoPowered = true;
+}
+
+// 彻底断脉冲：舵机失去保持力矩，控制器不再自激振荡
+static void servoPowerOff() {
+  if (!g_servoHwOk || !g_servoPowered) return;
+  uint32_t period = (uint32_t)(g_servoCycPerSec / 50);
+  pwm_set_cycles(g_servoPwm, 2, period, 0, PWM_POLARITY_NORMAL);
+  g_servoPowered = false;
+}
+
 static void servoWrite(int angleDeg) {
   if (angleDeg < 0)   angleDeg = 0;
   if (angleDeg > 180) angleDeg = 180;
   g_servoAngle = (int16_t)angleDeg;
   g_servoUs = (uint16_t)(SERVO_MIN_US +
       (uint32_t)(SERVO_MAX_US - SERVO_MIN_US) * angleDeg / 180);
+  servoWritePulseUs(g_servoUs);
+  g_lastServoMoveMs = millis();
+}
+
+// 车速越快，扫得越窄 —— 前方采样率优先于侧向信息量
+static void autoScanUpdate() {
+  if (!g_autoScan) return;
+  int16_t t = (g_outThr < 0) ? (int16_t)(-g_outThr) : g_outThr;
+
+  int16_t wantMin, wantMax, wantStep;
+  uint16_t wantDwell;
+
+  if (t == 0)          { wantMin = 0;   wantMax = 180; wantStep = 30; wantDwell = 300; }
+  else if (t <= 15)    { wantMin = 60;  wantMax = 120; wantStep = 15; wantDwell = 150; }
+  else if (t <= 30)    { wantMin = 75;  wantMax = 105; wantStep = 15; wantDwell = 120; }
+  else                 { wantMin = 90;  wantMax = 90;  wantStep = 15; wantDwell = 120; }
+
+  if (wantMax <= wantMin) {           // 锁定正前方
+    if (g_scanning) { g_scanning = false; servoWrite(90); }
+    else if (g_servoAngle != 90 && !g_scanning) servoWrite(90);
+    return;
+  }
+  if (!g_scanning || g_scanMin != wantMin || g_scanMax != wantMax ||
+      g_scanStep != wantStep || g_scanDwellMs != wantDwell) {
+    g_scanMin = wantMin; g_scanMax = wantMax;
+    g_scanStep = wantStep; g_scanDwellMs = wantDwell;
+    g_scanning = true; g_nextScanMs = millis();
+  }
 }
 
 static void scanTick(uint32_t nowMs) {
@@ -251,15 +343,17 @@ static String rpc_status() {
   uint32_t left = 0;
   if (g_leased) { int32_t d = (int32_t)(g_leaseMs - millis()); left = (d > 0) ? d : 0; }
   snprintf(buf, sizeof(buf),
-           "latched=%d leased=%d left=%lums out=%d/%d dir=%d wd_stops=%lu stops=%lu",
+           "latched=%d leased=%d left=%lums out=%d/%d dir=%d wd_stops=%lu stops=%lu sonar_stops=%lu servo_pwr=%d",
            g_latched ? 1 : 0, g_leased ? 1 : 0, (unsigned long)left,
            (int)g_outThr, (int)g_outSteer, (int)g_dir,
-           (unsigned long)g_wdStops, (unsigned long)g_stopCalls);
+           (unsigned long)g_wdStops, (unsigned long)g_stopCalls,
+           (unsigned long)g_sonarStops, g_servoPowered ? 1 : 0);
   return String(buf);
 }
 
 // ---------------- RPC：传感器头 ----------------
 static bool rpc_sonar_park(int angle) {
+  g_autoScan = false;
   g_scanning = false;
   servoWrite(angle);
   return true;
@@ -272,10 +366,27 @@ static bool rpc_sonar_scan_start(int amin, int amax, int step, int dwell_ms) {
   if (dwell_ms < 50) dwell_ms = 50;
   g_scanMin = (int16_t)amin; g_scanMax = (int16_t)amax;
   g_scanStep = (int16_t)step; g_scanDwellMs = (uint16_t)dwell_ms;
+  g_autoScan = false;
   g_scanning = true; g_nextScanMs = millis();
   return true;
 }
 static bool rpc_sonar_scan_stop() { g_scanning = false; return true; }
+
+static bool rpc_sonar_auto(int on) { g_autoScan = (on != 0); g_nextScanMs = millis(); return true; }
+static bool rpc_sonar_guard(int on, int base_mm, int thr_per_pct) {
+  g_sonarGuard = (on != 0);
+  if (base_mm > 0)      g_sonarGuardBaseMm = (uint16_t)base_mm;
+  if (thr_per_pct >= 0) g_sonarThrPerPct = (uint16_t)thr_per_pct;
+  return true;
+}
+static String rpc_sonar_info() {
+  char buf[120];
+  snprintf(buf, sizeof(buf), "auto=%d guard=%d base=%u k=%u limit=%u stops=%lu",
+           g_autoScan ? 1 : 0, g_sonarGuard ? 1 : 0,
+           (unsigned)g_sonarGuardBaseMm, (unsigned)g_sonarThrPerPct,
+           (unsigned)sonarGuardMm(), (unsigned long)g_sonarStops);
+  return String(buf);
+}
 
 static String rpc_sonar_raw() {
   char buf[100];
@@ -304,13 +415,14 @@ void setup() {
   digitalWrite(PIN_TRIG, LOW);
 
   hardStop();
+  servoInit();
   servoWrite(90);                 // 传感器头先回正前方
   nextFrameUs = micros();
 
   // Bridge.begin() 会阻塞等 Linux，期间先发 300ms 中位帧，让底盘最后看到「停」
   for (int i = 0; i < 15; i++) {
     waitFrame();
-    sendFrame(US_MID, US_MID, GEAR_FWD, g_servoUs);
+    sendFrame(US_MID, US_MID, GEAR_FWD);
   }
 
   Bridge.begin();
@@ -329,16 +441,28 @@ void setup() {
   Bridge.provide("sonar_scan_start", rpc_sonar_scan_start);
   Bridge.provide("sonar_scan_stop",  rpc_sonar_scan_stop);
   Bridge.provide("sonar_raw",        rpc_sonar_raw);
+  Bridge.provide("sonar_auto",       rpc_sonar_auto);
+  Bridge.provide("sonar_guard",      rpc_sonar_guard);
+  Bridge.provide("sonar_info",       rpc_sonar_info);
 
   Monitor.begin(115200);
-  Monitor.println("CHASSIS_V3_SONAR_READY lease=300ms servo=D9 trig=D10 echo=D11");
+  Monitor.print("CHASSIS_V3_SONAR_READY lease=300ms trig=D10 echo=D11 servo_hw=");
+  Monitor.println(g_servoHwOk ? 1 : 0);
 }
 
 void loop() {
   uint32_t now = millis();
   updateOutputs(now);
 
+  sonarGuardTick();
+
+  autoScanUpdate();
   scanTick(now);
+
+  // 车停住 + 不扫描 + 已经静止一段时间 → 断脉冲，消除 SG90 自激抖动
+  if (g_outThr == 0 && !g_scanning && (uint32_t)(now - g_lastServoMoveMs) > SERVO_IDLE_OFF_MS) {
+    servoPowerOff();
+  }
 
   // 超声：只在「本帧发完之后、下一帧到来之前」的有界窗口里测
   if ((int32_t)(now - g_lastPingMs) >= (int32_t)SONAR_PERIOD_MS) {

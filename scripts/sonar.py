@@ -9,6 +9,9 @@
     ./scripts/sonar.py sweep                # 0..180 每 30° 扫一遍
     ./scripts/sonar.py scan 0 180 15        # 连续扫描（固件内扫）
     ./scripts/sonar.py stop                 # 停止扫描，保持当前位置
+    ./scripts/sonar.py auto [on|off]        # 车速自适应扫描（默认开）
+    ./scripts/sonar.py guard [on|off] [base_mm] [k]   # 近距自动刹车
+    ./scripts/sonar.py info                 # 当前策略参数
 
 环境变量：
     ROUTER_TARGET=tcp:127.0.0.1:7501        # 默认
@@ -103,6 +106,24 @@ def main(argv):
         elif cmd == "stop":
             rpc.call("sonar_scan_stop")
             print("scan stopped")
+
+        elif cmd == "auto":
+            on = 1 if (len(argv) < 2 or argv[1] != "off") else 0
+            rpc.call("sonar_auto", on)
+            print(f"auto-scan {'ON' if on else 'OFF'}")
+
+        elif cmd == "guard":
+            if len(argv) < 2:
+                print(rpc.call("sonar_info"))
+            else:
+                on = 0 if argv[1] == "off" else 1
+                base = int(argv[2]) if len(argv) > 2 else 0
+                k = int(argv[3]) if len(argv) > 3 else -1
+                rpc.call("sonar_guard", on, base, k)
+                print(rpc.call("sonar_info"))
+
+        elif cmd == "info":
+            print(rpc.call("sonar_info"))
 
         elif cmd == "sweep":
             step = int(argv[1]) if len(argv) > 1 else 30
