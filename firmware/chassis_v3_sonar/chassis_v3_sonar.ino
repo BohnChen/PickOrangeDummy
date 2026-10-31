@@ -81,7 +81,7 @@ static int16_t  g_scanMin = 0, g_scanMax = 180, g_scanStep = 15;
 static uint16_t g_scanDwellMs = 300;
 static uint32_t g_nextScanMs = 0;
 
-static bool     g_autoScan = true;      // 头部跟随车速自动切换扫描模式
+static bool     g_autoScan = false;     // 默认关闭自动扫描，等待系统主控启动后再统一起动
 static bool     g_sonarGuard = true;    // 近距自动停车保护
 static uint16_t g_sonarGuardBaseMm = 250;
 static uint16_t g_sonarThrPerPct   = 5; // 每 1% 油门增加的刹车距离
