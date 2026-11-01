@@ -95,6 +95,8 @@ def check_l2(T_prev, T_next):
 
 
 L3_MIN_R_PARK = 0.02      # 归位(REST)时允许的最小水平半径（折叠位 TCP 只有 ~50mm）
+L3_MIN_R_HIGH = 0.03      # TCP 抬高到 L3_HIGH_Z 以上时，允许几乎在底座正上方
+L3_HIGH_Z = 0.15          # 高于这个高度，末端离车架已有 20cm 以上，半径限制可放宽
 
 
 def check_l3(T, min_r=None):
@@ -104,7 +106,12 @@ def check_l3(T, min_r=None):
     """
     p = np.asarray(T[:3, 3], dtype=float)
     r = float(np.linalg.norm(p[:2]))
-    _min = L3_MIN_R if min_r is None else min_r
+    if min_r is not None:
+        _min = min_r
+    elif p[2] > L3_HIGH_Z:
+        _min = L3_MIN_R_HIGH       # 抬高了：允许在底座正上方，由扫掠检查负责车架碰撞
+    else:
+        _min = L3_MIN_R
     if not (_min <= r <= L3_MAX_R):
         raise SafetyError(f"L3 位置违规：水平半径 {r*1000:.0f}mm 超出 [{_min*1000:.0f},{L3_MAX_R*1000:.0f}]")
     if not (L3_Z_MIN <= p[2] <= L3_Z_MAX):
