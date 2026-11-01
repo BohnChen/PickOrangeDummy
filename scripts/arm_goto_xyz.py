@@ -30,8 +30,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # ---- 复用 instant_tap 的 FK/IK ----
 try:
     from instant_tap import forward_kinematics_tool0, solve_exact_tool0_ik
+    from arm_kin import solve_pose_ik, fk_full, model_from_fw
+    import arm_safety as safety
 except Exception as e:
-    print(f"无法导入 instant_tap 的 FK/IK: {e}")
+    print(f"无法导入运动学/安全模块: {e}")
     sys.exit(1)
 
 PORT_CANDIDATES = [
@@ -253,10 +255,19 @@ def main():
             if reason:
                 print(f"拒绝：{reason}")
                 return 2
-            q, resid = solve_exact_tool0_ik(tgt, seed=cur_model)
-            print(f"IK 残差: {resid:.2f} mm")
-            if resid > 5.0:
-                print("拒绝：IK 残差过大")
+            # 关键：用**保持当前姿态**的位姿 IK，绝不允许手腕翻转。
+            # 之前用只约束位置的 IK，J5 从 -74° 翻到 +0.18°，
+            # 153mm 长的锥形末端整体扫过，圆形开口转向车架（事故）。
+            T_cur = fk_full(cur_model)
+            axis_cur = T_cur[:3, 2]
+            q, resid, axis_err = solve_pose_ik(tgt, axis_cur, seed=cur_model,
+                                               posture_w=0.0005)
+            print(f"位姿IK: 位置残差 {resid:.2f}mm  轴向保持误差 {axis_err:.2f}°")
+            if resid > 6.0:
+                print("拒绝：位置残差过大")
+                return 2
+            if axis_err > 12.0:
+                print(f"拒绝：无法保持当前末端姿态（{axis_err:.1f}°）")
                 return 2
             target_model = list(q)
 
@@ -276,6 +287,15 @@ def main():
 
         cmd = ">" + ",".join(f"{v:.3f}" for v in target_fw) + f",{args.speed:.1f}"
         print(f"下发: {cmd}")
+        # ---- 安全守卫：L1/L2/L3 ----
+        T_next = fk_full(target_model)
+        try:
+            safety.check_all(T_cur, T_next, need_l1=(np.linalg.norm(tgt) > 0.14))
+        except safety.SafetyError as e:
+            print(f"!! 安全拦截: {e}")
+            return 3
+        print(f"安全校验通过 (末端姿态变化 {safety.axis_angle_deg(T_cur[:3,2], T_next[:3,2]):.1f}°)")
+
         ser.write(cmd)
 
         js = wait_settle(ser)
