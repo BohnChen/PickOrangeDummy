@@ -128,10 +128,12 @@ def detect_fruit():
 
 def check_pose(target, seed, aim_at=None):
     """aim_at 非空时同时约束"套筒轴线指向 aim_at"（J5 就是套筒轴向）"""
+    j6_lock = float(seed[5])          # J6 = 刀片轴，绝不参与定位
     if aim_at is None:
         q, res = cal.solve_exact_tool0_ik(np.array(target), seed=seed)
         if res > 5.0:
             return None, f"IK 残差 {res:.1f}mm", 0.0
+        q = list(q); q[5] = j6_lock
         axis_err = 0.0
     else:
         d = np.asarray(aim_at, dtype=float) - np.asarray(target, dtype=float)
@@ -139,12 +141,13 @@ def check_pose(target, seed, aim_at=None):
         if n < 1e-6:
             return None, "瞄准点与目标重合", 0.0
         q, res, axis_err = solve_pose_ik(np.array(target), d / n, seed=seed,
-                                         posture_w=0.0005)
+                                         posture_w=0.0005, lock_j6=j6_lock)
         if res > 6.0:
             return None, f"位姿IK 位置残差 {res:.1f}mm", axis_err
         if axis_err > AXIS_TOL_DEG:
             return None, f"轴线偏差 {axis_err:.1f}° 过大", axis_err
     fw = cal.agx.clamp_fw(cal.agx.model_rad_to_fw(q))
+    fw[5] = cal.agx.model_rad_to_fw(list(seed))[5]   # 再钉一次，确保与当前一致
     if not (J3_MIN < fw[2] < 179):
         return None, f"J3={fw[2]:.1f}° 不安全", axis_err
     if abs(fw[4]) > J5_MAX:
@@ -298,15 +301,36 @@ def do_servo_feed(ser, dry, max_step=0.010, stop_gap=0.015, max_iters=30):
 
 
 def do_cut(ser, dry):
-    """J6 合刀 → 保压 → 张刀"""
+    """J6 合刀 → 保压 → 张刀
+
+    全流程中 J6 是刀片驱动轴。这是**唯一**允许 J6 转动的入口：
+      - 先做行程限位检查（|ΔJ6| ≤ J6_CUT_MAX_TRAVEL）
+      - 临时解锁 serial 层的 J6 硬锁
+      - 结束后无论成败都重新上锁
+    """
     js = ser.joints()
     if js is None:
         log("!! 读不到 J6")
         return False
     home = js[5]
+    if abs(CUT_SPAN_DEG) > cal.agx.J6_CUT_MAX_TRAVEL:
+        log(f"!! 剪切行程 {CUT_SPAN_DEG}° 超过硬限位 "
+            f"{cal.agx.J6_CUT_MAX_TRAVEL}°，拒绝")
+        return False
     target_close = home - CUT_SPAN_DEG
     log(f"CUT: J6 {home:+.1f}° → {target_close:+.1f}° → 回 {home:+.1f}°")
     base = list(js)
+    ser.j6_locked = False            # 仅本次剪切解锁
+    try:
+        return _cut_impl(ser, dry, base, home, target_close)
+    finally:
+        ser.j6_locked = True         # 无论如何都重新上锁
+        _j = ser.joints()            # 用实测值作为新的锁定基准
+        if _j:
+            ser.last_j6 = _j[5]
+
+
+def _cut_impl(ser, dry, base, home, target_close):
     for phase, j6 in (("合刀", target_close), ("张刀", home)):
         cmd = list(base)
         cmd[5] = j6

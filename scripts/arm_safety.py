@@ -105,17 +105,30 @@ def check_l3(T):
     return True
 
 
-def _ee_point_hits_box(c, r):
-    """末端某截面的球近似是否侵入车体盒（含半径和安全间隙）"""
+def _penetration(c, r):
+    """末端某截面球近似侵入车体盒的深度（米；0 = 不接触）
+
+    用"到盒子的距离"衡量：在盒外为负，进入越深越正。
+    这样可以用"侵入深度是否增加"来判断动作是否更危险，
+    而不是简单地一刀切禁止——否则一旦起点就贴边，任何动作（包括逃开）都会被拦死。
+    """
     b = CHASSIS_BOX
-    rr = r + SWEEP_MARGIN
-    if not (b["x"][0] - rr <= c[0] <= b["x"][1] + rr):
-        return False
-    if not (b["y"][0] - rr <= c[1] <= b["y"][1] + rr):
-        return False
-    if not (b["z"][0] - rr <= c[2] <= b["z"][1] + rr):
-        return False
-    return True
+    dx = max(b["x"][0] - c[0], 0, c[0] - b["x"][1])
+    dy = max(b["y"][0] - c[1], 0, c[1] - b["y"][1])
+    dz = max(b["z"][0] - c[2], 0, c[2] - b["z"][1])
+    d_out = math.sqrt(dx * dx + dy * dy + dz * dz)
+    return (r + SWEEP_MARGIN) - d_out      # >0 表示侵入
+
+
+def _ee_point_hits_box(c, r):
+    return _penetration(c, r) > 0.0
+
+
+def ee_penetration(T):
+    """整条末端的最大侵入深度（米）"""
+    p = np.asarray(T[:3, 3], dtype=float)
+    z = tool_axis(T)
+    return max(_penetration(p + dist * z, rad) for dist, rad in EE_STATIONS)
 
 
 def check_sweep(T_from, T_to):
@@ -135,18 +148,27 @@ def check_sweep(T_from, T_to):
     except Exception:
         sl = None
     p0, p1 = np.asarray(T_from[:3, 3]), np.asarray(T_to[:3, 3])
-    for i in range(SWEEP_SAMPLES + 1):
+    start_pen = ee_penetration(T_from)
+    worst = (-1e9, None)
+    for i in range(1, SWEEP_SAMPLES + 1):     # 跳过 t=0（起点本身）
         t = i / SWEEP_SAMPLES
         Rot = sl(t) if sl is not None else R0
         axis = Rot.as_matrix()[:, 2]
         p = p0 + (p1 - p0) * t
         for dist, rad in EE_STATIONS:
             c = p + dist * axis
-            if _ee_point_hits_box(c, rad):
-                raise SafetyError(
-                    f"L2 扫掠碰撞：运动到 {t*100:.0f}% 时，末端距 tool0 {dist*1000:.0f}mm 处"
-                    f"（半径 {rad*1000:.0f}mm）侵入车体包围盒，"
-                    f"位置 ({c[0]:+.3f},{c[1]:+.3f},{c[2]:+.3f})")
+            pen = _penetration(c, rad)
+            if pen > worst[0]:
+                worst = (pen, (t, dist, c))
+    pen, info = worst
+    # 允许"脱离"（侵入不比起点更深），禁止"更靠近"
+    limit = max(start_pen, 0.0) + 0.005
+    if pen > 0 and pen > limit:
+        t, dist, c = info
+        raise SafetyError(
+            f"L2 扫掠碰撞：运动到 {t*100:.0f}% 时侵入车体 {pen*1000:.0f}mm"
+            f"（起点侵入 {max(start_pen,0)*1000:.0f}mm，允许 ≤ {limit*1000:.0f}mm）；"
+            f"末端距 tool0 {dist*1000:.0f}mm 处，位置 ({c[0]:+.3f},{c[1]:+.3f},{c[2]:+.3f})")
     return True
 
 

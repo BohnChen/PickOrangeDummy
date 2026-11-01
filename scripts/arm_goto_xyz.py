@@ -47,9 +47,34 @@ FW_LIMITS = [
 ]
 READ_TIMEOUT = 0.20
 
+# ---------------------------------------------------------------------------
+# J6 硬锁（2026-11-01 事故后新增）
+#
+# J6 是刀片驱动轴。它转动 = 刀片闭合/张开 = 剪切。
+# 绝不允许任何"定位/瞄准/滚转"动作顺带转动 J6。
+#
+# 规则：
+#   1. 默认锁死，任何 '>' 运动指令只要 J6 变化 > J6_TOL 就直接拒绝发送
+#   2. 只有显式的剪切流程可以临时解锁，且解锁后单次行程受 J6_CUT_MAX_TRAVEL 限制
+# ---------------------------------------------------------------------------
+J6_TOL = 0.3              # 允许的 J6 抖动（编码器噪声）
+J6_CUT_MAX_TRAVEL = 90.0  # 剪切时单次允许的最大 J6 行程（度）
+
+
+class J6Violation(RuntimeError):
+    """试图在非剪切流程中转动 J6"""
+    pass
+
 
 class RefSerial:
+    #: 是否锁住 J6（默认锁死）
+    j6_locked = True
+    #: 最近一次读到/下发的 J6（固件度）；None 表示未知
+    last_j6 = None
+
     def __init__(self, port):
+        self.j6_locked = True
+        self.last_j6 = None
         self.fd = os.open(port, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
         try:
             a = termios.tcgetattr(self.fd)
@@ -69,6 +94,22 @@ class RefSerial:
                 break
 
     def write(self, line):
+        """发送一行。运动指令（以 '>' 开头）必须先过 J6 硬锁。"""
+        if line.startswith(">") and self.j6_locked:
+            fields = line[1:].split(",")
+            if len(fields) >= 6:
+                try:
+                    j6 = float(fields[5])
+                except ValueError:
+                    raise J6Violation(f"无法解析 J6: {line}")
+                ref = self.last_j6
+                if ref is not None and abs(j6 - ref) > J6_TOL:
+                    raise J6Violation(
+                        f"拒绝执行：定位动作试图转动 J6 "
+                        f"{ref:+.2f}° → {j6:+.2f}°（变化 {j6-ref:+.2f}°）\n"
+                        f"    J6 是刀片驱动轴，只允许剪切流程显式移动。\n"
+                        f"    指令: {line.strip()}")
+                self.last_j6 = j6
         if not line.endswith("\n"):
             line += "\n"
         try:
@@ -116,9 +157,11 @@ class RefSerial:
                     p = line.strip().split()
                     if len(p) >= 7 and p[0] == "ok":
                         try:
-                            return [float(x) for x in p[1:7]]
+                            vals = [float(x) for x in p[1:7]]
                         except ValueError:
                             continue
+                        self.last_j6 = vals[5]   # 同步 J6 参考值
+                        return vals
                 buf = buf[-200:]
             else:
                 time.sleep(0.004)
@@ -260,8 +303,11 @@ def main():
             # 153mm 长的锥形末端整体扫过，圆形开口转向车架（事故）。
             T_cur = fk_full(cur_model)
             axis_cur = T_cur[:3, 2]
+            # J6（刀片轴）必须在 IK 里就钉死，不能事后硬改，
+            # 否则位置/姿态会失配。
             q, resid, axis_err = solve_pose_ik(tgt, axis_cur, seed=cur_model,
-                                               posture_w=0.0005)
+                                               posture_w=0.0005,
+                                               lock_j6=cur_model[5])
             print(f"位姿IK: 位置残差 {resid:.2f}mm  轴向保持误差 {axis_err:.2f}°")
             if resid > 6.0:
                 print("拒绝：位置残差过大")
@@ -272,6 +318,14 @@ def main():
             target_model = list(q)
 
         target_fw = clamp_fw(model_rad_to_fw(target_model))
+        # 最后一道闸：J6 强制等于当前值（除非显式剪切流程解锁）
+        if ser.j6_locked and ser.last_j6 is not None:
+            if abs(target_fw[5] - ser.last_j6) > J6_TOL:
+                print(f"!! J6 硬锁：计算结果想动 J6 "
+                      f"{ser.last_j6:+.2f}° → {target_fw[5]:+.2f}°，已强制改回")
+            target_fw[5] = ser.last_j6
+            target_model = list(target_model)
+            target_model[5] = cur_model[5]
         print(f"目标固件角: {' '.join(f'{v:+7.2f}' for v in target_fw)}")
         if args.dry_run:
             print("（--dry-run：不动作）")

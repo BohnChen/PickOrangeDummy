@@ -33,6 +33,15 @@ BOUNDS = [
 ]
 
 
+def bounds_locked(lock_j6=None):
+    """返回限位表；给定 lock_j6 时把第6轴钉死在该值（弧度）"""
+    b = [list(x) for x in BOUNDS]
+    if lock_j6 is not None:
+        v = float(lock_j6)
+        b[5] = [v, v]
+    return b
+
+
 def fk_full(q):
     """完整正解：返回 4x4 变换（base_link ← tool0）"""
     T = np.eye(4)
@@ -46,7 +55,8 @@ def fk_full(q):
 
 
 def solve_pose_ik(target_xyz, axis_des, seed=None,
-                  pos_tol_m=0.001, axis_tol=0.05, posture_w=0.0002):
+                  pos_tol_m=0.001, axis_tol=0.05, posture_w=0.0002,
+                  lock_j6=None):
     """位置 + 工具 Z 轴方向约束的 IK
 
     target_xyz : base_link 下的目标位置 (m)
@@ -70,7 +80,10 @@ def solve_pose_ik(target_xyz, axis_des, seed=None,
         ze = float(np.sum((T[:3, 2] - axis_des) ** 2))
         return w_pos * pe + w_axis * ze + posture_w * float(np.sum(np.square(np.asarray(q[3:]))))
 
-    res = minimize(obj, np.asarray(seed, dtype=float), bounds=BOUNDS,
+    s0 = np.asarray(seed, dtype=float).copy()
+    if lock_j6 is not None:
+        s0[5] = float(lock_j6)
+    res = minimize(obj, s0, bounds=bounds_locked(lock_j6),
                    method="L-BFGS-B",
                    options={"ftol": 1e-12, "gtol": 1e-10, "maxiter": 400})
     T = fk_full(res.x)
@@ -88,3 +101,88 @@ def fw_from_model(m):
 def model_from_fw(fw):
     m = [fw[0], fw[1] + 73.0, fw[2] - 180.0, fw[3], -fw[4], fw[5]]
     return [math.radians(v) for v in m]
+
+
+# ---------------------------------------------------------------------------
+# 完整 6 自由度位姿 IK + 出料口朝向约束
+#
+# 背景：末端外壳的 −Y_tool 方向是圆形出料口（STL 外壳 Y ∈ −128..+88，
+# 多出的 40mm 就是出料槽）。出料口要接管道往下排果，所以必须朝下。
+# 只约束"锥罩轴线"是不够的——绕轴线的滚转（J4/J6）仍可把出料口翻到朝天。
+#
+# 约定：出料口方向 = −Y_tool；要求 Y_tool 尽量朝上（+Z）。
+# ---------------------------------------------------------------------------
+
+def tool_frame_from_axis(axis_des):
+    """给定锥罩指向，构造"出料口朝下"的末端目标姿态
+
+    z = 锥罩轴线
+    x = 水平（与世界 Z 垂直）
+    y = z × x  → 指向尽可能朝天，因此出料口 (−y) 尽可能朝地
+    """
+    z = np.asarray(axis_des, dtype=float)
+    z = z / (np.linalg.norm(z) + 1e-12)
+    up = np.array([0.0, 0.0, 1.0])
+    if abs(float(np.dot(z, up))) > 0.95:
+        up = np.array([0.0, -1.0, 0.0])
+    x = np.cross(up, z)
+    x /= (np.linalg.norm(x) + 1e-12)
+    y = np.cross(z, x)
+    T = np.eye(4)
+    T[:3, 0] = x
+    T[:3, 1] = y
+    T[:3, 2] = z
+    return T
+
+
+def rot_error_rad(Ra, Rb):
+    """两个旋转矩阵之间的夹角（弧度）"""
+    R = Ra.T @ Rb
+    tr = float(np.clip((np.trace(R) - 1.0) / 2.0, -1.0, 1.0))
+    return math.acos(tr)
+
+
+def solve_full_ik(target_T, seed=None, pos_tol_m=0.001, rot_tol=0.05,
+                  posture_w=0.0002, roll_w=1.0, lock_j6=None):
+    """完整 6 自由度 IK：位置 + 姿态（含滚转）
+
+    target_T : 4x4 目标位姿（base_link ← tool0）
+    返回 (q, pos_err_mm, rot_err_deg)
+    """
+    target_T = np.asarray(target_T, dtype=float)
+    p_des = target_T[:3, 3]
+    R_des = target_T[:3, :3]
+
+    if seed is None:
+        seed = [math.atan2(p_des[0], -p_des[1]), 0.8, -0.8, 0.0, 0.0, 0.0]
+
+    w_pos = 1.0 / (pos_tol_m ** 2)
+    w_rot = roll_w / (rot_tol ** 2)
+
+    def obj(q):
+        T = fk_full(q)
+        pe = float(np.sum((T[:3, 3] - p_des) ** 2))
+        re = rot_error_rad(R_des, T[:3, :3])
+        return w_pos * pe + w_rot * re * re + posture_w * float(np.sum(np.square(np.asarray(q[3:]))))
+
+    if lock_j6 is not None:
+        seed = list(seed); seed[5] = float(lock_j6)
+    best = None
+    for s in (seed, [seed[0], 0.8, -0.8, 0.0, 0.6, seed[5]],
+              [seed[0], 0.5, 0.0, 1.2, 0.6, seed[5]],
+              [seed[0], 1.0, -1.2, -1.2, 0.3, seed[5]]):
+        res = minimize(obj, np.asarray(s, dtype=float), bounds=bounds_locked(lock_j6),
+                       method="L-BFGS-B",
+                       options={"ftol": 1e-12, "gtol": 1e-10, "maxiter": 600})
+        if best is None or res.fun < best.fun:
+            best = res
+    T = fk_full(best.x)
+    pos_err_mm = float(np.linalg.norm(T[:3, 3] - p_des) * 1000.0)
+    rot_err_deg = float(math.degrees(rot_error_rad(R_des, T[:3, :3])))
+    return best.x, pos_err_mm, rot_err_deg
+
+
+def port_down_deg(T):
+    """出料口朝上/朝下的角度：0° = 正下方，180° = 正上方"""
+    y = np.asarray(T[:3, 1], dtype=float)
+    return float(math.degrees(math.acos(np.clip(y[2], -1.0, 1.0))))
