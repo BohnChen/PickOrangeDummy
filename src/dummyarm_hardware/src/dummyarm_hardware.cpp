@@ -236,10 +236,14 @@ bool DummyArmHardware::query_positions(double period_s)
   }
 
   std::string line;
-  // 快速非阻塞解析回复 (超时严格限制在 2ms 以内，绝不拖垮控制器线程调度)
+  // 2026-11-01 修正：原超时 2ms 太短。
+  //   115200 下一条 "ok 0.00 -73.00 180.00 -0.00 0.00 0.00\n" 约 38 字符 ≈ 3.3ms，
+  //   2ms 必然读不全；读不全 → 回包堆积在固件 CDC 发送缓冲 → 固件阻塞写 → 串口彻底哑死
+  //   （表现为 /joint_states 永远是 0，且必须断电重启才能恢复）。
+  // 改成: 每次 12ms、最多 3 次尝试（正常一次就返回），失败不再 break 而是 continue。
   for (int attempt = 0; attempt < 3; ++attempt) {
-    if (!serial_.readLine(line, 2)) {
-      break;
+    if (!serial_.readLine(line, 12)) {
+      continue;
     }
     // 过滤可能漏掉的孤立 "ok" 或空行
     if (line == "ok" || line.empty()) {
@@ -271,7 +275,8 @@ bool DummyArmHardware::query_positions(double period_s)
     }
   }
 
-  // 偶尔丢包时平滑沿用上一帧数据，保证 ROS 2 控制器不发生 Overrun
+  // 三次都没拿到完整行：清掉残留的半截数据，避免下次把旧字节拼进新回包
+  serial_.clearRx();
   return true;
 }
 
