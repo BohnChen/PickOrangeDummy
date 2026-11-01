@@ -60,6 +60,10 @@ STAGE_BACK_M = CONE_LEN_M + STAGE_GAP_M
 STAGE_DOWN_M = 0.00
 FEED_STEP_M = 0.015      # 进刀步长
 FEED_PAST_M = 0.005     # 终点：刚好到果心（再往前 J3 会触底）
+FEED_DEPTH_PAST_M = 0.020   # 罩口越过果心的深度
+# 为什么是 20mm：刀片平面在 tool0 起算 126~136mm，果实半径约 20mm，
+# 要让果实**完全进到刀片平面内侧**（剪的是果梗不是果实），
+# 果心必须 ≤ 125-20 = 105mm ⇒ 罩口要越过果心 20mm。
 RETREAT_BACK_M = 0.08    # 退刀沿 +Y
 RETREAT_UP_M = 0.05      # 退刀抬升
 CUT_SPAN_DEG = 60.0
@@ -72,6 +76,12 @@ PORT_MAX_DEG = 50.0   # （仅提示用）出料口偏离"正下方"的角度
 # J2 固件范围 -73°~+90°；实测舒展姿态在 +13~+30°，极限折叠到 +50 以上。
 J2_CONTRACT_FW = 50.0   # 超过这个值视为"收缩"，拒绝
 J6_NOW_FW = None      # 实测的 J6（固件度），所有规划一律以它为准
+
+# 视觉坐标 → 机械臂真实位置的系统性偏差（2026-11-01 实测）
+# 现象：视觉算出的罩口已经对准果心（残差 0.0mm），但实际果实在罩口**下方 3~5cm**
+# 原因：不是相机标定（留出验证 7.6mm），而是机械臂 FK 绝对精度 / J5 负重下垂
+# 处理：瞄准目标按实测偏差补偿。根治办法是在末端贴 ArUco 做位姿闭环。
+AIM_OFFSET_Z_M = -0.040
 
 
 def log(msg):
@@ -264,7 +274,8 @@ def do_feed(ser, fruit, stage, dry):
     """
     pf = fruit["p_base"]
     ax = approach_axis()
-    tcp_goal = pf - CONE_LEN_M * ax
+    # 罩口越过果心 FEED_DEPTH_PAST_M，把果实整个送进刀片平面内侧
+    tcp_goal = pf - (CONE_LEN_M - FEED_DEPTH_PAST_M) * ax
     cur = stage.copy()
     step = 0
     seed = seed_now(ser)
@@ -451,6 +462,8 @@ def main():
     ap.add_argument("--servo", action="store_true", help="实时视觉伺服进刀")
     ap.add_argument("--target", nargs=3, type=float, metavar=("X", "Y", "Z"),
                     help="直接指定 base_link 下的果实坐标（跳过视觉检测，用于锥罩遮挡时）")
+    ap.add_argument("--aim-z-offset", type=float, default=None,
+                    help=f"瞄准补偿 z（默认 {AIM_OFFSET_Z_M*1000:+.0f}mm，0 表示不补偿）")
     args = ap.parse_args()
 
     if args.target:
@@ -466,6 +479,11 @@ def main():
     log(f"\n目标果实: 像素={fruit['pixel']} 深度={fruit['depth']*1000:.0f}mm "
         f"半径≈{fruit['radius']*1000:.1f}mm")
     log(f"  base_link: X={pf[0]:+.4f} Y={pf[1]:+.4f} Z={pf[2]:+.4f}")
+    _off = AIM_OFFSET_Z_M if args.aim_z_offset is None else args.aim_z_offset
+    if abs(_off) > 1e-9:
+        fruit["p_base"] = np.asarray(fruit["p_base"], dtype=float) + np.array([0.0, 0.0, _off])
+        log(f"瞄准补偿 z {_off*1000:+.0f}mm → 实际瞄准 "
+            f"({fruit['p_base'][0]:+.4f},{fruit['p_base'][1]:+.4f},{fruit['p_base'][2]:+.4f})")
     if args.detect:
         return 0
 
