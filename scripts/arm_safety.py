@@ -94,12 +94,19 @@ def check_l2(T_prev, T_next):
     return True
 
 
-def check_l3(T):
-    """L3：TCP 位置包络"""
+L3_MIN_R_PARK = 0.02      # 归位(REST)时允许的最小水平半径（折叠位 TCP 只有 ~50mm）
+
+
+def check_l3(T, min_r=None):
+    """L3：TCP 位置包络
+
+    min_r 默认 L3_MIN_R；归位动作传 L3_MIN_R_PARK（折叠位半径本来就小）。
+    """
     p = np.asarray(T[:3, 3], dtype=float)
     r = float(np.linalg.norm(p[:2]))
-    if not (L3_MIN_R <= r <= L3_MAX_R):
-        raise SafetyError(f"L3 位置违规：水平半径 {r*1000:.0f}mm 超出 [{L3_MIN_R*1000:.0f},{L3_MAX_R*1000:.0f}]")
+    _min = L3_MIN_R if min_r is None else min_r
+    if not (_min <= r <= L3_MAX_R):
+        raise SafetyError(f"L3 位置违规：水平半径 {r*1000:.0f}mm 超出 [{_min*1000:.0f},{L3_MAX_R*1000:.0f}]")
     if not (L3_Z_MIN <= p[2] <= L3_Z_MAX):
         raise SafetyError(f"L3 位置违规：z={p[2]*1000:.0f}mm 超出 [{L3_Z_MIN*1000:.0f},{L3_Z_MAX*1000:.0f}]")
     return True
@@ -172,8 +179,8 @@ def check_sweep(T_from, T_to):
     return True
 
 
-def check_all(T_prev, T_next, need_l1=False):
-    check_l3(T_next)
+def check_all(T_prev, T_next, need_l1=False, park=False):
+    check_l3(T_next, min_r=(L3_MIN_R_PARK if park else None))
     if T_prev is not None:
         check_sweep(T_prev, T_next)
     return True

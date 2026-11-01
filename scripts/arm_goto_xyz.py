@@ -346,12 +346,13 @@ def main():
         print(f"下发: {cmd}")
         # ---- 安全守卫：L1/L2/L3 ----
         T_next = fk_full(target_model)
+        _T_cur = fk_full(cur_model)          # --rest 分支也要有起点姿态
         try:
-            safety.check_all(T_cur, T_next, need_l1=(np.linalg.norm(tgt) > 0.14))
+            safety.check_all(_T_cur, T_next, need_l1=False, park=args.rest)
         except safety.SafetyError as e:
             print(f"!! 安全拦截: {e}")
             return 3
-        print(f"安全校验通过 (末端姿态变化 {safety.axis_angle_deg(T_cur[:3,2], T_next[:3,2]):.1f}°)")
+        print(f"安全校验通过 (末端姿态变化 {safety.axis_angle_deg(_T_cur[:3,2], T_next[:3,2]):.1f}°)")
 
         ser.write(cmd)
 
