@@ -56,7 +56,7 @@ MOUTH_DIA_M = 0.120      # 罩口内径
 # 关键：目标是让【罩口】到达果实，而不是 TCP 到果心。
 # TCP 退后 CONE_LEN 时，罩口正好落在果心（实测误差 3mm、轴向 0.00°）。
 STAGE_GAP_M  = 0.05      # 预备位：罩口离果心 5cm
-ELEV_DEG     = 25.0      # 进刀仰角（从斜下方往上套；果梗在上、果实在下，仰角更容易套住）
+ELEV_DEG     = 20.0      # 进刀仰角（从斜下方往上套；果梗在上、果实在下，仰角更容易套住）
 STAGE_BACK_M = CONE_LEN_M + STAGE_GAP_M
 STAGE_DOWN_M = 0.00
 FEED_STEP_M = 0.015      # 进刀步长
@@ -78,11 +78,22 @@ PORT_MAX_DEG = 50.0   # （仅提示用）出料口偏离"正下方"的角度
 J2_CONTRACT_FW = 50.0   # 超过这个值视为"收缩"，拒绝
 J6_NOW_FW = None      # 实测的 J6（固件度），所有规划一律以它为准
 
-# 视觉坐标 → 机械臂真实位置的系统性偏差（2026-11-01 实测）
-# 现象：视觉算出的罩口已经对准果心（残差 0.0mm），但实际果实在罩口**下方 3~5cm**
-# 原因：不是相机标定（留出验证 7.6mm），而是机械臂 FK 绝对精度 / J5 负重下垂
-# 处理：瞄准目标按实测偏差补偿。根治办法是在末端贴 ArUco 做位姿闭环。
-AIM_OFFSET_Z_M = -0.040
+# 视觉坐标 → 机械臂真实位置的系统性偏差（由真实套入物理实验反算得到）
+# 包含相机标定外参系统漂移、大臂负重下垂以及结构安装累计偏差
+OFFSET_CFG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "config", "pick_offset.json"
+)
+
+def load_pick_offset():
+    try:
+        with open(OFFSET_CFG_PATH, "r") as f:
+            cfg = json.load(f)
+            return np.array([cfg["offset_x_m"], cfg["offset_y_m"], cfg["offset_z_m"]], dtype=float)
+    except Exception:
+        return np.array([-0.0263, -0.0727, -0.0357], dtype=float)
+
+AIM_OFFSET = load_pick_offset()
 
 
 def log(msg):
@@ -150,15 +161,20 @@ def detect_fruit(use_yolo=True, conf_thresh=0.10):
         except Exception as e:
             log(f"   YOLO 推理异常 ({e})，降级使用 HSV")
 
-    # 若 YOLO 未检测到有效目标，降级为 HSV 颜色分割保底
+    # 若 YOLO 未检测到有效目标，降级为 HSV + 深度过滤分割保底
     if best is None:
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, np.array([10, 80, 70]), np.array([45, 255, 255]))
+        mask = cv2.inRange(hsv, np.array([12, 60, 50]), np.array([40, 255, 255]))
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # 将深度有效性直接融合到 mask 中，过滤远景噪点
+        near_mask = (dep > 200) & (dep < 800)
+        mask_filtered = (mask > 0) & near_mask
+        
+        cnts, _ = cv2.findContours(mask_filtered.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for ct in cnts:
             a = cv2.contourArea(ct)
-            if a < 300:
+            if a < 150:
                 continue
             M = cv2.moments(ct)
             if M["m00"] <= 0:
@@ -168,17 +184,15 @@ def detect_fruit(use_yolo=True, conf_thresh=0.10):
             m2 = np.zeros_like(mask)
             cv2.drawContours(m2, [ct], -1, 255, -1)
             vv = dep[m2 > 0]
-            vv = vv[vv > 0]
-            if vv.size < 30:
+            vv = vv[(vv > 200) & (vv < 800)]
+            if vv.size < 20:
                 continue
             z = float(np.median(vv)) / 1000.0
-            if not (0.15 < z < 0.9):
-                continue
             if best is None or a > best["area"]:
                 (_, _), rpx = cv2.minEnclosingCircle(ct)
                 best = {
                     "pixel": (u, v), "depth": z, "area": a, "conf": 1.0,
-                    "class": "orange_hsv", "source": "HSV", "radius_px": float(rpx)
+                    "class": "duck_target", "source": "HSV_Depth", "radius_px": float(rpx)
                 }
 
     k = cam.k
@@ -577,6 +591,22 @@ def do_retreat(ser, fruit, dry):
     return True
 
 
+def do_rest(ser, dry):
+    """安全平滑回到 REST 折叠姿态"""
+    log(">> 正在将机械臂安全平稳收拢回到 REST 姿态...")
+    rest_fw = [0.0, -73.0, 180.0, 0.0, 0.0, 0.0]
+    if dry:
+        log(f"   (dry-run) 回 REST: {rest_fw}")
+        return True
+    js = move_to(ser, rest_fw, speed=15.0, park=True)
+    if js is not None and max(abs(js[i] - rest_fw[i]) for i in range(6)) < 3.0:
+        log(">> 机械臂已成功安全到达 REST 折叠位！")
+        return True
+    else:
+        log("!! 回 REST 未能完全到位或被拦截")
+        return False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--detect", action="store_true")
@@ -584,16 +614,19 @@ def main():
     ap.add_argument("--full", action="store_true")
     ap.add_argument("--cut", action="store_true")
     ap.add_argument("--retreat", action="store_true")
+    ap.add_argument("--rest", action="store_true", help="安全平滑回 REST 折叠位")
     ap.add_argument("--auto-cut", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--servo", action="store_true", help="实时视觉伺服进刀")
     ap.add_argument("--target", nargs=3, type=float, metavar=("X", "Y", "Z"),
                     help="直接指定 base_link 下的果实坐标（跳过视觉检测，用于锥罩遮挡时）")
-    ap.add_argument("--aim-z-offset", type=float, default=None,
-                    help=f"瞄准补偿 z（默认 {AIM_OFFSET_Z_M*1000:+.0f}mm，0 表示不补偿）")
+    ap.add_argument("--aim-offset", nargs=3, type=float, default=None,
+                    help="手动覆盖补偿向量 [dx, dy, dz] (m)")
     args = ap.parse_args()
 
-    if args.target:
+    if args.rest:
+        fruit = {"pixel": (0, 0), "depth": 0.0, "p_base": np.array([0.0, 0.0, 0.0]), "radius": 0.0}
+    elif args.target:
         pb = np.array(args.target, dtype=float)
         fruit = {"pixel": None, "depth": float(np.linalg.norm(pb)),
                  "p_base": pb, "radius": 0.022, "area": 0, "manual": True}
@@ -605,12 +638,13 @@ def main():
     pf = fruit["p_base"]
     log(f"\n目标果实: 像素={fruit['pixel']} 深度={fruit['depth']*1000:.0f}mm "
         f"半径≈{fruit['radius']*1000:.1f}mm")
-    log(f"  base_link: X={pf[0]:+.4f} Y={pf[1]:+.4f} Z={pf[2]:+.4f}")
-    _off = AIM_OFFSET_Z_M if args.aim_z_offset is None else args.aim_z_offset
-    if abs(_off) > 1e-9:
-        fruit["p_base"] = np.asarray(fruit["p_base"], dtype=float) + np.array([0.0, 0.0, _off])
-        log(f"瞄准补偿 z {_off*1000:+.0f}mm → 实际瞄准 "
-            f"({fruit['p_base'][0]:+.4f},{fruit['p_base'][1]:+.4f},{fruit['p_base'][2]:+.4f})")
+    log(f"  base_link(原始视觉): X={pf[0]:+.4f} Y={pf[1]:+.4f} Z={pf[2]:+.4f}")
+    
+    _off = AIM_OFFSET if args.aim_offset is None else np.array(args.aim_offset, dtype=float)
+    if not args.rest:
+        fruit["p_base"] = np.asarray(fruit["p_base"], dtype=float) + _off
+        log(f"  应用真实物理补偿: ΔX={_off[0]*1000:+.1f}mm, ΔY={_off[1]*1000:+.1f}mm, ΔZ={_off[2]*1000:+.1f}mm")
+        log(f"  → 实际目标物理坐标: ({fruit['p_base'][0]:+.4f},{fruit['p_base'][1]:+.4f},{fruit['p_base'][2]:+.4f})")
     if args.detect:
         return 0
 
@@ -624,9 +658,12 @@ def main():
             J6_NOW_FW = _j[5]
             log(f"J6 实测 {J6_NOW_FW:+.2f}°（本次所有规划都以此为准，不会动它）")
         ser.cmd("!START", 0.8)
+        if args.rest:
+            return 0 if do_rest(ser, args.dry_run) else 1
         if args.cut:
             return 0 if do_cut(ser, args.dry_run) else 1
         if args.retreat:
+            # 如果提供了 fruit 则基于目标退刀，否则直接沿当前工具方向或安全回退
             return 0 if do_retreat(ser, fruit, args.dry_run) else 1
 
         stage = do_stage(ser, fruit, args.dry_run)
