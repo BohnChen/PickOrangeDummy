@@ -59,15 +59,14 @@ astra:
 d435i:
   parent: base_footprint
   child: d435i_link
-  xyz: [0.7611, -0.1324, 0.3518]
-  rpy: [-0.0126, -0.1549, 1.7634]
+  xyz: [0.8254, -0.0724, 0.3334]
+  rpy: [-0.0335, -0.1845, 1.9579]
   accuracy: CALIBRATED
   note: >
-    2026-11-01 用 6 点 SVD 标定（scripts/calib_eye_to_hand.py）。
-    拟合残差 平均 19.6mm / 最大 29.6mm。
-    yaw=101.0°，与假设的 100° 吻合，说明机械几何正确。
-    精度受限于彩色标记的深度噪声（~2cm）；若改用 40mm ArUco 标记做 PnP，
-    可望压到 ~2mm（标记文件见 docs/calib/）。
+    2026-11-01 用 40mm ArUco（DICT_4X4_50 id0）+ PnP 做 6 点 SVD 标定。
+    拟合残差 平均 17.6mm；**留出点验证误差 7.6mm**（未参与拟合的新位姿）。
+    yaw=112.2°。
+    标定脚本 scripts/calib_eye_to_hand.py；标记 docs/calib/aruco_40mm.pdf。
   optical_frame: camera_color_optical_frame
 
 # --- 里程计占位 ---

@@ -46,6 +46,13 @@ DATA = "/tmp/opencode/calib_points.json"
 ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 ARUCO_SIZE_M = 0.040          # 打印宽度 40mm；换尺寸必须改这里
 ARUCO_PARAMS = cv2.aruco.DetectorParameters_create()
+# 默认参数在这台相机/光照下太严（标记只占 ~50px、画面偏暗），实测会漏检。
+# 放宽阈值 + 亚像素角点精化：既能检出，也能把角点定位精度提到 0.1px 级。
+ARUCO_PARAMS.adaptiveThreshConstant = 7
+ARUCO_PARAMS.minMarkerPerimeterRate = 0.02
+ARUCO_PARAMS.maxMarkerPerimeterRate = 4.0
+ARUCO_PARAMS.polygonalApproxAccuracyRate = 0.05
+ARUCO_PARAMS.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
 
 # 6 个标定位姿（base_link, 米）。都在相机可见的左前方，J3 保持 >45°
 POSES = [
@@ -227,18 +234,35 @@ def collect():
             if not (45 < fw[2] < 179):
                 print(f"[{i}] {p} J3={fw[2]:.1f}° 不安全，跳过")
                 continue
-            ser.write(">" + ",".join(f"{v:.3f}" for v in fw) + ",25.0")
-            js = wait_motion(ser, fw)
+            # 固件在运动中会丢弃新指令，所以必须"下发→校验→必要时重发"
+            js = None
+            for attempt in range(3):
+                ser.write(">" + ",".join(f"{v:.3f}" for v in fw) + ",25.0")
+                js = wait_motion(ser, fw, timeout=45.0)
+                if js is not None and max(abs(js[i] - fw[i]) for i in range(6)) < 2.0:
+                    break
+                print(f"[{i}] 第 {attempt+1} 次下发未到位，重发")
+                time.sleep(1.0)
             if js is None:
                 print(f"[{i}] 运动后读不到角度，中止")
                 break
             time.sleep(0.4)
 
-            bgr, dep = grab(cam)
+            # 运动刚停时可能有运动模糊/自动曝光未稳定，连拍几帧取第一帧能识别的
+            bgr = dep = None
+            ar = None
+            for _try in range(5):
+                bgr, dep = grab(cam)
+                if bgr is None:
+                    time.sleep(0.2)
+                    continue
+                ar = find_aruco(bgr, cam.k)
+                if ar is not None:
+                    break
+                time.sleep(0.35)
             if bgr is None:
                 print(f"[{i}] 拍照失败")
                 continue
-            ar = find_aruco(bgr, cam.k)
             if ar is not None:
                 u, v, p_cam = ar
                 p_cam = np.array(p_cam, dtype=float)
