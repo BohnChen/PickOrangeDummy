@@ -48,14 +48,16 @@ AXIS_TOL_DEG = 25.0      # 套筒轴线与"指向果实"的最大允许偏差
 
 # --- 末端执行器几何（从 STL 实测）---
 # 外壳 Z 从 -36(法兰面) 到 +117(罩口平面)，共 153mm；罩口内径约 120mm
-CONE_LEN_M = 0.153       # tool0(法兰面) → 罩口平面
+CONE_LEN_M = 0.125       # tool0(法兰面) → 罩口平面（STL 实测 Z=-8→117）
 MOUTH_DIA_M = 0.120      # 罩口内径
 
 # --- 动作参数 ---
 # 关键：目标是让【罩口】到达果实，而不是 TCP 到果心。
 # TCP 退后 CONE_LEN 时，罩口正好落在果心（实测误差 3mm、轴向 0.00°）。
-STAGE_BACK_M = 0.20      # 预备位：TCP 离果心 20cm（罩口离果心约 5cm；再远会超出最小可达距离）
-STAGE_DOWN_M = 0.00      # 罩口足够大(120mm)，直接对准果心，不再下压
+STAGE_GAP_M  = 0.05      # 预备位：罩口离果心 5cm
+ELEV_DEG     = 25.0      # 进刀仰角（从斜下方往上套；果梗在上、果实在下，仰角更容易套住）
+STAGE_BACK_M = CONE_LEN_M + STAGE_GAP_M
+STAGE_DOWN_M = 0.00
 FEED_STEP_M = 0.015      # 进刀步长
 FEED_PAST_M = 0.005     # 终点：刚好到果心（再往前 J3 会触底）
 RETREAT_BACK_M = 0.08    # 退刀沿 +Y
@@ -65,7 +67,10 @@ CUT_SPEED = 5.0
 
 J3_MIN = 45.0            # 固件 J3 角下限（红线是 35°，这里留 10° 余量）
 J5_MAX = 80.0
-PORT_MAX_DEG = 50.0   # 出料口偏离"正下方"的上限
+PORT_MAX_DEG = 50.0   # （仅提示用）出料口偏离"正下方"的角度
+# 出料管是软管，主人确认：只要 J2 不处于收缩状态就接得住。
+# J2 固件范围 -73°~+90°；实测舒展姿态在 +13~+30°，极限折叠到 +50 以上。
+J2_CONTRACT_FW = 50.0   # 超过这个值视为"收缩"，拒绝
 J6_NOW_FW = None      # 实测的 J6（固件度），所有规划一律以它为准
 
 
@@ -158,10 +163,9 @@ def check_pose(target, seed, aim_at=None):
             return None, f"轴线偏差 {axis_err:.1f}° 过大", axis_err
     q = list(q); q[5] = j6_lock           # 丢弃 J6 的解，用当前值
     fw = cal.agx.clamp_fw(cal.agx.model_rad_to_fw(q))
-    port = port_down_deg(fk_full(q))      # 以"丢弃 J6 后的真实姿态"评估
-    if port > PORT_MAX_DEG:
-        return None, (f"出料口偏离朝下 {port:.0f}° > {PORT_MAX_DEG:.0f}°"
-                      f"（该解靠 J6 滚转凑姿态，被丢弃后出料口会转歪）"), axis_err
+    if fw[1] > J2_CONTRACT_FW:
+        return None, (f"J2={fw[1]:+.0f}° 处于收缩状态（> {J2_CONTRACT_FW:.0f}°），"
+                      f"出料软管会挤到车体，拒绝该解"), axis_err
     if not (J3_MIN < fw[2] < 179):
         return None, f"J3={fw[2]:.1f}° 不安全", axis_err
     if abs(fw[4]) > J5_MAX:
@@ -181,11 +185,23 @@ def move_to(ser, fw, speed=20.0, timeout=50.0):
     return js
 
 
+def approach_axis():
+    """进刀轴向：朝车外(-Y) + 向上的仰角
+
+    果梗在上、果实在下，从斜下方往上套能把果实"兜"进锥罩，
+    而不是从上方压下去把它推走。
+    """
+    el = math.radians(ELEV_DEG)
+    return np.array([0.0, -math.cos(el), math.sin(el)])
+
+
 def do_stage(ser, fruit, dry):
     pf = fruit["p_base"]
-    stage = np.array([pf[0], pf[1] + STAGE_BACK_M, pf[2] - STAGE_DOWN_M])
+    ax = approach_axis()
+    stage = pf - STAGE_BACK_M * ax
     log(f"STAGE 目标(TCP): X={stage[0]:+.3f} Y={stage[1]:+.3f} Z={stage[2]:+.3f}"
-        f"   [罩口在 TCP 前方 {CONE_LEN_M*100:.0f}mm]")
+        f"   [仰角 {ELEV_DEG:.0f}°，罩口在 TCP 前方 {CONE_LEN_M*1000:.0f}mm，"
+        f"离果心 {STAGE_GAP_M*1000:.0f}mm]")
     pose, err, ae = check_pose(stage, seed=[0.2, 0.8, -0.7, 0, 0.8, 0], aim_at=pf)
     if pose is None:
         log(f"!! 预备位不可用: {err}")
@@ -204,25 +220,26 @@ def do_stage(ser, fruit, dry):
 
 
 def do_feed(ser, fruit, stage, dry):
-    """沿"套筒实际轴线"分步进刀。
+    """沿"进刀轴向"分步进刀（仰角方向）。
 
-    为什么不是沿 -Y 直线：J5 顶到限位也只能把套筒瞄到 ~13° 以内，
-    而越往深处伸偏差越大（42°）。沿套筒自己的轴线推进，
-    开口始终"迎面"对着果实，不会用锥壁去推。
+    罩口要落在果心 ⇒ TCP 目标 = 果心 - CONE_LEN * axis。
+    全程沿同一条轴线推进，开口始终"迎面"对着果实，
+    不会用锥壁去推它。
     """
     pf = fruit["p_base"]
+    ax = approach_axis()
+    tcp_goal = pf - CONE_LEN_M * ax
     cur = stage.copy()
     step = 0
     seed = [0.2, 0.5, -0.5, 0, 0, 0]
-    # 进刀到 TCP 距果心 CONE_LEN_M（此时罩口正好罩住果实）
-    while np.linalg.norm(pf - cur) > CONE_LEN_M + 0.002:
+    while np.linalg.norm(tcp_goal - cur) > 0.002:
         step += 1
-        if step > 20:
+        if step > 24:
             log("   进刀步数超限，停止")
             return False
-        d = pf - cur
+        d = tcp_goal - cur
         dist = np.linalg.norm(d)
-        step_m = min(FEED_STEP_M, dist - CONE_LEN_M)
+        step_m = min(FEED_STEP_M, dist)
         cur = cur + d / dist * step_m
         pose, err, ae = check_pose(cur, seed=seed, aim_at=pf)
         if pose is None:

@@ -325,9 +325,9 @@ def main():
             target_fw[5] = ser.last_j6
             target_model = list(target_model)
             target_model[5] = cur_model[5]
-            _port = port_down_deg(fk_full(target_model))
-            if _port > 50.0:
-                print(f"!! 拒绝：出料口朝下偏离 {_port:.0f}°（>50°），该解靠 J6 滚转凑姿态")
+            _j2 = target_fw[1]
+            if _j2 > 50.0:
+                print(f"!! 拒绝：J2={_j2:+.0f}° 处于收缩状态（>50°），出料软管会挤到车体")
                 return 2
         print(f"目标固件角: {' '.join(f'{v:+7.2f}' for v in target_fw)}")
         if args.dry_run:
