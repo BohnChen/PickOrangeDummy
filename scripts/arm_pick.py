@@ -40,8 +40,9 @@ spec = importlib.util.spec_from_file_location(
 cal = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cal)
 from instant_tap import forward_kinematics_tool0
-from arm_kin import (fk_full, solve_pose_ik, solve_full_ik, tool_frame_from_axis,
-                     fw_from_model, model_from_fw, port_down_deg)
+from arm_kin import (fk_full, fk_shell, port_down_deg, port_down_deg_from_q,
+                     solve_pose_ik, solve_full_ik, tool_frame_from_axis,
+                     fw_from_model, model_from_fw)
 
 CALIB = "/tmp/opencode/calib_result.json"
 AXIS_TOL_DEG = 25.0      # 套筒轴线与"指向果实"的最大允许偏差
@@ -238,6 +239,71 @@ def approach_axis():
     """
     el = math.radians(ELEV_DEG)
     return np.array([0.0, -math.cos(el), math.sin(el)])
+
+
+def plan_pick(target_fruit_pos, current_joints_model=None):
+    """规划单次套果路径与策略。
+    
+    返回字典：
+      {
+        "status": "STAGE_AND_FEED" | "DIRECT_FEED" | "ABORT",
+        "reason": str,
+        "stage_pose": (q, fw) or None,
+        "feed_steps": [(cur_target_pos, q, fw, ae), ...],
+        "tcp_goal": np.ndarray
+      }
+    
+    核心决策原则（按用户指令）：
+    1. 正常情况下：从预备位 (STAGE) 进刀到套果终点 (FEED)。
+    2. 若果实太靠近车体，导致预备位不可达/扫掠碰撞，但直接进刀路径可行：
+       主动放弃准备位，采用 DIRECT_FEED 直接套果。
+    3. 若既不能到达准备位，又无法直接套果（超出臂展、死区、姿态受限）：
+       返回 ABORT 主动放弃该果实，避免强行运动发生碰撞危险。
+    """
+    pf = np.asarray(target_fruit_pos, dtype=float)
+    ax = approach_axis()
+    tcp_goal = pf - (CONE_LEN_M - FEED_DEPTH_PAST_M) * ax
+    stage_target = pf - STAGE_BACK_M * ax
+    
+    seed = current_joints_model
+    
+    # 1. 尝试评估预备位
+    stage_pose, stage_err, stage_ae = check_pose(stage_target, seed=seed, aim_at=pf)
+    
+    # 2. 尝试评估直接到达终点
+    goal_pose, goal_err, goal_ae = check_pose(tcp_goal, seed=seed, aim_at=pf)
+    
+    if stage_pose is not None and goal_pose is not None:
+        # 预备位可用
+        return {
+            "status": "STAGE_AND_FEED",
+            "reason": "预备位及套果终点均可达",
+            "stage_target": stage_target,
+            "stage_pose": stage_pose,
+            "goal_pose": goal_pose,
+            "tcp_goal": tcp_goal
+        }
+    
+    if stage_pose is None and goal_pose is not None:
+        # 预备位不可达（太靠近车架），但直接套果位姿可行
+        return {
+            "status": "DIRECT_FEED",
+            "reason": f"预备位受限({stage_err})，但终点可达，主动放弃准备位直接进刀",
+            "stage_target": None,
+            "stage_pose": None,
+            "goal_pose": goal_pose,
+            "tcp_goal": tcp_goal
+        }
+        
+    # 两者均不可达
+    return {
+        "status": "ABORT",
+        "reason": f"准备位不可达({stage_err})且直接进刀不可达({goal_err})，安全放弃",
+        "stage_target": None,
+        "stage_pose": None,
+        "goal_pose": None,
+        "tcp_goal": tcp_goal
+    }
 
 
 def do_stage(ser, fruit, dry):
@@ -504,11 +570,21 @@ def main():
 
         stage = do_stage(ser, fruit, args.dry_run)
         if stage is None:
-            return 1
-        if args.stage:
+            # 评估是否可以放弃准备位直接进刀
+            log(">> 准备位不可达，检查是否可直接进刀...")
+            plan = plan_pick(fruit["p_base"], current_joints_model=seed_now(ser))
+            if plan["status"] == "DIRECT_FEED":
+                log(f">> 触发策略: {plan['reason']}")
+                # 构造从当前位置直接进刀
+                cur_tcp = fk_full(seed_now(ser))[:3, 3]
+                fed = do_feed(ser, fruit, cur_tcp, args.dry_run)
+            else:
+                log(f"!! 无法安全进刀: {plan['reason']}")
+                return 1
+        elif args.stage:
             return 0
-
-        fed = do_servo_feed(ser, args.dry_run) if args.servo else do_feed(ser, fruit, stage, args.dry_run)
+        else:
+            fed = do_servo_feed(ser, args.dry_run) if args.servo else do_feed(ser, fruit, stage, args.dry_run)
         if not fed:
             log("进刀失败，执行退刀")
             do_retreat(ser, fruit, args.dry_run)

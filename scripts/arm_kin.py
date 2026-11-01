@@ -42,14 +42,24 @@ def bounds_locked(lock_j6=None):
     return b
 
 
-def fk_full(q):
-    """完整正解：返回 4x4 变换（base_link ← tool0）"""
+def fk_shell(q):
+    """外壳正解：返回 4x4 变换（base_link ← shell 外壳系）
+    
+    外壳系安装在 J5 旋转轴上，不随 J6（刀片轴）转动。
+    出料口法向固定为 -Y_shell。
+    """
     T = np.eye(4)
     T = T @ T_BASE_J1 @ get_rot_z(q[0])
     T = T @ T_J1_J2 @ get_rot_z(q[1])
     T = T @ T_J2_J3 @ get_rot_z(q[2])
     T = T @ T_J3_J4 @ get_rot_z(q[3])
     T = T @ T_J4_J5 @ get_rot_z(q[4])
+    return T
+
+
+def fk_full(q):
+    """完整正解：返回 4x4 变换（base_link ← tool0）"""
+    T = fk_shell(q)
     T = T @ T_J5_J6 @ get_rot_z(q[5])
     return T
 
@@ -183,6 +193,13 @@ def solve_full_ik(target_T, seed=None, pos_tol_m=0.001, rot_tol=0.05,
 
 
 def port_down_deg(T):
-    """出料口朝上/朝下的角度：0° = 正下方，180° = 正上方"""
+    """出料口朝上/朝下的角度：0° = 正下方，180° = 正上方
+    若传入的是 shell 系或 tool0 系，基于 -Y 轴判断朝下程度（-Y_tool / -Y_shell）
+    """
     y = np.asarray(T[:3, 1], dtype=float)
     return float(math.degrees(math.acos(np.clip(y[2], -1.0, 1.0))))
+
+
+def port_down_deg_from_q(q):
+    """直接基于外壳系计算出料口偏角，完全杜绝 J6 的干扰"""
+    return port_down_deg(fk_shell(q))
