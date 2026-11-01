@@ -8,5 +8,7 @@ dummyarm_AImodel/datasets/
 dummyarm_AImodel/runs/
 *.pt
 *.onnx
+*.zip
+__MACOSX/
 yolo11*-seg.pt
 .DS_Store
