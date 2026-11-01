@@ -227,6 +227,35 @@ def envelope_check(p):
     return None
 
 
+def hold_position(ser, speed=3.0):
+    """锁轴：把当前实测位置回发一遍，让各轴原地保持力矩。
+
+    事故背景（2026-11-01 夜）：`--rest` 因 wait_settle 超时被判"未到位"，
+    随后脚本继续失能，机械臂在**伸展悬空**状态下失去力矩、重力下坠撞地。
+    规则：**任何异常只能锁轴，绝不能失能**。
+    失能只允许发生在"已确认停在 REST"之后。
+    """
+    js = None
+    for _ in range(8):
+        js = ser.joints()
+        if js is not None:
+            break
+        time.sleep(0.2)
+    if js is None:
+        print("!! 锁轴失败：读不到当前角度（无法回发保持指令）")
+        return None
+    ser.write(">" + ",".join(f"{v:.3f}" for v in js) + f",{speed:.1f}")
+    print(f"已锁轴（保持当前姿态）: {' '.join(f'{v:+7.2f}' for v in js)}")
+    return js
+
+
+def move_timeout(fw_from, fw_to, speed, base=60.0):
+    """按"最大单轴行程 / 速度"估算并留足余量，避免慢速长行程被超时误判"""
+    span = max(abs(a - b) for a, b in zip(fw_from, fw_to))
+    est = span / max(speed, 1.0) * 1.2      # 经验：约 1.2s/(度/速度)
+    return max(base, est * 1.8 + 20.0)
+
+
 def wait_settle(ser, timeout=90.0, tol=0.15, stable_n=3, interval=0.4):
     """轮询直到关节角连续 stable_n 个观察窗变化 < tol 度
 
@@ -356,9 +385,18 @@ def main():
 
         ser.write(cmd)
 
-        js = wait_settle(ser)
+        _to = move_timeout(fw, target_fw, args.speed)
+        print(f"等待到位（超时 {_to:.0f}s，按行程/速度估算）")
+        js = wait_settle(ser, timeout=_to)
         if js is None:
             print("!! 等待到位时读不到角度")
+            hold_position(ser)
+            return 1
+
+        _err_fw = max(abs(js[i] - target_fw[i]) for i in range(6))
+        if _err_fw > 3.0:
+            print(f"!! 未到位（最大关节差 {_err_fw:.1f}°）")
+            hold_position(ser)          # 锁轴，绝不失能
             return 1
 
         new_model = fw_to_model_rad(js)
