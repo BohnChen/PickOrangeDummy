@@ -89,7 +89,7 @@ def log(msg):
     print(msg, flush=True)
 
 
-def detect_fruit():
+def detect_fruit(use_yolo=True, conf_thresh=0.10):
     rclpy_ok = True
     import rclpy
     rclpy.init()
@@ -104,45 +104,106 @@ def detect_fruit():
         log("!! 相机无数据")
         rclpy.try_shutdown()
         return None
-    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, np.array([10, 80, 70]), np.array([45, 255, 255]))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
     best = None
-    for ct in cnts:
-        a = cv2.contourArea(ct)
-        if a < 300:
-            continue
-        M = cv2.moments(ct)
-        if M["m00"] <= 0:
-            continue
-        u = int(M["m10"] / M["m00"])
-        v = int(M["m01"] / M["m00"])
-        m2 = np.zeros_like(mask)
-        cv2.drawContours(m2, [ct], -1, 255, -1)
-        vv = dep[m2 > 0]
-        vv = vv[vv > 0]
-        if vv.size < 30:
-            continue
-        z = float(np.median(vv)) / 1000.0
-        if not (0.15 < z < 0.9):
-            continue
-        if best is None or a > best[0]:
-            best = (a, u, v, z, ct)
+    # 优先尝试 YOLO 实例分割模型
+    weights_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "dummyarm_AImodel/runs/segment/exp-001_yolo11n-seg_50e/weights/best.pt"
+    )
+    if use_yolo and os.path.exists(weights_path):
+        try:
+            from ultralytics import YOLO
+            model = YOLO(weights_path)
+            res = model(bgr, conf=conf_thresh, verbose=False)[0]
+            if len(res.boxes) > 0 and res.masks is not None:
+                # 寻找置信度最高或面积最大的 orange / occluded_orange
+                for i, box in enumerate(res.boxes):
+                    cls_id = int(box.cls[0])
+                    cls_name = model.names[cls_id]
+                    if cls_name not in ('orange', 'occluded_orange'):
+                        continue
+                    conf = float(box.conf[0])
+                    mask = (res.masks.data[i].cpu().numpy() > 0.5).astype(np.uint8)
+                    mask = cv2.resize(mask, (bgr.shape[1], bgr.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    vv = dep[mask > 0]
+                    vv = vv[vv > 0]
+                    if vv.size < 30:
+                        continue
+                    z = float(np.median(vv)) / 1000.0
+                    if not (0.15 < z < 0.9):
+                        continue
+                    # 轮廓中心
+                    M = cv2.moments(mask)
+                    if M["m00"] <= 0:
+                        continue
+                    u = int(M["m10"] / M["m00"])
+                    v = int(M["m01"] / M["m00"])
+                    a = float(M["m00"])
+                    if best is None or conf > best.get("conf", 0):
+                        best = {
+                            "pixel": (u, v), "depth": z, "area": a, "conf": conf,
+                            "class": cls_name, "source": "YOLO", "mask": mask
+                        }
+                if best is not None:
+                    log(f"   [YOLOv11-seg] 识别到目标: 类={best['class']}, 置信度={best['conf']:.2f}")
+        except Exception as e:
+            log(f"   YOLO 推理异常 ({e})，降级使用 HSV")
+
+    # 若 YOLO 未检测到有效目标，降级为 HSV 颜色分割保底
+    if best is None:
+        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, np.array([10, 80, 70]), np.array([45, 255, 255]))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for ct in cnts:
+            a = cv2.contourArea(ct)
+            if a < 300:
+                continue
+            M = cv2.moments(ct)
+            if M["m00"] <= 0:
+                continue
+            u = int(M["m10"] / M["m00"])
+            v = int(M["m01"] / M["m00"])
+            m2 = np.zeros_like(mask)
+            cv2.drawContours(m2, [ct], -1, 255, -1)
+            vv = dep[m2 > 0]
+            vv = vv[vv > 0]
+            if vv.size < 30:
+                continue
+            z = float(np.median(vv)) / 1000.0
+            if not (0.15 < z < 0.9):
+                continue
+            if best is None or a > best["area"]:
+                (_, _), rpx = cv2.minEnclosingCircle(ct)
+                best = {
+                    "pixel": (u, v), "depth": z, "area": a, "conf": 1.0,
+                    "class": "orange_hsv", "source": "HSV", "radius_px": float(rpx)
+                }
+
     k = cam.k
     cam.destroy_node()
     rclpy.try_shutdown()
     if best is None:
         log("!! 没找到近距目标")
         return None
-    a, u, v, z, ct = best
+
+    u, v = best["pixel"]
+    z = best["depth"]
     pc = cal.pixel_to_cam(u, v, z, k)
     T = np.array(json.load(open(CALIB))["T_base_link_camera"])
     pb = T[:3, :3] @ np.array(pc) + T[:3, 3]
-    # 用轮廓外接圆半径估计果实半径（像素→米）
-    (_, _), rpx = cv2.minEnclosingCircle(ct)
-    radius_m = float(rpx) * z / k[0]
-    return {"pixel": (u, v), "depth": z, "p_base": pb, "radius": radius_m, "area": a}
+
+    if "radius_px" in best:
+        radius_m = best["radius_px"] * z / k[0]
+    else:
+        # 基于 mask 面积近似等效圆半径
+        radius_m = math.sqrt(best["area"] / math.pi) * z / k[0]
+
+    return {
+        "pixel": (u, v), "depth": z, "p_base": pb, "radius": radius_m,
+        "area": best["area"], "source": best["source"], "conf": best.get("conf", 1.0)
+    }
 
 
 def check_pose(target, seed, aim_at=None):
