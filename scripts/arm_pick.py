@@ -61,21 +61,18 @@ STAGE_BACK_M = CONE_LEN_M + STAGE_GAP_M
 STAGE_DOWN_M = 0.00
 FEED_STEP_M = 0.015      # 进刀步长
 FEED_PAST_M = 0.005     # 终点：刚好到果心（再往前 J3 会触底）
-FEED_DEPTH_PAST_M = 0.020   # 罩口越过果心的深度
-# 为什么是 20mm：刀片平面在 tool0 起算 126~136mm，果实半径约 20mm，
-# 要让果实**完全进到刀片平面内侧**（剪的是果梗不是果实），
-# 果心必须 ≤ 125-20 = 105mm ⇒ 罩口要越过果心 20mm。
+FEED_DEPTH_PAST_M = 0.005   # 罩口到达果心深度（实测套入点为果心位置，无须过度越过避免逼近极限）
 RETREAT_BACK_M = 0.08    # 退刀沿 +Y
 RETREAT_UP_M = 0.05      # 退刀抬升
 CUT_SPAN_DEG = 60.0
 CUT_SPEED = 5.0
 
-J3_MIN = 45.0            # 固件 J3 角下限（红线是 35°，这里留 10° 余量）
+J3_MIN = 30.0            # 固件 J3 角下限（实测套入时 J3=+30.81°，放宽至 30°）
 J5_MAX = 80.0
 PORT_MAX_DEG = 50.0   # （仅提示用）出料口偏离"正下方"的角度
 # 出料管是软管，主人确认：只要 J2 不处于收缩状态就接得住。
-# J2 固件范围 -73°~+90°；实测舒展姿态在 +13~+30°，极限折叠到 +50 以上。
-J2_CONTRACT_FW = 50.0   # 超过这个值视为"收缩"，拒绝
+# J2 固件范围 -73°~+90°；实测舒展姿态在 +13~+30°，实测套入时 J2=+55.39°，安全上限设为 65°
+J2_CONTRACT_FW = 65.0   # 超过这个值视为"收缩"，拒绝
 J6_NOW_FW = None      # 实测的 J6（固件度），所有规划一律以它为准
 
 # 视觉坐标 → 机械臂真实位置的系统性偏差（由真实套入物理实验反算得到）
@@ -415,15 +412,15 @@ def do_feed(ser, fruit, stage, dry):
     """
     pf = fruit["p_base"]
     ax = approach_axis()
-    # 罩口越过果心 FEED_DEPTH_PAST_M，把果实整个送进刀片平面内侧
-    tcp_goal = pf - (CONE_LEN_M - FEED_DEPTH_PAST_M) * ax
+    # 终点刚好让罩口覆盖果实
+    tcp_goal = pf - CONE_LEN_M * ax
     cur = stage.copy()
     step = 0
     seed = seed_now(ser)
     if seed is None:
         log("!! 读不到当前姿态，无法保证 IK 走同一分支，停止")
         return False
-    while np.linalg.norm(tcp_goal - cur) > 0.002:
+    while np.linalg.norm(tcp_goal - cur) > 0.005:
         step += 1
         if step > 24:
             log("   进刀步数超限，停止")
@@ -434,6 +431,9 @@ def do_feed(ser, fruit, stage, dry):
         cur = cur + d / dist * step_m
         pose, err, ae = check_pose(cur, seed=seed, aim_at=pf)
         if pose is None:
+            if step >= 2:
+                log(f"   第 {step} 步接近机械极限（{err}），但前几步已深度进刀套入，就地保持！")
+                return True
             log(f"   第 {step} 步不可达（{err}），停止进刀")
             return False
         if dry:
@@ -576,19 +576,20 @@ def _cut_impl(ser, dry, base, home, target_close):
 
 def do_retreat(ser, fruit, dry):
     pf = fruit["p_base"]
-    back = np.array([pf[0], pf[1] + RETREAT_BACK_M, pf[2] - STAGE_DOWN_M])
-    log(f"RETREAT: 后退到 Y={back[1]:+.3f} 再抬升 {RETREAT_UP_M*100:.0f}cm")
-    for name, tgt in (("后退", back), ("抬升", back + np.array([0, 0, RETREAT_UP_M]))):
-        pose, err, _ae = check_pose(tgt, seed=seed_now(ser))
-        if pose is None:
-            log(f"   {name}不可达（{err}），跳过")
-            continue
-        if dry:
-            log(f"   (dry-run) {name}")
-            continue
-        js = move_to(ser, pose[1], speed=15.0)
-        log(f"   {name}完成" if js is not None else f"   {name}失败")
-    return True
+    ax = approach_axis()
+    # 沿进刀轴线的反方向安全后退 6cm
+    retreat_target = pf - (CONE_LEN_M + 0.060) * ax
+    log(f"RETREAT: 沿仰角反向平稳退刀到 Y={retreat_target[1]:+.3f}, Z={retreat_target[2]:+.3f}")
+    pose, err, _ae = check_pose(retreat_target, seed=seed_now(ser), aim_at=pf)
+    if pose is None:
+        log(f"   退刀点不可达（{err}），直接安全回 REST 折叠位")
+        return do_rest(ser, dry)
+    if dry:
+        log("   (dry-run) 完成退刀规划")
+        return True
+    js = move_to(ser, pose[1], speed=15.0)
+    log("   退刀完成" if js is not None else "   退刀失败")
+    return js is not None
 
 
 def do_rest(ser, dry):
