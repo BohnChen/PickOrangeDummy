@@ -26,14 +26,28 @@ if CHASSIS_DIR not in sys.path:
 from pickorange_chassis.rpc import RpcClient
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ignore-vision", action="store_true", help="强制忽略视觉，专门测试 10 秒超时巡航安全停车")
+    parser.add_argument("--speed", type=int, default=25, help="巡航速度百分比（推荐 25%）")
+    parser.add_argument("--disable-sonar-guard", action="store_true", default=True, help="架空/近距离调试时关闭超声波自动刹停")
+    args = parser.parse_args()
+
     print("==================================================")
     print(">>> 启动 L3 整机巡航寻果编排状态机 <<<")
-    print("规则: 小车以 20% 慢速巡航前进，实时搜寻目标；")
-    print("      若发现目标立刻停车；若 10 秒未发现目标自动超时停车。")
+    if args.ignore_vision:
+        print(f"模式: 【超时巡航测试】车速={args.speed}%，强制忽略视觉，验证满 10 秒底盘自动刹停！")
+    else:
+        print(f"规则: 小车以 {args.speed}% 慢速巡航前进，实时搜寻目标；")
+        print("      若发现目标立刻停车；若 10 秒未发现目标自动超时停车。")
     print("==================================================")
     
     client = RpcClient('tcp:127.0.0.1:7501')
     try:
+        # 架空调试防误触：关闭前向声呐近距拦截
+        if args.disable_sonar_guard:
+            client.call('sonar_guard', 0, 0, 0)
+            
         # 确保起始状态安全居中
         client.call('turn', 0)
         client.call('stop')
@@ -41,10 +55,10 @@ def main():
         
         start_time = time.time()
         timeout_limit = 10.0
-        patrol_speed = 20  # 20% 慢速巡航
+        patrol_speed = args.speed
         
         found_target = False
-        print("\n>>> 进入 CRUISE 巡航状态，小车开始前进...")
+        print("\n>>> 进入 CRUISE 巡航状态，小车开始平滑连续前进...")
         
         step_count = 0
         while time.time() - start_time < timeout_limit:
@@ -56,7 +70,7 @@ def main():
             print(f"  [巡航中] 耗时: {elapsed:4.1f}s / {timeout_limit:.0f}s (车速={patrol_speed}%)...", end="\r", flush=True)
             
             # 每隔约 0.6 秒进行一次视觉探寻
-            if step_count % 12 == 0:
+            if not args.ignore_vision and step_count % 12 == 0:
                 print(f"\n  [视觉探寻] 正在扫描侧向视野...")
                 fruit = arm_pick.detect_fruit()
                 if fruit is not None:
