@@ -40,8 +40,8 @@ spec = importlib.util.spec_from_file_location(
 cal = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cal)
 from instant_tap import forward_kinematics_tool0
-from arm_kin import (fk_full, solve_pose_ik, fw_from_model, model_from_fw,
-                     port_down_deg)
+from arm_kin import (fk_full, solve_pose_ik, solve_full_ik, tool_frame_from_axis,
+                     fw_from_model, model_from_fw, port_down_deg)
 
 CALIB = "/tmp/opencode/calib_result.json"
 AXIS_TOL_DEG = 25.0      # 套筒轴线与"指向果实"的最大允许偏差
@@ -155,8 +155,13 @@ def check_pose(target, seed, aim_at=None):
         n = np.linalg.norm(d)
         if n < 1e-6:
             return None, "瞄准点与目标重合", 0.0
-        q, res, axis_err = solve_pose_ik(np.array(target), d / n, seed=seed,
-                                         posture_w=0.0005)
+        # 必须用 6 自由度（完整姿态）解算，不能用只约束轴线的 5 自由度：
+        # 5DOF 把滚转留给正则项，实测会掉进坏分支
+        # （J1 转到 -169.6°、J3 压在 35° 红线、轴线还差 19.9°）。
+        # 6DOF 直接指定"出料口朝下"的目标姿态，解干净且稳定。
+        _Tdes = tool_frame_from_axis(d / n)
+        _Tdes[:3, 3] = np.array(target)
+        q, res, axis_err = solve_full_ik(_Tdes, seed=seed, rot_tol=0.06)
         if res > 6.0:
             return None, f"位姿IK 位置残差 {res:.1f}mm", axis_err
         if axis_err > AXIS_TOL_DEG:
@@ -173,7 +178,21 @@ def check_pose(target, seed, aim_at=None):
     return (q, fw), None, axis_err
 
 
-def move_to(ser, fw, speed=20.0, timeout=50.0):
+def move_to(ser, fw, speed=20.0, timeout=50.0, park=False):
+    """下发一条关节目标并等到位。
+
+    下发前必须过扫掠碰撞检查（末端 125mm 长、外廓 Ø172，扫到车架就是事故）。
+    """
+    import arm_safety as _safety
+    _cur = seed_now(ser)
+    if _cur is None:
+        log("   !! 读不到当前姿态，无法做扫掠检查，拒绝下发")
+        return None
+    try:
+        _safety.check_all(fk_full(_cur), fk_full(model_from_fw(fw)), park=park)
+    except _safety.SafetyError as e:
+        log(f"   !! 扫掠拦截: {e}")
+        return None
     js = None
     for k in range(3):
         ser.write(">" + ",".join(f"{v:.3f}" for v in fw) + f",{speed:.1f}")
@@ -183,6 +202,22 @@ def move_to(ser, fw, speed=20.0, timeout=50.0):
         log(f"   重发第 {k+2} 次")
         time.sleep(0.8)
     return js
+
+
+def seed_now(ser):
+    """从当前实测关节角取 IK 种子。
+
+    绝不能用写死的初值：IK 从远离实际的姿态出发会掉进别的解分支
+    （实测踩到过 J5 直接跳到 -89° 的情况）。
+    """
+    if ser is None:
+        return None
+    for _ in range(6):
+        js = ser.joints()
+        if js is not None:
+            return model_from_fw(js)
+        time.sleep(0.15)
+    return None
 
 
 def approach_axis():
@@ -202,7 +237,8 @@ def do_stage(ser, fruit, dry):
     log(f"STAGE 目标(TCP): X={stage[0]:+.3f} Y={stage[1]:+.3f} Z={stage[2]:+.3f}"
         f"   [仰角 {ELEV_DEG:.0f}°，罩口在 TCP 前方 {CONE_LEN_M*1000:.0f}mm，"
         f"离果心 {STAGE_GAP_M*1000:.0f}mm]")
-    pose, err, ae = check_pose(stage, seed=[0.2, 0.8, -0.7, 0, 0.8, 0], aim_at=pf)
+    _seed = seed_now(ser)
+    pose, err, ae = check_pose(stage, seed=_seed, aim_at=pf)
     if pose is None:
         log(f"!! 预备位不可用: {err}")
         return None
@@ -231,7 +267,10 @@ def do_feed(ser, fruit, stage, dry):
     tcp_goal = pf - CONE_LEN_M * ax
     cur = stage.copy()
     step = 0
-    seed = [0.2, 0.5, -0.5, 0, 0, 0]
+    seed = seed_now(ser)
+    if seed is None:
+        log("!! 读不到当前姿态，无法保证 IK 走同一分支，停止")
+        return False
     while np.linalg.norm(tcp_goal - cur) > 0.002:
         step += 1
         if step > 24:
@@ -388,7 +427,7 @@ def do_retreat(ser, fruit, dry):
     back = np.array([pf[0], pf[1] + RETREAT_BACK_M, pf[2] - STAGE_DOWN_M])
     log(f"RETREAT: 后退到 Y={back[1]:+.3f} 再抬升 {RETREAT_UP_M*100:.0f}cm")
     for name, tgt in (("后退", back), ("抬升", back + np.array([0, 0, RETREAT_UP_M]))):
-        pose, err = check_pose(tgt, seed=[0.2, 0.5, -0.3, 0, 0, 0])
+        pose, err, _ae = check_pose(tgt, seed=seed_now(ser))
         if pose is None:
             log(f"   {name}不可达（{err}），跳过")
             continue
