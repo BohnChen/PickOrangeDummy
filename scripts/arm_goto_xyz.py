@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # ---- 复用 instant_tap 的 FK/IK ----
 try:
     from instant_tap import forward_kinematics_tool0, solve_exact_tool0_ik
-    from arm_kin import solve_pose_ik, fk_full, model_from_fw
+    from arm_kin import solve_pose_ik, fk_full, model_from_fw, port_down_deg
     import arm_safety as safety
 except Exception as e:
     print(f"无法导入运动学/安全模块: {e}")
@@ -303,11 +303,10 @@ def main():
             # 153mm 长的锥形末端整体扫过，圆形开口转向车架（事故）。
             T_cur = fk_full(cur_model)
             axis_cur = T_cur[:3, 2]
-            # J6（刀片轴）必须在 IK 里就钉死，不能事后硬改，
-            # 否则位置/姿态会失配。
+            # J6（刀片轴）参与解算以保持自由度，但结果丢弃：
+            # J6 只绕锥罩轴线旋转，丢弃不改变位置和锥罩轴向，只改变滚转。
             q, resid, axis_err = solve_pose_ik(tgt, axis_cur, seed=cur_model,
-                                               posture_w=0.0005,
-                                               lock_j6=cur_model[5])
+                                               posture_w=0.0005)
             print(f"位姿IK: 位置残差 {resid:.2f}mm  轴向保持误差 {axis_err:.2f}°")
             if resid > 6.0:
                 print("拒绝：位置残差过大")
@@ -326,6 +325,10 @@ def main():
             target_fw[5] = ser.last_j6
             target_model = list(target_model)
             target_model[5] = cur_model[5]
+            _port = port_down_deg(fk_full(target_model))
+            if _port > 50.0:
+                print(f"!! 拒绝：出料口朝下偏离 {_port:.0f}°（>50°），该解靠 J6 滚转凑姿态")
+                return 2
         print(f"目标固件角: {' '.join(f'{v:+7.2f}' for v in target_fw)}")
         if args.dry_run:
             print("（--dry-run：不动作）")

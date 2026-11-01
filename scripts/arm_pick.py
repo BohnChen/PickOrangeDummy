@@ -40,7 +40,8 @@ spec = importlib.util.spec_from_file_location(
 cal = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cal)
 from instant_tap import forward_kinematics_tool0
-from arm_kin import fk_full, solve_pose_ik, fw_from_model, model_from_fw
+from arm_kin import (fk_full, solve_pose_ik, fw_from_model, model_from_fw,
+                     port_down_deg)
 
 CALIB = "/tmp/opencode/calib_result.json"
 AXIS_TOL_DEG = 25.0      # 套筒轴线与"指向果实"的最大允许偏差
@@ -64,6 +65,8 @@ CUT_SPEED = 5.0
 
 J3_MIN = 45.0            # 固件 J3 角下限（红线是 35°，这里留 10° 余量）
 J5_MAX = 80.0
+PORT_MAX_DEG = 50.0   # 出料口偏离"正下方"的上限
+J6_NOW_FW = None      # 实测的 J6（固件度），所有规划一律以它为准
 
 
 def log(msg):
@@ -128,7 +131,14 @@ def detect_fruit():
 
 def check_pose(target, seed, aim_at=None):
     """aim_at 非空时同时约束"套筒轴线指向 aim_at"（J5 就是套筒轴向）"""
-    j6_lock = float(seed[5])          # J6 = 刀片轴，绝不参与定位
+    # J6 = 刀片轴：**参与解算**（保持解算自由度），但结果丢弃、绝不执行。
+    # J6 只绕锥罩轴线转，丢弃它不影响 TCP 位置、也不影响锥罩轴向，
+    # 只影响滚转 —— 所以丢弃后要额外检查"出料口是否仍然朝下"。
+    if J6_NOW_FW is not None:
+        seed = list(seed)
+        seed[5] = cal.agx.fw_to_model_rad(
+            [0.0, 0.0, 0.0, 0.0, 0.0, float(J6_NOW_FW)])[5]
+    j6_lock = float(seed[5])
     if aim_at is None:
         q, res = cal.solve_exact_tool0_ik(np.array(target), seed=seed)
         if res > 5.0:
@@ -141,13 +151,17 @@ def check_pose(target, seed, aim_at=None):
         if n < 1e-6:
             return None, "瞄准点与目标重合", 0.0
         q, res, axis_err = solve_pose_ik(np.array(target), d / n, seed=seed,
-                                         posture_w=0.0005, lock_j6=j6_lock)
+                                         posture_w=0.0005)
         if res > 6.0:
             return None, f"位姿IK 位置残差 {res:.1f}mm", axis_err
         if axis_err > AXIS_TOL_DEG:
             return None, f"轴线偏差 {axis_err:.1f}° 过大", axis_err
+    q = list(q); q[5] = j6_lock           # 丢弃 J6 的解，用当前值
     fw = cal.agx.clamp_fw(cal.agx.model_rad_to_fw(q))
-    fw[5] = cal.agx.model_rad_to_fw(list(seed))[5]   # 再钉一次，确保与当前一致
+    port = port_down_deg(fk_full(q))      # 以"丢弃 J6 后的真实姿态"评估
+    if port > PORT_MAX_DEG:
+        return None, (f"出料口偏离朝下 {port:.0f}° > {PORT_MAX_DEG:.0f}°"
+                      f"（该解靠 J6 滚转凑姿态，被丢弃后出料口会转歪）"), axis_err
     if not (J3_MIN < fw[2] < 179):
         return None, f"J3={fw[2]:.1f}° 不安全", axis_err
     if abs(fw[4]) > J5_MAX:
@@ -379,11 +393,19 @@ def main():
     ap.add_argument("--auto-cut", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--servo", action="store_true", help="实时视觉伺服进刀")
+    ap.add_argument("--target", nargs=3, type=float, metavar=("X", "Y", "Z"),
+                    help="直接指定 base_link 下的果实坐标（跳过视觉检测，用于锥罩遮挡时）")
     args = ap.parse_args()
 
-    fruit = detect_fruit()
-    if fruit is None:
-        return 1
+    if args.target:
+        pb = np.array(args.target, dtype=float)
+        fruit = {"pixel": None, "depth": float(np.linalg.norm(pb)),
+                 "p_base": pb, "radius": 0.022, "area": 0, "manual": True}
+        log(f"使用手动指定目标（跳过视觉）: {pb}")
+    else:
+        fruit = detect_fruit()
+        if fruit is None:
+            return 1
     pf = fruit["p_base"]
     log(f"\n目标果实: 像素={fruit['pixel']} 深度={fruit['depth']*1000:.0f}mm "
         f"半径≈{fruit['radius']*1000:.1f}mm")
@@ -395,6 +417,11 @@ def main():
                             if os.path.exists(cal.agx.PORT_CANDIDATES[0])
                             else cal.agx.PORT_CANDIDATES[1])
     try:
+        global J6_NOW_FW
+        _j = ser.joints()
+        if _j is not None:
+            J6_NOW_FW = _j[5]
+            log(f"J6 实测 {J6_NOW_FW:+.2f}°（本次所有规划都以此为准，不会动它）")
         ser.cmd("!START", 0.8)
         if args.cut:
             return 0 if do_cut(ser, args.dry_run) else 1
