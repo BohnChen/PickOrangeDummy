@@ -1,0 +1,95 @@
+
+===== 系统 =====
+Linux aidlux 5.15.78-android13-8-g2ea13fdc7f40-dirty #1 SMP PREEMPT Mon Aug 11 19:22:17 CST 2025 aarch64 aarch64 aarch64 GNU/Linux
+PRETTY_NAME="Ubuntu 22.04.2 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.2 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+pid1: systemd
+Python 3.10.12
+CPU: 8 cores
+               total        used        free      shared  buff/cache   available
+内存：       14Gi       2.2Gi        10Gi        30Mi       2.5Gi        12Gi
+交换：      4.0Gi       951Mi       3.1Gi
+
+===== ROS =====
+humble
+ros2 not in PATH
+
+===== PWM（决定能否板载生成 3 路 50Hz） =====
+总计 0
+lrwxrwxrwx. 1 root root 0 11月 10 21:09 pwmchip0 -> ../../devices/platform/soc/c42d000.qcom,spmi/spmi-0/0-01/c42d000.qcom,spmi:qcom,pm8550@1:pwms@e800/pwm/pwmchip0
+lrwxrwxrwx. 1 root root 0 11月 10 21:09 pwmchip5 -> ../../devices/platform/soc/c42d000.qcom,spmi/spmi-0/0-01/c42d000.qcom,spmi:qcom,pm8550@1:pwms@eb00/pwm/pwmchip5
+lrwxrwxrwx. 1 root root 0 11月 10 21:09 pwmchip6 -> ../../devices/platform/soc/c42d000.qcom,spmi/spmi-0/0-01/c42d000.qcom,spmi:qcom,pm8550@1:pwms@ea00/pwm/pwmchip6
+--- /sys/class/pwm/pwmchip0 npwm=5
+--- /sys/class/pwm/pwmchip5 npwm=1
+--- /sys/class/pwm/pwmchip6 npwm=1
+platform/c42d000.qcom,spmi:qcom,pm8550@1:pwms@ea00, 1 PWM device
+ pwm-0   ((null)              ): period: 0 ns duty: 0 ns polarity: normal
+
+platform/c42d000.qcom,spmi:qcom,pm8550@1:pwms@eb00, 1 PWM device
+ pwm-0   (qcom,mdss_dsi_ft8719): requested enabled period: 100000 ns duty: 0 ns polarity: normal
+
+platform/c42d000.qcom,spmi:qcom,pm8550@1:pwms@e800, 5 PWM devices
+ pwm-0   (red                 ): requested period: 1000000 ns duty: 0 ns polarity: normal
+ pwm-1   (green               ): requested period: 1000000 ns duty: 0 ns polarity: normal
+ pwm-2   (blue                ): requested period: 1000000 ns duty: 0 ns polarity: normal
+ pwm-3   ((null)              ): period: 0 ns duty: 0 ns polarity: normal
+ pwm-4   (pwm-fan             ): requested period: 0 ns duty: 0 ns polarity: normal
+
+===== PWM 引脚复用 =====
+/sys/kernel/debug/pinctrl/f000000.pinctrl/pinmux-pins:pin 9 (GPIO_9): soc:pwm-fan f000000.pinctrl:310 function gpio group gpio9
+
+===== GPIO =====
+export
+gpiochip216
+gpiochip239
+gpiochip245
+gpiochip251
+gpiochip257
+gpiochip263
+gpiochip269
+gpiochip277
+gpiochip289
+gpiochip301
+unexport
+GPIO ranges handled:
+0: c42d000.qcom,spmi:qcom,pm8550@1:pinctrl@8800 GPIOS [289 - 300] PINS [0 - 11]
+GPIO ranges handled:
+0: c42d000.qcom,spmi:qcom,pm8550b@7:pinctrl@8800 GPIOS [277 - 288] PINS [0 - 11]
+GPIO ranges handled:
+
+===== 串口设备 =====
+no ttyACM/ttyUSB
+no /dev/serial/by-id
+dialout group: dialout:x:20:
+
+===== USB / 相机 =====
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+/dev/video0
+/dev/video1
+/dev/video32
+/dev/video33
+msm_vidc_decoder (platform:msm_vidc_bus):
+	/dev/video32
+	/dev/video33
+
+
+===== I2C / SPI =====
+no i2c/spi devices
+
+===== 网络 =====
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.1.1/24 brd 192.168.1.255 scope global br-lan
+    inet 172.20.10.2/28 brd 172.20.10.15 scope global dynamic noprefixroute wlan0
+
+===== AidLux 相关 =====
+aidlux
+qrobot
+usb
+sysfs on /sys/aidlux type sysfs (rw,relatime,seclabel)
