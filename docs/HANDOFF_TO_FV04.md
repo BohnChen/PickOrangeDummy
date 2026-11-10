@@ -45,7 +45,7 @@
 |---|---|
 | SoC | Qualcomm QCS8550，8 核（1×Kryo Gold 3.2 GHz + 4×2.8 + 3×Silver 2.0），Adreno 740，**48 TOPS** |
 | 内存/存储 | 16 GB LPDDR5x + 128 GB UFS（也有 8 GB 版本） |
-| 系统 | AidLux 融合系统：Android + Ubuntu 22.04 共享内核；浏览器 `ip:8000` 进桌面，也可 VNC/SSH |
+| 系统 | AidLux 融合系统：Android + Ubuntu 22.04 共享内核；浏览器 `ip:8000` 进桌面，也可 VNC/SSH。**实测 PID1 = systemd**，AidLux 各服务以 systemd 单元运行 |
 | ROS | 应用中心可装 **ROS 2 Humble + Gazebo + MoveIt2**（官方目前只在 Ubuntu 22.04 支持） |
 | 算力工具 | **AidLite-SDK**（模型转换/量化/推理），不是 ONNX Runtime/TFLite |
 | 接口 | 4× USB3.1 + 1× USB-C、HDMI IN/OUT、4 路网口、Micro SD、Wi-Fi 7 / BT 5.3 |
@@ -95,7 +95,7 @@
 | Python | 3.12 | **3.10**（注意语法与 numpy 版本） |
 | NPU | 未用 | **AidLite-SDK**（YOLO 要重新量化导出） |
 | 交互 | `web_dual_cam.py` 预览 | **正式交互模块**（Web 或 Android App，AidLux 允许 Android 写 UI） |
-| 开机自启 | systemd | **AidLux 无 systemd**，用 AidLux 应用自启动或脚本 |
+| 开机自启 | systemd | **AidLux 有 systemd**（实测），写 `*.service` 即可 |
 
 ---
 
@@ -170,40 +170,32 @@ PickOrangesFV04/
 
 ## 8. 关键技术问题
 
-### 8.1 底盘 PWM：能不能全在板子上做（**待实测，先别写代码**）
+### 8.1 底盘 PWM：能不能全在板子上做（**已实测，结论：不能纯硬件 PWM**）
 
-需要 **3 路 50 Hz 舵机 PWM**（油门 / 转向 / 档位，脉宽约 1000–2000 µs）。
-FV04 上没有 MCU，所以有三条路：
+在 FV04 上实测（2026-11-10，见 §12），结论：
 
-| 方案 | 前提 | 稳定性 | 安全性 | 结论 |
-|---|---|---|---|---|
-| A. 板载**硬件 PWM**（`/sys/class/pwm`） | 设备树把 QCS8550 的 PWM 引到了排针 | 高（内核定时） | 中：进程死/PWM 保持最后值 | **首选，先验证** |
-| B. **PCA9685**（I2C 16 路 PWM 模块） | I2C 可用 | 高（芯片硬件定时） | 同上 | A 不成立时的替代，¥10 |
-| C. GPIO 软件模拟 PWM | 任意 GPIO | 低（抖动，负载下漂移） | 低 | **不推荐**用于油门/转向 |
-| D. 外置 MCU（旧方案） | 一块 Arduino | 高 | 高（租约 + 锁存急停） | 安全兜底方案 |
+| 路线 | 实测结果 | 可用性 |
+|---|---|---|
+| 板载硬件 PWM（`/sys/class/pwm`） | 只有 **3 个 PMIC（PM8550）PWM chip**：RGB LED、屏幕背光、风扇；**没有一个引到 40pin 排针**；SoC PWM 未在设备树使能 | ❌ 不可用 |
+| I2C + PCA9685 | `CONFIG_I2C_CHARDEV is not set`、无 `/dev/i2c-*`、无 i2c-dev 模块 | ❌ 不可用（要改内核，不现实） |
+| SPI 舵机控制 | 无 spidev / spi_master | ❌ 不可用 |
+| **排针 GPIO 软件 PWM** | GPIO 301–511 可用（排针 pin N → GPIO 336+N） | ⚠️ 唯一"纯排针"路线，抖动待实测 |
+| **USB → 3 路 PWM 小板** | `CONFIG_USB_ACM=y`、ch341/cp210x/ftdi 内置，USB 3.0 四路 | ✅ 最稳的"板子出信号"方案 |
+| 外置 MCU（旧 Arduino） | 同上，USB 串口 | ✅ 安全性最好（可带租约看门狗） |
 
-**在 FV04 上先跑这几条命令**（决定 A 是否成立）。
-完整一次性采集：`ssh aidlux 'bash -s' < scripts/fv04_probe.sh > fv04_report.txt`（脚本见 `scripts/fv04_probe.sh`）。
+**安全缺口（与方案无关）**：Linux 侧生成 PWM 时，进程崩溃/系统卡死 **PWM 会保持最后值**，
+而旧项目已实测「档位信号浮空可能被判为前进」。
+所以无论选哪条，**物理急停是必需项**，并必须确认底盘控制器在信号丢失时的行为：
 
-```bash
-ls /sys/class/pwm/                       # 有没有 pwmchip
-cat /sys/kernel/debug/pwm                # 各通道占用情况（root）
-cat /sys/kernel/debug/pinctrl/*/pinmux-pins | grep -i pwm   # PWM 引到哪些脚
-```
+> 车架空、低速前进中，直接拔掉油门信号线 → 停 / 滑行 / 继续跑？
 
-再看排针：**用 Raspberry 40PIN（3.3 V）**，不要用 Qualcomm 40PIN（1.8 V）。
-需要确认这三个脚在设备树里是 PWM 功能、且未被背光/风扇占用。
+- 会停 → GPIO/USB 方案可接受；
+- 继续跑 → 必须加"信号看门狗"（小 MCU 只做钳位），或改用外置 MCU 生成。
 
-**安全缺口（比 PWM 本身更重要）**：
-Linux 侧生成 PWM 时，进程崩溃/系统卡死 **PWM 会保持最后值**，
-而旧实测已证明「档位信号浮空可能被判为前进」。
-所以必须补一条：**底盘控制器在信号丢失时会不会停车？** 用 5 分钟实测：
-
-> 车架空、低速前进中，直接拔掉油门信号线 → 车是停、是滑行、还是继续跑？
-
-- 若会停 → 方案 A/B 可接受，但**物理急停仍是必需项**；
-- 若继续跑 → 必须加"信号看门狗"（外置 MCU 只做钳位，不生成 PWM），
-  或回到方案 D。
+**GPIO 软件 PWM 的实测方法**（需要先拿到 FV04 排针引脚定义）：
+1. 从阿加犀 A8550PF1 手册查 RPi 40PIN 的 3.3 V GPIO 引脚；
+2. 选两个空闲脚做**回环**（输出 → 输入），用 `gpiomon` 打时间戳测 50 Hz 抖动；
+3. 抖动 < 100 µs 再考虑接底盘，否则走 USB 方案。
 
 ### 8.2 ROS 2 Humble 具体牺牲了什么
 
@@ -230,7 +222,7 @@ Actions / TF / URDF / MoveIt / ros2_control / rclpy 的核心 API 在两者间�
 
 ### 8.4 AidLux 环境注意
 
-- **没有 systemd**：节点拉起用启动脚本 + AidLux 应用自启动；崩溃自愈要自己写。
+- **有 systemd**（实测 PID1=systemd，`aid-*` 服务在跑）：节点可以做成 systemd 单元，崩溃自愈用 `Restart=`。
 - **权限**：容器内通常 root，但 `/dev/ttyACM*` 的设备号会漂移 → 用 `/dev/serial/by-id/`。
 - **USB 相机**：4× USB3.1 是优势；D435i/Astra 尽量直连，别经 hub。
 - **共享内核**：Android 侧与 Ubuntu 侧共享 `/dev`，注意不要两边同时抢设备。
@@ -255,10 +247,12 @@ Actions / TF / URDF / MoveIt / ros2_control / rclpy 的核心 API 在两者间�
 
 ## 10. 待用户提供/确认
 
-1. §8.1 三条 PWM 命令的输出；
-2. 底盘控制器"拔掉油门信号"的真实行为；
-3. FV04 的 SSH/ADB 访问方式（IP、账号）；
-4. 新仓库是否要公开（影响 README 内容与图片）。
+1. ~~PWM 探测~~ → **已完成，见 §12**；
+2. 底盘控制器"拔掉油门信号"的真实行为（**仍未测，决定安全方案**）；
+3. ~~FV04 SSH 访问~~ → **已完成：`ssh aidlux@172.20.10.2`，密码同用户名**；
+4. 新仓库是否要公开（影响 README 内容与图片）；
+5. **FV04 排针引脚定义**（阿加犀 A8550PF1 手册"表 3"）——GPIO 软件 PWM 选脚必需；
+6. 是否同意在板子上装 `ros-humble-ros2-control` / `ros-humble-moveit`（apt，来自 TUNA 镜像）。
 
 ---
 
@@ -279,3 +273,64 @@ scripts/calib_eye_to_hand.py          手眼标定
 src/pickorange_interfaces             msg/action/srv
 src/pickorange_bringup                TF
 ```
+
+
+---
+
+## 12. FV04 实测记录（2026-11-10，只读探测）
+
+连接方式：`ssh aidlux@172.20.10.2`（用户名密码相同，`sudo` 可用）。
+探测脚本：`scripts/fv04_probe.sh`。
+
+### 12.1 系统
+
+| 项 | 实测 |
+|---|---|
+| OS | Ubuntu 22.04.2 LTS (Jammy)，aarch64 |
+| 内核 | `5.15.78-android13`，SMP **PREEMPT**（非 RT） |
+| PID 1 | **systemd**；`aid-appmon` / `aid-desktop` / `aid-lms` / `aidcode` 等在跑 |
+| CPU / 内存 | 8 核 / 14 GiB（可用 12 GiB） |
+| 磁盘 | 84 G，已用 19 G，**剩 65 G** |
+| Python | 3.10.12；numpy 1.26.4；cv2 4.12.0 |
+| 网络 | `wlan0 172.20.10.2/28`；`br-lan 192.168.1.1/24`；**外网可达**（github 200） |
+
+### 12.2 ROS
+
+| 项 | 实测 |
+|---|---|
+| 安装 | `/opt/ros/humble` 存在，286 个包 |
+| 使用 | 需先 `source /opt/ros/humble/setup.bash`（非登录 shell 里 `ros2` 不在 PATH） |
+| **缺失** | **MoveIt2 / ros2_control / controller_manager 未安装**（只有 `joint_state_publisher` 等） |
+| 可装性 | apt 源已配 TUNA：`ros-humble-ros2-control` 候选 2.54.3 ✅；`packages.ros.org` 不通（000），**必须走 TUNA** |
+
+### 12.3 外设与总线
+
+| 项 | 实测 | 影响 |
+|---|---|---|
+| USB | 4 条总线（2×USB3 + 2×USB2） | 相机/机械臂够用 |
+| USB 串口 | `CONFIG_USB_ACM=y`、`CONFIG_USB_SERIAL=y`，ch341/cp210x/ftdi 内置 | **REF 机械臂可直插**，/dev/ttyACM* 会出现 |
+| I2C | `CONFIG_I2C_CHARDEV not set`，无 `/dev/i2c-*`，无 i2c-dev 模块 | **PCA9685 / 任何 I2C 外设都不可用** |
+| SPI | 无 spidev / spi_master | SPI 外设不可用 |
+| 摄像头 | `/dev/video0/1` 存在（平台），未接 UVC 设备 | 需插入相机后复测 |
+| GPIO | `f000000.pinctrl`：GPIO 301–511（PINS 0–210）；排针 pin N → GPIO 336+N | 软件 PWM 的唯一通道 |
+
+### 12.4 PWM（结论：无排针硬件 PWM）
+
+| chip | npwm | 占用情况 |
+|---|---|---|
+| `pwmchip0`（PM8550 pwms@e800） | 5 | red / green / blue LED、`pwm-fan`、1 路空闲 |
+| `pwmchip5`（pwms@eb00） | 1 | 屏幕背光 `qcom,mdss_dsi_ft8719`（enabled） |
+| `pwmchip6`（pwms@ea00） | 1 | 空闲 |
+
+- 三个 chip **全部是 PMIC（PM8550）内部通道**，驱动 LED/背光/风扇，**没有引到 40pin 排针**；
+- `pinmux-pins` 里唯一与 PWM 相关的占用是 `pin 9 → soc:pwm-fan`；
+- SoC 自身的 PWM 控制器未在设备树使能。
+
+⇒ **"从排针直接输出 3 路 50Hz 舵机 PWM"只能靠 GPIO 软件 PWM**，
+其余路线（I2C/SPI/硬件 PWM）在本板上不成立。
+
+### 12.5 排针
+
+- **Raspberry 40PIN**（3.3 V 域，含 GPIO/UART）← 接舵机信号用这个；
+- **Qualcomm 40PIN**（1.8 V 域，含 UART/CAN/I2S）← 不要用；
+- 具体引脚定义需查阿加犀 A8550PF1 手册（"表 3"），**尚未拿到**。
