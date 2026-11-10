@@ -9,8 +9,10 @@
 
 | 文档 | 内容 |
 |---|---|
+| [`docs/ARCHITECTURE_REVIEW_2026-11-10.md`](docs/ARCHITECTURE_REVIEW_2026-11-10.md) | **现状复盘（当前入口）**：技术方案、优缺点、供电失效分析、P0–P2 路线、下一版继承清单 |
+| [`docs/POWER_v2_SPEC.md`](docs/POWER_v2_SPEC.md) | **供电 v2 规格**：12 V Buck + 机械臂独立支路 + BOM + 上电 SOP + 验收测试 |
 | [`docs/architecture_v2.md`](docs/architecture_v2.md) | **整机软件架构 v2.0（当前）**：分层、进程模型、TF、双相机分工、停车策略、语音、里程碑、待确认项 |
-| [`docs/architecture_diagrams.md`](docs/architecture_diagrams.md) | **架构图册**：11 张图（分层 / 进程 / 通信 / TF / 状态机 / 时序 / 安全 / 语音 / 里程碑） |
+| [`docs/architecture_diagrams.md`](docs/architecture_diagrams.md) | **架构图册**：13 张图（分层 / 进程 / 通信 / TF / 状态机 / 时序 / 安全 / 语音 / 里程碑 + 2 张现状版） |
 | [`docs/safety_and_incidents.md`](docs/safety_and_incidents.md) | 事故史 + 硬性安全约束（**必读**） |
 | [`docs/HANDOFF_交接文档.md`](docs/HANDOFF_交接文档.md) | 机械臂真值表、映射、避坑清单（**必读**） |
 | [`docs/chassis_control_verified.md`](docs/chassis_control_verified.md) | 底盘接线与信号实测结论 |
@@ -52,6 +54,11 @@ src/
 - **语音**：USB 声卡，离线 KWS + 预生成反馈语
 
 ## 当前状态
+
+> ⚠️ **2026-11-10：计算板（VENTUNO Q）已损坏，Linux 侧全栈停摆。**
+> 原因与整改见 [`docs/safety_and_incidents.md`](docs/safety_and_incidents.md) 事故 D、
+> [`docs/POWER_v2_SPEC.md`](docs/POWER_v2_SPEC.md)。下一版计划见
+> [`docs/ARCHITECTURE_REVIEW_2026-11-10.md`](docs/ARCHITECTURE_REVIEW_2026-11-10.md) §10。
 
 - [x] 机械臂真机链路（`dummyarm_link` 协议验证）
 - [x] 数字样机 + TF 验证
