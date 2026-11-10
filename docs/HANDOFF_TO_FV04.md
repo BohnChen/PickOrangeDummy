@@ -182,7 +182,8 @@ FV04 上没有 MCU，所以有三条路：
 | C. GPIO 软件模拟 PWM | 任意 GPIO | 低（抖动，负载下漂移） | 低 | **不推荐**用于油门/转向 |
 | D. 外置 MCU（旧方案） | 一块 Arduino | 高 | 高（租约 + 锁存急停） | 安全兜底方案 |
 
-**在 FV04 上先跑这三条命令**（决定 A 是否成立）：
+**在 FV04 上先跑这几条命令**（决定 A 是否成立）。
+完整一次性采集：`ssh aidlux 'bash -s' < scripts/fv04_probe.sh > fv04_report.txt`（脚本见 `scripts/fv04_probe.sh`）。
 
 ```bash
 ls /sys/class/pwm/                       # 有没有 pwmchip
@@ -238,9 +239,11 @@ Actions / TF / URDF / MoveIt / ros2_control / rclpy 的核心 API 在两者间�
 
 ## 9. 开工顺序（新会话照做）
 
+0. 先在 FV04 上跑 `scripts/fv04_probe.sh`，把结果贴进 `docs/fv04_platform.md`。
 1. 读本文 + 旧仓库 `docs/safety_and_incidents.md`、`docs/HANDOFF_交接文档.md`、
    `docs/ARCHITECTURE_REVIEW_2026-11-10.md`。
 2. 建骨架：README、`.gitignore`、`docs/` 目录；`git commit` 一个"目录骨架"。
+   （可用旧仓库的 `scripts/migrate_to_fv04.sh --dry-run` 先看会搬什么，再去掉 `--dry-run` 执行）
 3. 搬"零改动"资产：`interfaces`、`bringup`、`config`、`DH_Params`、URDF + STL。
 4. 改 ROS 版本：`package.xml`、`CMakeLists.txt`、launch、`ros2_control` 2.x。
 5. 在 FV04 上先跑**纯软件**验证：`ros2 launch` 起 TF、RViz 看车+臂+双相机（无硬件）。
