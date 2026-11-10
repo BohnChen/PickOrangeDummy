@@ -36,6 +36,7 @@
 | 5 | 打印文件（`models/*.3mf/.gcode`）**不进仓库**，用户之后放 MakerWorld |
 | 6 | 最终形态一次排进去：**交互模块必须有**（方便移动车子） |
 | 7 | 底盘 PWM 方案：**用户希望直接在板子上做**（排针 → 底盘控制器），但需先实测，见 §8.1 |
+| 8 | **已定：先按「纯板载」实现** —— GPIO 软件生成 3 路 50 Hz 舵机脉冲；抖动不达标再切 USB 后端（同一接口） |
 
 ---
 
@@ -89,7 +90,7 @@
 |---|---|---|
 | ROS 2 | Jazzy（24.04） | **Humble（22.04）** |
 | 底盘传输 | `arduino-router` msgpack RPC（unix/tcp） | **USB 串口**（外置 MCU）或**板载 PWM**（见 §8.1） |
-| 底盘 PWM 生成 | 板载 STM32H5 固件 `chassis_v3_sonar.ino` | 待定：硬件 PWM / PCA9685 / 外置 MCU |
+| 底盘 PWM 生成 | 板载 STM32H5 固件 `chassis_v3_sonar.ino`（也是软件 bit-bang） | **FV04 GPIO 软件生成 50 Hz 脉冲**（发送器留 `gpio`/`usb`/`mcu` 三后端） |
 | `ros2_control` | 4.x（Jazzy） | **2.x（Humble）**，`dummyarm_hardware` 要改 |
 | MoveIt 2 | 2.9/2.10 代 | **2.5/2.6 代**，launch/yaml 要调 |
 | Python | 3.12 | **3.10**（注意语法与 numpy 版本） |
@@ -161,6 +162,7 @@ PickOrangesFV04/
 ├── config/
 ├── scripts/
 └── tools/
+    └── servo_pwm/            # 第 5 步：C 发送器（gpio/usb/mcu 三后端）+ 回环抖动测试
 ```
 
 `.gitignore` 至少要盖住：`build/ install/ log/ __pycache__/ *.pyc .DS_Store _tmp_* .venv/`
@@ -170,32 +172,51 @@ PickOrangesFV04/
 
 ## 8. 关键技术问题
 
-### 8.1 底盘 PWM：能不能全在板子上做（**已实测，结论：不能纯硬件 PWM**）
+### 8.1 底盘信号：板载 GPIO 软件生成 3 路 50 Hz 舵机脉冲（**已定方案**）
 
-在 FV04 上实测（2026-11-10，见 §12），结论：
+**信号定义（与旧固件完全一致，不要改语义）：**
 
-| 路线 | 实测结果 | 可用性 |
-|---|---|---|
-| 板载硬件 PWM（`/sys/class/pwm`） | 只有 **3 个 PMIC（PM8550）PWM chip**：RGB LED、屏幕背光、风扇；**没有一个引到 40pin 排针**；SoC PWM 未在设备树使能 | ❌ 不可用 |
-| I2C + PCA9685 | `CONFIG_I2C_CHARDEV is not set`、无 `/dev/i2c-*`、无 i2c-dev 模块 | ❌ 不可用（要改内核，不现实） |
-| SPI 舵机控制 | 无 spidev / spi_master | ❌ 不可用 |
-| **排针 GPIO 软件 PWM** | GPIO 301–511 可用（排针 pin N → GPIO 336+N） | ⚠️ 唯一"纯排针"路线，抖动待实测 |
-| **USB → 3 路 PWM 小板** | `CONFIG_USB_ACM=y`、ch341/cp210x/ftdi 内置，USB 3.0 四路 | ✅ 最稳的"板子出信号"方案 |
-| 外置 MCU（旧 Arduino） | 同上，USB 串口 | ✅ 安全性最好（可带租约看门狗） |
+| 项 | 值 |
+|---|---|
+| 帧周期 | **20 000 µs（50 Hz）**，连续重复 |
+| 脉宽 | 1000–2000 µs，中位 **1500** |
+| 油门 | 1500 停；>1500 给速度（1% = 5 µs）；<1500 刹车 |
+| 转向 | 1500 中位；±400 µs 满舵（+右 / −左） |
+| 档位 | 1000 前进 / 1500 倒车（**只允许这两个值**） |
+| 电平 | 3.3 V（Raspberry 40PIN 侧），与底盘控制器共地 |
+| 帧内顺序 | 油门 → 200 µs 间隔 → 转向 → 200 µs 间隔 → 档位，其余时间空闲 |
 
-**安全缺口（与方案无关）**：Linux 侧生成 PWM 时，进程崩溃/系统卡死 **PWM 会保持最后值**，
-而旧项目已实测「档位信号浮空可能被判为前进」。
-所以无论选哪条，**物理急停是必需项**，并必须确认底盘控制器在信号丢失时的行为：
+**为什么纯板载可行**：旧固件这 3 路本来就是**软件 bit-bang**
+（`digitalWrite` + `delayMicroseconds`，注释写明「抖动 ±几十 µs」），不是硬件 PWM。
+FV04 上换成 Linux 用户态忙等，风险只在调度抖动，必须实测。
 
-> 车架空、低速前进中，直接拔掉油门信号线 → 停 / 滑行 / 继续跑？
+**实现硬约束（写代码时逐条照做）：**
 
-- 会停 → GPIO/USB 方案可接受；
-- 继续跑 → 必须加"信号看门狗"（小 MCU 只做钳位），或改用外置 MCU 生成。
+1. 用 **C**（不要 Python：GIL + 解释器抖动）；
+2. `SCHED_FIFO` 优先级 80；`mlockall(MCL_CURRENT|MCL_FUTURE)`；
+3. PWM 线程绑到**单独一个核**；视觉 / NPU 绑到其他核；
+4. 用 `clock_gettime(CLOCK_MONOTONIC)` **忙等**，不要 `usleep`；
+5. 一帧内三路顺序发，总占空约 6.4 ms，剩余时间自旋；
+6. 异常 / 心跳丢失 → 三路立即回 **1500 中位**并停发；
+7. **发送器抽象**：`gpio`（默认）/ `usb` / `mcu` 三后端，同一接口，切换只改配置。
 
-**GPIO 软件 PWM 的实测方法**（需要先拿到 FV04 排针引脚定义）：
-1. 从阿加犀 A8550PF1 手册查 RPi 40PIN 的 3.3 V GPIO 引脚；
-2. 选两个空闲脚做**回环**（输出 → 输入），用 `gpiomon` 打时间戳测 50 Hz 抖动；
-3. 抖动 < 100 µs 再考虑接底盘，否则走 USB 方案。
+**抖动验收（接底盘之前必须做）：**
+
+- 回环：输出脚 → 另一输入脚，`gpiomon` 打时间戳，跑 **10 分钟**；
+- 判据：脉宽 **P99 偏差 < 100 µs**、无 >500 µs 离群、帧周期 15–25 ms；
+- 不达标 → 切 USB 后端（信号定义不变）。
+
+**安全（不可省）：**
+
+- **物理急停**；
+- 实测「拔掉油门信号线 → 车停 / 滑行 / 继续跑」；
+- 若控制器不会停 → 加信号看门狗（小 MCU 只做钳位）。
+
+**已知限制：**
+
+- 80 个排针里**没有硬件 PWM**（证据见 §12.4），只能软件生成；
+- RPi 40PIN = 3.3 V 域，Qualcomm 40PIN = 1.8 V 域，**不要接错**；
+- 具体引脚号需 A8550PF1 手册「表 3」（**当前缺失，阻塞第 5 步**）。
 
 ### 8.2 ROS 2 Humble 具体牺牲了什么
 
@@ -231,28 +252,29 @@ Actions / TF / URDF / MoveIt / ros2_control / rclpy 的核心 API 在两者间�
 
 ## 9. 开工顺序（新会话照做）
 
-0. 先在 FV04 上跑 `scripts/fv04_probe.sh`，把结果贴进 `docs/fv04_platform.md`。
+0. ~~跑 `scripts/fv04_probe.sh`~~ **已完成**，结果见 §12；原始输出在 `docs/fv04_probe_report_2026-11-10.txt`。
 1. 读本文 + 旧仓库 `docs/safety_and_incidents.md`、`docs/HANDOFF_交接文档.md`、
    `docs/ARCHITECTURE_REVIEW_2026-11-10.md`。
-2. 建骨架：README、`.gitignore`、`docs/` 目录；`git commit` 一个"目录骨架"。
-   （可用旧仓库的 `scripts/migrate_to_fv04.sh --dry-run` 先看会搬什么，再去掉 `--dry-run` 执行）
-3. 搬"零改动"资产：`interfaces`、`bringup`、`config`、`DH_Params`、URDF + STL。
-4. 改 ROS 版本：`package.xml`、`CMakeLists.txt`、launch、`ros2_control` 2.x。
-5. 在 FV04 上先跑**纯软件**验证：`ros2 launch` 起 TF、RViz 看车+臂+双相机（无硬件）。
-6. 再接机械臂 REF（USB CDC）→ 验证 `/joint_states`。
-7. 最后碰底盘：先做 §8.1 的 PWM 实测与"信号丢失"安全测试，再写 `chassis_node`。
-8. 交互模块放在"能手动开车"这个最小可用点上：Web（浏览器）优先，Android App 后置。
-
----
+2. 建骨架：README、`.gitignore`、`docs/`；`scripts/migrate_to_fv04.sh --dry-run` 先看迁移清单；把本文复制到新仓库 `docs/migration_from_v1.md`。
+3. 搬「零改动」资产：`pickorange_interfaces`、`pickorange_bringup`、`config/`、`DH_Params/`、URDF + STL。
+4. 改 ROS 版本：`package.xml` / `CMakeLists` / launch / `ros2_control` 2.x；
+   补装 `ros-humble-ros2-control`、`ros-humble-moveit`（**走 TUNA 源**）。
+5. **先写「舵机脉冲发送器」**：C + `SCHED_FIFO` + 忙等，3 路 50 Hz；接口留三后端。
+6. **抖动回环测试**：10 分钟，P99 < 100 µs 才继续；不达标切 USB 后端。
+7. 写 `chassis_node`：订阅 `/cmd_vel` → 发送器；200 ms 心跳；发布 `/chassis/state`。
+8. FV04 上跑**纯软件**验证：`ros2 launch` 起 TF + RViz（无硬件）。
+9. 接机械臂 REF（USB CDC）→ 验证 `/joint_states`。
+10. 接底盘实测：先架空、再落地；同步做「拔信号线」安全测试。
+11. 交互模块：Web 优先（AidLux 浏览器 `ip:8000`），Android App 后置。
 
 ## 10. 待用户提供/确认
 
 1. ~~PWM 探测~~ → **已完成，见 §12**；
-2. 底盘控制器"拔掉油门信号"的真实行为（**仍未测，决定安全方案**）；
+2. 底盘控制器「拔掉油门信号」的真实行为（**仍未测，决定安全方案**）；
 3. ~~FV04 SSH 访问~~ → **已完成：`ssh aidlux@172.20.10.2`，密码同用户名**；
 4. 新仓库是否要公开（影响 README 内容与图片）；
-5. **FV04 排针引脚定义**（阿加犀 A8550PF1 手册"表 3"）——GPIO 软件 PWM 选脚必需；
-6. 是否同意在板子上装 `ros-humble-ros2-control` / `ros-humble-moveit`（apt，来自 TUNA 镜像）。
+5. **FV04 排针引脚定义**（A8550PF1 手册「表 3」）——**阻塞第 5 步**，至少需要 3 个 3.3 V 域 GPIO；
+6. 是否同意在板子上 `apt install ros-humble-ros2-control ros-humble-moveit`（TUNA 源）。
 
 ---
 
@@ -339,3 +361,14 @@ src/pickorange_bringup                TF
 - **Raspberry 40PIN**（3.3 V 域，含 GPIO/UART）← 接舵机信号用这个；
 - **Qualcomm 40PIN**（1.8 V 域，含 UART/CAN/I2S）← 不要用；
 - 具体引脚定义需查阿加犀 A8550PF1 手册（"表 3"），**尚未拿到**。
+
+
+---
+
+## 13. 新会话开场提示词（直接复制粘贴）
+
+> 读 `/Users/bohn/04_Project/02_My_Dummy/PickOrangeDummy/docs/HANDOFF_TO_FV04.md`，
+> 按 §9 开工。旧仓库只读参考，不要修改。
+> §8.1 是已定的底盘信号方案：**纯板载 GPIO 软件生成 3 路 50 Hz 舵机脉冲**，
+> 发送器要留 `gpio`/`usb`/`mcu` 三后端。
+> 先做第 2–4 步；到第 5 步（写发送器）之前，把接口设计和引脚选择给我确认。
