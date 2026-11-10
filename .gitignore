@@ -12,3 +12,4 @@ dummyarm_AImodel/runs/
 __MACOSX/
 yolo11*-seg.pt
 .DS_Store
+_tmp_*
