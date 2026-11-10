@@ -468,9 +468,31 @@ gantt
 
 ---
 
+## 图 12–13 · 现状版（2026-11-10，手写 SVG）
+
+> 这两张**不是 Mermaid 生成的**，是手写 SVG（可直接用编辑器 / Inkscape 改字），
+> 因为要同时表达"供电 + 硬件 + 软件现状"，Mermaid 排不出来。
+
+### 图 12 · 整机架构总览
+
+一句话：**三列（感知输入 / 计算与软件栈 / 电源与电气），五层只向下依赖，红框标出当前断点。**
+
+- 预览：[PNG](diagrams/12-system-overview.png)　｜　源：[SVG](diagrams/12-system-overview.svg)
+- 配套：`ARCHITECTURE_REVIEW_2026-11-10.md` §1
+
+### 图 13 · 供电失效链与整改
+
+一句话：**上面是现状，中间是四条失效链，下面是整改方案。**
+
+- 预览：[PNG](diagrams/13-power-failure.png)　｜　源：[SVG](diagrams/13-power-failure.svg)
+- 配套：`POWER_v2_SPEC.md`
+
+---
+
 ## 图源与重新生成
 
 每个图的 Mermaid 源在 [`diagrams/*.mmd`](diagrams/)，同名 `.svg` / `.png` 是渲染产物。
+（例外：图 12/13 是手写 SVG，没有 `.mmd`，直接改 `.svg` 再导出 PNG 即可。）
 本文档里的代码块与 `.mmd` 内容一致——**改图改 `.mmd`，再重新渲染**。
 
 渲染用 gstack 的离线 mermaid 渲染器（不需要联网）：
