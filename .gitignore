@@ -13,3 +13,4 @@ __MACOSX/
 yolo11*-seg.pt
 .DS_Store
 _tmp_*
+.superpowers/
