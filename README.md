@@ -26,6 +26,7 @@ firmware/     底盘 MCU 固件（VENTUNO Q / STM32H5 / Zephyr）
 scripts/      标定、诊断、标定工具与一次性脚本
 config/       运行期配置（J6 刀片零点等）
 models/       末端执行器与结构件 CAD / 打印文件
+presentation_assets/  答辩 PPT 生成器与素材（2026 高通智能边缘大赛）
 dummyarm_AImodel/  柑橘实例分割模型工程（训练/数据/导出）
 src/
   pickorange_interfaces/     接口定义（msg / action / srv）— S0 已完成
