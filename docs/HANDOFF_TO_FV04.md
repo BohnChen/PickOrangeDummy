@@ -324,7 +324,12 @@ src/pickorange_bringup                TF
 
 - 三个 chip **全部是 PMIC（PM8550）内部通道**，驱动 LED/背光/风扇，**没有引到 40pin 排针**；
 - `pinmux-pins` 里唯一与 PWM 相关的占用是 `pin 9 → soc:pwm-fan`；
-- SoC 自身的 PWM 控制器未在设备树使能。
+- **SoC pinmux 的 274 个函数里没有任何通用 PWM**：全表只有 3 条
+  `tsense_pwm1/2/3`（热敏激励，都在 `gpio50`），其余是 gpio/uart/i2s/i2c/cam_mclk/can 等；
+- 设备树里**没有 PWM 控制器节点**（只有 PMIC 下的 `pwms@e800/ea00/eb00`）。
+
+⇒ 结论不依赖"排针有没有引出 PWM 脚"：**当前固件根本没有把 PWM 控制器使能/复用到排针**，
+80 个排针里没有任何一脚能输出硬件 PWM。要改必须动设备树 + 内核（vendor 固件），不在应用层范围内。
 
 ⇒ **"从排针直接输出 3 路 50Hz 舵机 PWM"只能靠 GPIO 软件 PWM**，
 其余路线（I2C/SPI/硬件 PWM）在本板上不成立。
